@@ -605,21 +605,28 @@ CREATE TABLE IF NOT EXISTS reviews (
     rating      INT         NOT NULL,
     comment     TEXT        NOT NULL,
     sentiment   VARCHAR(20) NOT NULL,
+    edited_at   DATETIME,
     status      VARCHAR(20) NOT NULL,
     created_at  DATETIME    NOT NULL,
     updated_at  DATETIME    NOT NULL,
     deleted_at  DATETIME,
     deleted     BOOLEAN     NOT NULL DEFAULT FALSE,
     version     BIGINT,
+    CONSTRAINT fk_reviews_user FOREIGN KEY (user_id) REFERENCES users(id),
+    CONSTRAINT fk_reviews_booking FOREIGN KEY (booking_id) REFERENCES bookings(id),
+    CONSTRAINT chk_reviews_rating CHECK (rating >= 1 AND rating <= 10),
+
     PRIMARY KEY (id),
-    CONSTRAINT uk_reviews_user_id_movie_id_deleted
-        UNIQUE (user_id, movie_id, deleted),
-    CONSTRAINT uk_reviews_booking_id_deleted
-        UNIQUE (booking_id, deleted),
-    CONSTRAINT fk_reviews_user
-        FOREIGN KEY (user_id) REFERENCES users (id),
-    CONSTRAINT fk_reviews_booking
-        FOREIGN KEY (booking_id) REFERENCES bookings (id)
+    INDEX idx_reviews_movie_id (movie_id),
+    INDEX idx_reviews_user_id (user_id),
+    INDEX idx_reviews_booking_id (booking_id),
+    INDEX idx_reviews_status (status),
+    INDEX idx_reviews_deleted (deleted),
+
+    -- Mỗi user chỉ review 1 phim 1 lần (soft-delete aware)
+    UNIQUE KEY uk_reviews_user_movie_deleted (user_id, movie_id, deleted),
+    -- Mỗi booking chỉ review 1 lần (soft-delete aware)
+    UNIQUE KEY uk_reviews_booking_deleted (booking_id, deleted)
 );
 
 -- ================== LOYALTY TRANSACTIONS ==================

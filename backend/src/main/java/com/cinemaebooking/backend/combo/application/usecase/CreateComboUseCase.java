@@ -36,7 +36,11 @@ public class CreateComboUseCase {
                 .originalPrice(request.getOriginalPrice())
                 .stock(request.getStock())
                 .imageUrl(request.getImageUrl() != null ? request.getImageUrl().trim() : null)
-                .status(ComboStatus.INACTIVE) // business rule: new combo always INACTIVE
+                .status(determineInitialStatus(request.getStock()))
                 .build();
+    }
+
+    private ComboStatus determineInitialStatus(Integer stock) {
+        return stock != null && stock > 0 ? ComboStatus.ACTIVE : ComboStatus.INACTIVE;
     }
 }

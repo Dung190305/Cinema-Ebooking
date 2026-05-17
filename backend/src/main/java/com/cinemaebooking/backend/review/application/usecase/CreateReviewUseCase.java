@@ -1,0 +1,51 @@
+package com.cinemaebooking.backend.review.application.usecase;
+
+import com.cinemaebooking.backend.review.application.dto.CreateReviewRequest;
+import com.cinemaebooking.backend.review.application.dto.ReviewResponse;
+import com.cinemaebooking.backend.review.application.mapper.ReviewResponseMapper;
+import com.cinemaebooking.backend.review.application.port.AiAnalysisResult;
+import com.cinemaebooking.backend.review.application.port.AIServicePort;
+import com.cinemaebooking.backend.review.application.port.ReviewRepository;
+import com.cinemaebooking.backend.review.application.validator.ReviewCommandValidator;
+import com.cinemaebooking.backend.review.domain.enums.ReviewStatus;
+import com.cinemaebooking.backend.review.domain.model.Review;
+import com.cinemaebooking.backend.common.exception.domain.ReviewExceptions;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+public class CreateReviewUseCase {
+
+    private final ReviewRepository reviewRepository;
+    private final ReviewCommandValidator validator;
+    private final ReviewResponseMapper mapper;
+    private final AIServicePort aiService;
+
+    @Transactional
+    public ReviewResponse execute(CreateReviewRequest request) {
+        validator.validateCreateRequest(request);
+
+        Review review = Review.builder()
+                .userId(request.getUserId())
+                .movieId(request.getMovieId())
+                .bookingId(request.getBookingId())
+                .rating(request.getRating())
+                .comment(request.getComment())
+                .status(ReviewStatus.HIDDEN)
+                .build();
+
+        // Gọi AI để phân tích comment
+        AiAnalysisResult aiResult = aiService.analyze(request.getComment());
+
+        if ("REJECTED".equals(aiResult.getFinalDecision())) {
+            throw ReviewExceptions.aiRejected();
+        }
+
+        review.applyAiResult(aiResult.isValid(), aiResult.getSentiment());
+
+        Review saved = reviewRepository.save(review);
+        return mapper.toResponse(saved);
+    }
+}
