@@ -7,7 +7,7 @@ public interface AIServicePort {
      * AI model cũng kiểm tra comment có hợp lệ hay không.
      *
      * @param comment nội dung comment cần phân tích
-     * @return AiAnalysisResult chứa isValid và sentiment
+     * @return AiAnalysisResult chứa isValid, sentiment và finalDecision
      */
     AiAnalysisResult analyze(String comment);
 }

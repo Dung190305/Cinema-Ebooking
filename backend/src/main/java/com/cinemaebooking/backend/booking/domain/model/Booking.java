@@ -70,9 +70,7 @@ public class Booking extends BaseEntity<BookingId> {
         this.coupon = couponData;
         this.couponDiscountAmount = couponData.getDiscountValue();
     }
-    /**
-     * Logic tính toán lại tổng tiền của toàn bộ Booking
-     */
+
     public BigDecimal calculateSubtotal() {
         BigDecimal ticketSum = (tickets == null) ? BigDecimal.ZERO : tickets.stream()
                 .map(Ticket::getPrice)
@@ -81,7 +79,6 @@ public class Booking extends BaseEntity<BookingId> {
         BigDecimal comboSum = (combos == null) ? BigDecimal.ZERO : combos.stream()
                 .map(c -> c.getUnitPrice().multiply(BigDecimal.valueOf(c.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-
 
         this.totalTicketPrice = ticketSum;
         this.totalComboPrice = comboSum;
@@ -101,9 +98,6 @@ public class Booking extends BaseEntity<BookingId> {
         }
     }
 
-    /**
-     * Chuyển trạng thái sang đã xác nhận (Paid)
-     */
     public void markAsPaid() {
         if (this.status != BookingStatus.PENDING) {
             throw new RuntimeException("Chỉ có thể thanh toán đơn hàng đang chờ.");
@@ -112,9 +106,6 @@ public class Booking extends BaseEntity<BookingId> {
         this.paidAt = LocalDateTime.now();
     }
 
-    /**
-     * Hủy đơn hàng
-     */
     public void cancel() {
         if (this.status == BookingStatus.CANCELLED) return;
 

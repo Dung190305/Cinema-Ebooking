@@ -551,7 +551,7 @@ CREATE TABLE IF NOT EXISTS seat_locks (
     id BIGINT NOT NULL AUTO_INCREMENT,
     showtime_seat_id BIGINT NOT NULL,
     user_id BIGINT NOT NULL,
-    booking_id BIGINT NOT NULL,
+    booking_id BIGINT  NULL,
 
     expired_at DATETIME NOT NULL,
 

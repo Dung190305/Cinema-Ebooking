@@ -7,7 +7,6 @@ import com.cinemaebooking.backend.booking.application.port.BookingRepository;
 import com.cinemaebooking.backend.booking.application.port.BookingLoyaltyPort;
 import com.cinemaebooking.backend.booking.domain.enums.BookingStatus;
 import com.cinemaebooking.backend.booking.domain.model.Booking;
-
 import com.cinemaebooking.backend.booking_combo.application.port.ComboInternalService;
 import com.cinemaebooking.backend.booking_combo.domain.model.BookingCombo;
 import com.cinemaebooking.backend.booking_coupon.application.port.CouponInternalService;
