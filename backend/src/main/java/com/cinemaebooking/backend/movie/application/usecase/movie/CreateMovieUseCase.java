@@ -9,7 +9,6 @@ import com.cinemaebooking.backend.movie.application.mapper.MovieResponseMapper;
 import com.cinemaebooking.backend.movie.application.port.GenreRepository;
 import com.cinemaebooking.backend.movie.application.port.MovieRepository;
 import com.cinemaebooking.backend.movie.application.validator.MovieCommandValidator;
-import com.cinemaebooking.backend.movie.domain.enums.MovieStatus;
 import com.cinemaebooking.backend.movie.domain.model.Genre;
 import com.cinemaebooking.backend.movie.domain.model.Movie;
 import com.cinemaebooking.backend.movie.domain.valueobject.GenreId;
@@ -46,7 +45,7 @@ public class CreateMovieUseCase {
                 .duration(request.getDuration())
                 .ageRating(request.getAgeRating())
                 .releaseDate(request.getReleaseDate())
-                .status(MovieStatus.COMING_SOON)
+                .showingEndDate(request.getShowingEndDate())
                 .posterUrl(request.getPosterUrl())
                 .bannerUrl(request.getBannerUrl())
                 .director(request.getDirector())

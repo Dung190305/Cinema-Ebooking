@@ -65,10 +65,8 @@ public class MovieJpaEntity extends BaseJpaEntity {
     @Column(nullable = false)
     private LocalDate releaseDate;
 
-    @NotNull
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private MovieStatus status;
+    @Column(name = "showing_end_date")
+    private LocalDate showingEndDate;
 
     @Column(name = "poster_url", length = 500)
     private String posterUrl;
