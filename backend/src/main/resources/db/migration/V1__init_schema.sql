@@ -664,3 +664,27 @@ CREATE TABLE IF NOT EXISTS loyalty_transactions (
     CONSTRAINT fk_loyalty_transactions_user_coupon
         FOREIGN KEY (user_coupon_id) REFERENCES user_coupons (id)
 );
+
+-- OTP table for email verification during user registration.
+
+CREATE TABLE IF NOT EXISTS otps (
+    id          BIGINT       NOT NULL AUTO_INCREMENT,
+    user_id     BIGINT       NOT NULL,
+    code        VARCHAR(6)   NOT NULL,
+    otp_type    VARCHAR(20)  NOT NULL DEFAULT 'EMAIL_VERIFICATION',
+    expired_at  DATETIME     NOT NULL,
+    attempts    INT          NOT NULL DEFAULT 0,
+    verified    BOOLEAN      NOT NULL DEFAULT FALSE,
+
+    deleted     BOOLEAN      NOT NULL DEFAULT FALSE,
+    deleted_at  DATETIME     NULL,
+    created_at  DATETIME     NOT NULL,
+    updated_at  DATETIME     NOT NULL,
+    version     BIGINT       NULL,
+
+    PRIMARY KEY (id),
+    INDEX idx_otps_user_id (user_id),
+    INDEX idx_otps_code (code),
+
+    CONSTRAINT fk_otps_user_id FOREIGN KEY (user_id) REFERENCES users(id)
+    );
