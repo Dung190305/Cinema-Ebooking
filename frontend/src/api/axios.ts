@@ -21,14 +21,25 @@ const PUBLIC_ENDPOINTS = [
   '/auth/refresh_token' 
 ]
 
+const PROTECTED_GET_PATHS = [
+  '/users/me',
+  '/loyalty/my-account',  
+]
+
 const isPublicEndpoint = (url?: string): boolean => {
   if (!url) return false
   return PUBLIC_ENDPOINTS.some(publicPath => url.includes(publicPath))
 }
 
+const isPublicGetRequest = (config: InternalAxiosRequestConfig): boolean => {
+  if (config.method?.toUpperCase() !== 'GET') return false
+  if (PROTECTED_GET_PATHS.some(path => config.url?.includes(path))) return false  
+  return true
+}
+
 // ================= REQUEST =================
 apiClient.interceptors.request.use((config) => {
-    if (isPublicEndpoint(config.url)) {
+    if (isPublicEndpoint(config.url) || isPublicGetRequest(config)) {
         delete config.headers.Authorization;
         return config 
     } 
@@ -104,6 +115,19 @@ apiClient.interceptors.response.use(
         }
 
         if (isPublicEndpoint(url)) {
+            const mapped = mapFieldErrors(apiError ?? null)
+            return Promise.reject({
+                type: 'api',
+                fieldErrors: mapped.fieldErrors,
+                globalErrors: mapped.globalErrors,
+                code: apiError?.code ?? null,
+                message: apiError?.message ?? 'Đã có lỗi xảy ra',
+                status,
+                raw: apiError,
+            })
+        }
+
+        if (isPublicGetRequest(originalRequest)) {
             const mapped = mapFieldErrors(apiError ?? null)
             return Promise.reject({
                 type: 'api',
