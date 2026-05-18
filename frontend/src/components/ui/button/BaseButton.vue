@@ -21,7 +21,7 @@ const base =
 
 const variants: Record<Variant, string> = {
   primary: 'bg-accent text-text-on-accent hover:brightness-110',
-  secondary: 'border border-accent text-text-primary hover:bg-accent hover:text-text-on-accent',
+  secondary: 'border border-accent text-text-secondary hover:bg-accent hover:text-text-on-accent',
   ghost: 'text-text-secondary hover:text-text-primary'
 }
 
@@ -29,7 +29,8 @@ const sizes: Record<Size, string> = {
   sm: 'px-3 py-1 text-sm',
   md: 'px-4 py-2 text-md',
   lg: 'px-6 py-3 text-base',
-  '2xl': 'px-8 py-4 text-lg'
+  '2xl': 'px-8 py-4 text-lg',
+  '4xl': 'px-16 py-6 text-body'
 }
 
 const roundeds: Record<Rounded, string> = {
@@ -48,9 +49,8 @@ function getCompoundClasses() {
 
   const overlay = props.isAdmin
     ? 'hover:bg-overlay-light-10'
-    : 'hover:bg-overlay-dark-10'
+    : 'hover:bg-overlay-dark-30'
 
-  // iconOnly override size
   if (props.iconOnly) {
     classes.push('aspect-square')
 
@@ -59,7 +59,10 @@ function getCompoundClasses() {
     if (props.size === 'lg') classes.push('w-12 h-12')
     if (props.size === '2xl') classes.push('w-16 h-16')
 
-    classes.push('bg-transparent')
+    // ✅ CHỈ thêm bg-transparent khi variant KHÔNG phải ghost
+    if (props.variant !== 'ghost') {
+      classes.push('bg-transparent')
+    }
 
     if (props.variant === 'primary') {
       classes.push(overlay)
@@ -76,6 +79,7 @@ function getCompoundClasses() {
 
   return classes
 }
+
 const variantClass = computed(() => {
   const v = props.variant ?? 'primary'
 
