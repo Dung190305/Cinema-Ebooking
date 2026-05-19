@@ -21,7 +21,7 @@ public class Movie extends BaseEntity<MovieId> {
     private Integer duration;
     private AgeRating ageRating;
     private LocalDate releaseDate;
-    private MovieStatus status;
+    private LocalDate showingEndDate;
     private String posterUrl;
     private String bannerUrl;
     private String director;
@@ -31,22 +31,39 @@ public class Movie extends BaseEntity<MovieId> {
     private Integer ratingCount;
 
     // business methods
+    public MovieStatus getStatus() {
+        return MovieStatus.from(releaseDate, showingEndDate);
+    }
+
+    // ✅ Không còn changeStatus() — thay bằng business intent rõ ràng hơn
+    public void markAsEnded() {
+        if (this.showingEndDate == null || this.showingEndDate.isAfter(LocalDate.now())) {
+            this.showingEndDate = LocalDate.now();
+        }
+    }
+
+    public void extendShowing(LocalDate newEndDate) {
+        if (newEndDate == null || !newEndDate.isAfter(LocalDate.now())) {
+            throw CommonExceptions.invalidInput("New end date must be in the future");
+        }
+        this.showingEndDate = newEndDate;
+    }
+
     public void update(String title, String description, Integer duration,
-                       AgeRating ageRating, LocalDate releaseDate, MovieStatus status,
+                       AgeRating ageRating, LocalDate releaseDate, LocalDate showingEndDate,
                        String posterUrl, String bannerUrl, String director, String actors,
                        Set<Genre> genres) {
         validateTitle(title);
         validateDuration(duration);
         validateReleaseDate(releaseDate);
-        validateStatus(status);
-        // other fields optional
+        validateShowingEndDate(releaseDate, showingEndDate);
 
         this.title = title;
         this.description = description;
         this.duration = duration;
         this.ageRating = ageRating;
         this.releaseDate = releaseDate;
-        this.status = status;
+        this.showingEndDate = showingEndDate;
         this.posterUrl = posterUrl;
         this.bannerUrl = bannerUrl;
         this.director = director;
@@ -54,10 +71,13 @@ public class Movie extends BaseEntity<MovieId> {
         this.genres = genres != null ? new HashSet<>(genres) : new HashSet<>();
     }
 
-    public void changeStatus(MovieStatus status) {
-        validateStatus(status);
-        this.status = status;
+    // private validators
+    private void validateShowingEndDate(LocalDate releaseDate, LocalDate showingEndDate) {
+        if (showingEndDate != null && !showingEndDate.isAfter(releaseDate)) {
+            throw CommonExceptions.invalidInput("Showing end date must be after release date");
+        }
     }
+
 
     private void validateTitle(String title) {
         if (title == null || title.trim().isEmpty()) {

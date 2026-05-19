@@ -48,8 +48,8 @@ public class LoyaltyAccountRepositoryImpl implements LoyaltyAccountRepository {
             mapper.updateEntity(entity, account);
         }
 
-        if (account.getTier() != null) {
-            MembershipTierJpaEntity tierRef = tierJpaRepository.getReferenceById(account.getTier().getId().getValue());
+        if (account.getTierId() != null) {
+            MembershipTierJpaEntity tierRef = tierJpaRepository.getReferenceById(account.getTierId());
             entity.setMembershipTier(tierRef);
         }
 

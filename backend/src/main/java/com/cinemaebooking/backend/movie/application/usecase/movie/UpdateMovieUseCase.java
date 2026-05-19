@@ -130,7 +130,7 @@ public class UpdateMovieUseCase {
                 request.getDuration(),
                 request.getAgeRating(),
                 request.getReleaseDate(),
-                request.getStatus(),
+                request.getShowingEndDate(),
                 request.getPosterUrl(),
                 request.getBannerUrl(),
                 request.getDirector(),

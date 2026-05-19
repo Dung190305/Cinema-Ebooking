@@ -4,11 +4,14 @@ import com.cinemaebooking.backend.movie.application.dto.movie.CreateMovieRequest
 import com.cinemaebooking.backend.movie.application.dto.movie.MovieResponse;
 import com.cinemaebooking.backend.movie.application.dto.movie.UpdateMovieRequest;
 import com.cinemaebooking.backend.movie.application.usecase.movie.*;
+import com.cinemaebooking.backend.movie.domain.enums.AgeRating;
+import com.cinemaebooking.backend.movie.domain.enums.MovieStatus;
 import com.cinemaebooking.backend.movie.domain.valueobject.MovieId;
 import com.cinemaebooking.backend.common.exception.domain.CommonExceptions;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -47,8 +50,12 @@ public class MovieController {
     }
 
     @GetMapping
-    public Page<MovieResponse> getMovieList(@PageableDefault(size = 8) Pageable pageable) {
-        return getMovieListUseCase.execute(pageable);
+    public Page<MovieResponse> getMovieList(
+            @PageableDefault(size = 8, sort = "releaseDate", direction = Sort.Direction.DESC) Pageable pageable,
+            @RequestParam(required = false) MovieStatus status,
+            @RequestParam(required = false) AgeRating ageRating
+    ) {
+        return getMovieListUseCase.execute(pageable, status, ageRating);
     }
 
     private MovieId toMovieId(Long id) {

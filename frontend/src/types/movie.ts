@@ -11,6 +11,7 @@ export interface MovieResponse {
   duration: number
   ageRating: AgeRating
   releaseDate: string // ISO date
+  showingEndDate: string | null
   status: MovieStatus
   posterUrl: string
   bannerUrl: string
@@ -27,6 +28,7 @@ export interface CreateMovieRequest {
   duration: number
   ageRating: AgeRating
   releaseDate: string
+  showingEndDate: string | null
   posterUrl: string
   bannerUrl: string
   director: string
@@ -34,6 +36,16 @@ export interface CreateMovieRequest {
   genreIds: number[]
 }
 
-export interface UpdateMovieRequest extends CreateMovieRequest {
-  status: MovieStatus
+export interface UpdateMovieRequest {
+  title: string
+  description: string
+  duration: number
+  ageRating: AgeRating
+  releaseDate: string
+  showingEndDate: string | null
+  posterUrl: string
+  bannerUrl: string
+  director: string
+  actors: string
+  genreIds: number[]
 }

@@ -6,6 +6,7 @@ const props = withDefaults(defineProps<{
     size?: number
     strokeWidth?: number
     scale?: number
+    filled?: boolean
 }>(), {
     size: 20,
     strokeWidth: 2,
@@ -22,7 +23,10 @@ const style = computed(() => ({
 </script>
 
 <template>
-    <span class="inline-flex items-center justify-center [&>svg]:stroke-current" :style="style">
+    <span :class="[
+        'inline-flex items-center justify-center [&>svg]:stroke-current',
+        filled && '[&>svg]:fill-current'
+    ]" :style="style">
         <component :is="icon" :size="size" :stroke-width="strokeWidth" v-bind="attrs" class="w-full h-full" />
     </span>
 </template>
