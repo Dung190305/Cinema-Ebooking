@@ -23,6 +23,8 @@ public class ComboController {
     private final DeleteComboUseCase deleteComboUseCase;
     private final GetComboDetailUseCase getComboDetailUseCase;
     private final GetComboListUseCase getComboListUseCase;
+    private final ActivateComboUseCase activateComboUseCase;
+    private final DeactivateComboUseCase deactivateComboUseCase;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -53,6 +55,20 @@ public class ComboController {
     @GetMapping
     public Page<ComboResponse> getComboList(@PageableDefault(size = 10) Pageable pageable) {
         return getComboListUseCase.execute(pageable);
+    }
+
+    @PostMapping("/{id}/activate")
+    @ResponseStatus(HttpStatus.OK)
+    public ComboResponse activateCombo(@PathVariable Long id) {
+        ComboId comboId = toComboId(id);
+        return activateComboUseCase.execute(comboId);
+    }
+
+    @PostMapping("/{id}/deactivate")
+    @ResponseStatus(HttpStatus.OK)
+    public ComboResponse deactivateCombo(@PathVariable Long id) {
+        ComboId comboId = toComboId(id);
+        return deactivateComboUseCase.execute(comboId);
     }
 
     private ComboId toComboId(Long id) {

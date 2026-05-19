@@ -30,19 +30,23 @@ public class Combo extends BaseEntity<ComboId> {
                        String description,
                        BigDecimal price,
                        String imageUrl,
-                       ComboStatus status) {
+                       ComboStatus newStatus) {
         validateName(name);
         validatePrice(price);
-        validateStatus(status);
+        validateStatus(newStatus);
         validateOptionalFields(this.originalPrice, price);
 
-        this.status = ComboStatus.INACTIVE;
         this.name = name.trim();
         this.description = normalize(description);
         this.price = price;
         this.imageUrl = normalize(imageUrl);
-        this.status = status;
-        syncStatusWithStock();
+
+        // Chỉ auto-sync khi stock = 0 và người dùng KHÔNG chủ động set ACTIVE
+        if (currentStock() <= 0 && newStatus != ComboStatus.ACTIVE) {
+            this.status = ComboStatus.INACTIVE;
+        } else {
+            this.status = newStatus;
+        }
     }
 
     public void increaseStock(Integer quantity) {
@@ -162,7 +166,7 @@ public class Combo extends BaseEntity<ComboId> {
     }
 
     private void syncStatusWithStock() {
-        if (currentStock() <= 0) {
+        if (currentStock() <= 0 && this.status == ComboStatus.ACTIVE) {
             this.status = ComboStatus.INACTIVE;
         }
     }
