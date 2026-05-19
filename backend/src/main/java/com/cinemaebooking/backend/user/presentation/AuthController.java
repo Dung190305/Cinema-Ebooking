@@ -1,11 +1,16 @@
 package com.cinemaebooking.backend.user.presentation;
 
+import com.cinemaebooking.backend.otp.application.dto.SendOtpResponse;
+import com.cinemaebooking.backend.otp.application.dto.VerifyOtpRequest;
+import com.cinemaebooking.backend.otp.application.dto.VerifyOtpResponse;
 import com.cinemaebooking.backend.user.application.dto.AuthDTO.LoginRequest;
 import com.cinemaebooking.backend.user.application.dto.AuthDTO.RefreshTokenRequest;
 import com.cinemaebooking.backend.user.application.dto.AuthDTO.RegisterRequest;
 import com.cinemaebooking.backend.user.application.dto.AuthDTO.ResetPasswordRequest;
 import com.cinemaebooking.backend.user.application.dto.Response.LoginResponse;
 import com.cinemaebooking.backend.user.application.usecase.auth.*;
+import com.cinemaebooking.backend.user.application.usecase.verification.SendVerificationEmailUseCase;
+import com.cinemaebooking.backend.user.application.usecase.verification.VerifyEmailUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,12 +27,37 @@ public class AuthController {
     private final ResetPasswordUseCase resetPasswordUseCase;
     private final RefreshTokenUseCase refreshTokenUseCase;
     private final ForgotPasswordUseCase forgotPasswordUseCase;
+    private final SendVerificationEmailUseCase sendVerificationEmailUseCase;
+    private final VerifyEmailUseCase verifyEmailUseCase;
 
+    // ================== REGISTER WITH OTP ==================
+
+    /**
+     * Bước 1: Đăng ký → tạo tài khoản INACTIVE + gửi OTP qua email
+     */
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public void register(@Valid @RequestBody RegisterRequest request) {
-        registerUseCase.execute(request);
+    public SendOtpResponse register(@Valid @RequestBody RegisterRequest request) {
+        return sendVerificationEmailUseCase.execute(request);
     }
+
+    /**
+     * Bước 2: Xác minh OTP → ACTIVE tài khoản
+     */
+    @PostMapping("/verify-otp")
+    public VerifyOtpResponse verifyOtp(@Valid @RequestBody VerifyOtpRequest request) {
+        return verifyEmailUseCase.execute(request.getCode(), request.getUserId());
+    }
+
+    /**
+     * Bước 3: Gửi lại OTP (chống spam: 60s cooldown)
+     */
+    @PostMapping("/resend-otp")
+    public SendOtpResponse resendOtp(@RequestParam Long userId) {
+        return sendVerificationEmailUseCase.resend(userId);
+    }
+
+    // ================== LOGIN ==================
 
     @PostMapping("/login")
     public LoginResponse login(@Valid @RequestBody LoginRequest request) {
