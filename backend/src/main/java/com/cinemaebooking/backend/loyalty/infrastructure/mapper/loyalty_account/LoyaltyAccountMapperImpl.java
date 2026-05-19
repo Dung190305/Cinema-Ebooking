@@ -20,8 +20,6 @@ public class LoyaltyAccountMapperImpl implements LoyaltyAccountMapper {
                 .totalSpending(domain.getTotalSpending())
                 .lifetimePoints(domain.getLifetimePoints())
                 .currentPoints(domain.getCurrentPoints())
-                .membershipTier(domain.getTier() != null ?
-                        MembershipTierJpaEntity.builder().id(domain.getTier().getId().getValue()).build() : null)
                 .lastActivityDate(domain.getLastActivityDate())
                 .joinedDate(domain.getJoinedDate())
                 .status(domain.getStatus())
@@ -38,11 +36,23 @@ public class LoyaltyAccountMapperImpl implements LoyaltyAccountMapper {
                 .totalSpending(entity.getTotalSpending())
                 .lifetimePoints(entity.getLifetimePoints())
                 .currentPoints(entity.getCurrentPoints())
-                .tier(entity.getMembershipTier() != null ?
-                        MembershipTierMapperImpl.staticToDomain(entity.getMembershipTier()) : null)
+                .tierId(entity.getMembershipTier() != null ?
+                        entity.getMembershipTier().getId() : null)
                 .lastActivityDate(entity.getLastActivityDate())
                 .joinedDate(entity.getJoinedDate())
                 .status(entity.getStatus())
                 .build();
+    }
+
+    @Override
+    public void updateEntity(LoyaltyAccountJpaEntity target, LoyaltyAccount source) {
+        target.setUserId(source.getUserId());
+        target.setLoyaltyNumber(source.getLoyaltyNumber());
+        target.setTotalSpending(source.getTotalSpending());
+        target.setLifetimePoints(source.getLifetimePoints());
+        target.setCurrentPoints(source.getCurrentPoints());
+        target.setLastActivityDate(source.getLastActivityDate());
+        target.setJoinedDate(source.getJoinedDate());
+        target.setStatus(source.getStatus());
     }
 }

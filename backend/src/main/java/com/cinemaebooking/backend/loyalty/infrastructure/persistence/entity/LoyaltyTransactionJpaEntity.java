@@ -12,6 +12,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -64,12 +65,12 @@ public class LoyaltyTransactionJpaEntity extends BaseJpaEntity {
     @Column(nullable = false, length = 30)
     private LoyaltyTransactionType type;
 
-    @Column(name = "change_point", nullable = false)
-    private Integer changePoint;
+    @Column(name = "change_point", nullable = false, precision = 12, scale = 2)
+    private BigDecimal changePoint;
 
     @PositiveOrZero
-    @Column(name = "balance_after", nullable = false)
-    private Integer balanceAfter;
+    @Column(name = "balance_after", nullable = false, precision = 12, scale = 2)
+    private BigDecimal balanceAfter;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "booking_id")

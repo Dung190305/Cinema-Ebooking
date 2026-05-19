@@ -13,6 +13,10 @@ public interface CouponRepository {
 
     Coupon update(Coupon coupon);
 
+    Coupon updateDraft(Coupon coupon);
+
+    void updateStatus(Coupon coupon);
+
     Optional<Coupon> findById(CouponId id);
 
     Page<Coupon> findAll(Pageable pageable);

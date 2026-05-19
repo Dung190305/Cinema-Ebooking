@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -28,7 +29,7 @@ public class ComboRepositoryImpl implements ComboRepository {
 
     @Override
     public Combo update(Combo combo) {
-        ComboJpaEntity entity = findEntityById(combo.getId().getValue());
+        ComboJpaEntity entity = findEntityByIdForUpdate(combo.getId().getValue());
         mapper.updateEntity(entity, combo);
         return mapper.toDomain(jpaRepository.save(entity));
     }
@@ -36,6 +37,23 @@ public class ComboRepositoryImpl implements ComboRepository {
     @Override
     public Optional<Combo> findById(ComboId id) {
         return jpaRepository.findById(id.getValue()).map(mapper::toDomain);
+    }
+
+    @Override
+    public Optional<Combo> findByIdForUpdate(ComboId id) {
+        return jpaRepository.findByIdForUpdate(id.getValue()).map(mapper::toDomain);
+    }
+
+    @Override
+    @Transactional
+    public Combo reserveStock(ComboId id, Integer quantity) {
+        ComboJpaEntity entity = findEntityByIdForUpdate(id.getValue());
+        Combo combo = mapper.toDomain(entity);
+
+        combo.sell(quantity);
+        mapper.updateEntity(entity, combo);
+
+        return mapper.toDomain(jpaRepository.save(entity));
     }
 
     @Override
@@ -66,6 +84,11 @@ public class ComboRepositoryImpl implements ComboRepository {
 
     private ComboJpaEntity findEntityById(Long id) {
         return jpaRepository.findById(id)
+                .orElseThrow(() -> ComboExceptions.notFound(ComboId.of(id)));
+    }
+
+    private ComboJpaEntity findEntityByIdForUpdate(Long id) {
+        return jpaRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> ComboExceptions.notFound(ComboId.of(id)));
     }
 }

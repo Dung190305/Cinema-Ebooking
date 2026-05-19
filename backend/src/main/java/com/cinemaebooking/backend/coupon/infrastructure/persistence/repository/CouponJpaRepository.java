@@ -19,17 +19,17 @@ import java.util.Optional;
 @Repository
 public interface CouponJpaRepository extends SoftDeleteJpaRepository<CouponJpaEntity> {
 
-    boolean existsByCode(String code);
+    boolean existsByCodeIgnoreCase(String code);
 
-    boolean existsByCodeAndIdNot(String code, Long id);
+    boolean existsByCodeIgnoreCaseAndIdNot(String code, Long id);
 
     Optional<CouponJpaEntity> findByCodeIgnoreCase(String code);
 
-    boolean existsByCodeAndEndDateAfter(String code, LocalDate currentDate);
+    boolean existsByCodeIgnoreCaseAndEndDateAfter(String code, LocalDate currentDate);
 
-    boolean existsByCodeAndUsageLimitGreaterThan(String code, Integer usedCount);
+    boolean existsByCodeIgnoreCaseAndUsageLimitGreaterThan(String code, Integer usedCount);
 
-    boolean existsByCodeAndEndDateAfterAndUsageLimitGreaterThan(
+    boolean existsByCodeIgnoreCaseAndEndDateAfterAndUsageLimitGreaterThan(
             String code, LocalDate currentDate, Integer usedCount);
 
 }

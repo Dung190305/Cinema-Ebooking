@@ -70,7 +70,10 @@
                 Slot scope { item } là draft hiện tại trong panel (RowItem).
             -->
             <template v-if="$slots['detail-actions']" #actions="slotProps">
-                <slot name="detail-actions" v-bind="slotProps" />
+                <slot name="detail-actions" v-bind="{
+                    ...slotProps,
+                    close: () => selectedItem = null
+                }" />
             </template>
         </DetailPanel>
 

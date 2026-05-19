@@ -78,8 +78,18 @@ public class BookingJpaEntity extends BaseJpaEntity {
     private BigDecimal totalComboPrice;
 
     @PositiveOrZero
-    @Column(name = "discount_amount", nullable = false, precision = 12, scale = 2)
-    private BigDecimal discountAmount;
+    @Column(name = "tier_discount_amount", precision = 12, scale = 2)
+    private BigDecimal tierDiscountAmount;
+
+    @PositiveOrZero
+    @Column(name = "coupon_discount_amount", precision = 12, scale = 2)
+    private BigDecimal couponDiscountAmount;
+
+    @Column(name = "membership_tier_name", length = 50)
+    private String membershipTierName;
+
+    @Column(name = "membership_discount_percent", precision = 5, scale = 2)
+    private BigDecimal membershipDiscountPercent;
 
     @Positive
     @Column(name = "final_amount", nullable = false, precision = 12, scale = 2)

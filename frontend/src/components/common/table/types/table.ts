@@ -1,7 +1,7 @@
 // ─── Column definition ───────────────────────────────────────────────────────
 // Mỗi column khai báo một lần, dùng lại ở cả table lẫn detail panel
 
-export type FieldType = 'text' | 'number' | 'email' | 'enum' | 'date' | 'datetime' | 'textarea' | 'multiselect' | 'boolean'
+export type FieldType = 'text' | 'number' | 'email' | 'enum' | 'date' | 'datetime' | 'textarea' | 'multiselect' | 'boolean' | 'currency' | 'relation'
 
 export interface ColumnDef<T = Record<string, unknown>> {
   key: keyof T & string
@@ -10,7 +10,7 @@ export interface ColumnDef<T = Record<string, unknown>> {
   width?: string
   required?: boolean
   readonly?: boolean
-  readonlyInEdit?: boolean
+  readonlyInEdit?: ReadonlyResolver<T>
   hideInCreate?: boolean
   hideInTable?: boolean
   displayKey?: string
@@ -68,8 +68,19 @@ export interface ColumnDef<T = Record<string, unknown>> {
    */
   displayFn?: (value: unknown, row: T) => string
 
+  typeResolver?: (depValues: Record<string, unknown>) => FieldType
 
+  pastOnly?: boolean
 
+  futureOnly?: boolean
+
+  autoSelectToday?: boolean 
+  /**
+   * Số ngày cộng thêm vào hiện tại để làm mốc `minDate`.
+   * - Mặc định = 0 (hôm nay).
+   * - Ví dụ: 1 → ngày mai, -1 → hôm qua.
+   */
+  minDateOffset?: number
 }
 
 // ─── Row item ─────────────────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import BaseButton from '@/components/ui/button/BaseButton.vue'
-import CalendarPicker from '@/components/common/login/subcomponents/CalenderPicker.vue'
+import CalendarPicker from '@/components/ui/calendar/CalenderPicker.vue'
 import { useRegisterForm } from '@/composables/useRegisterForm'
 
 const emit = defineEmits<{
@@ -103,7 +103,7 @@ const {
                 <label class="text-[12px] text-text-secondary">Ngày sinh</label>
                 <div class="mt-0.5">
                     <CalendarPicker v-model="form.dateOfBirth" @update:model-value="handleDateSelect"
-                        :hasError="!!errors.dateOfBirth" />
+                        :hasError="!!errors.dateOfBirth" :maxDate="new Date()" />
                 </div>
                 <p v-if="errors.dateOfBirth" class="mt-1 text-[11px] text-red-500">{{ errors.dateOfBirth }}</p>
             </div>

@@ -74,7 +74,10 @@ const columns: ColumnDef<EarningRuleResponse>[] = [
         key: 'earningType',
         label: 'Loại',
         type: 'enum',
-        options: ['TICKET', 'CONCESSION'],
+        options: [
+            { value: 'TICKET', label: 'Vé' },
+            { value: 'CONCESSION', label: 'Đồ ăn' },
+        ],
         width: '150px',
     },
     { key: 'multiplier', label: 'Tỉ lệ (%)', type: 'number', width: '120px' },

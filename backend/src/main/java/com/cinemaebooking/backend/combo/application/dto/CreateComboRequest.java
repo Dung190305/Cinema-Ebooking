@@ -1,6 +1,5 @@
 package com.cinemaebooking.backend.combo.application.dto;
 
-import com.cinemaebooking.backend.combo.domain.enums.ComboStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,5 +15,6 @@ public class CreateComboRequest {
     private String description;
     private BigDecimal price;
     private BigDecimal originalPrice;
+    private Integer stock;
     private String imageUrl;
 }

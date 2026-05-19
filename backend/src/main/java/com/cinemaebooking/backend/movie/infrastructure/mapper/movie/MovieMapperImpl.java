@@ -28,7 +28,7 @@ public class MovieMapperImpl implements MovieMapper {
                 .duration(domain.getDuration())
                 .ageRating(domain.getAgeRating())
                 .releaseDate(domain.getReleaseDate())
-                .status(domain.getStatus())
+                .showingEndDate(domain.getShowingEndDate())
                 .posterUrl(domain.getPosterUrl())
                 .bannerUrl(domain.getBannerUrl())
                 .director(domain.getDirector())
@@ -56,7 +56,7 @@ public class MovieMapperImpl implements MovieMapper {
                 .duration(entity.getDuration())
                 .ageRating(entity.getAgeRating())
                 .releaseDate(entity.getReleaseDate())
-                .status(entity.getStatus())
+                .showingEndDate(entity.getShowingEndDate())
                 .posterUrl(entity.getPosterUrl())
                 .bannerUrl(entity.getBannerUrl())
                 .director(entity.getDirector())
@@ -80,7 +80,7 @@ public class MovieMapperImpl implements MovieMapper {
         entity.setDuration(domain.getDuration());
         entity.setAgeRating(domain.getAgeRating());
         entity.setReleaseDate(domain.getReleaseDate());
-        entity.setStatus(domain.getStatus());
+        entity.setShowingEndDate(domain.getShowingEndDate());
         entity.setPosterUrl(domain.getPosterUrl());
         entity.setBannerUrl(domain.getBannerUrl());
         entity.setDirector(domain.getDirector());

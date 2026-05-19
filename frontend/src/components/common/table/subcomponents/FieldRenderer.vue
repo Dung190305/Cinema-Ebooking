@@ -1,37 +1,39 @@
 <template>
     <div :class="[
         'flex flex-col gap-1.5',
-        { 'w-full': mode !== 'display' }
+        { 'w-full': displayMode !== 'display' }
     ]">
-        <label v-if="mode !== 'display'" class="text-xs font-medium text-text-admin-primary">
+        <label v-if="displayMode !== 'display'" class="text-xs font-medium text-text-admin-primary">
             {{ column.label }}
             <span v-if="column.required !== false" class="text-red-400">*</span>
         </label>
 
         <!-- Readonly → hiển thị text thuần -->
-        <template v-if="column.readonly && mode !== 'display'">
+        <template v-if="column.readonly && displayMode !== 'display'">
             <p class="rounded-lg bg-slate-50 px-3 py-2 text-sm text-text-admin-tertiary">
                 <!-- Relation readonly: hiển thị label đã resolve -->
-                <template v-if="column.type === 'relation'">
+                <template v-if="effectiveType === 'relation'">
                     {{ resolvedLabel }}
                 </template>
                 <!-- Multiselect readonly -->
-                <template v-else-if="column.type === 'multiselect' && normalizedMultiselectValue.length">
+                <template v-else-if="effectiveType === 'multiselect' && normalizedMultiselectValue.length">
                     <span v-for="id in normalizedMultiselectValue" :key="id"
                         class="mr-1 mb-1 inline-block rounded-full bg-slate-200 px-2 py-0.5 text-xs">
                         {{ getOptionName(id) }}
                     </span>
                 </template>
-                <template v-else-if="column.type === 'enum'">
+                <template v-else-if="effectiveType === 'enum'">
                     {{ getEnumLabel(modelValue) ?? modelValue ?? '—' }}
                 </template>
-                <template v-else-if="column.type === 'date'">
+                <template v-else-if="effectiveType === 'date'">
                     {{ modelValue ? formatDateOnly(String(modelValue)) : '—' }}
                 </template>
-                <template v-else-if="column.type === 'datetime'"> <!-- thêm mới -->
+                <template v-else-if="effectiveType === 'datetime'"> <!-- thêm mới -->
                     {{ modelValue ? formatDateTime(String(modelValue)) : '—' }}
                 </template>
-
+                <template v-else-if="effectiveType === 'currency'">
+                    {{ modelValue != null && modelValue !== '' ? formatVND(Number(modelValue)) + ' ₫' : '—' }}
+                </template>
                 <template v-else>
                     {{ modelValue ?? '—' }}
                 </template>
@@ -42,10 +44,10 @@
              RELATION TYPE
              Static options / async optionsLoader / dependentLoader
         ════════════════════════════════════════════════════════════════════ -->
-        <template v-else-if="column.type === 'relation' && mode !== 'display'">
+        <template v-else-if="effectiveType === 'relation' && displayMode !== 'display'">
             <div class="flex flex-col gap-1">
                 <select :value="String(modelValue ?? '')"
-                    :disabled="isLoadingOptions || (column.type === 'relation' && !!column.dependentLoader && resolvedOptions.length === 0)"
+                    :disabled="isLoadingOptions || (effectiveType === 'relation' && !!column.dependentLoader && resolvedOptions.length === 0)"
                     class="w-full rounded-lg border px-3 py-2 text-sm text-slate-900 outline-none transition
                            focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50" :class="error
                             ? 'border-red-300 bg-red-50/40 focus:border-red-400 focus:ring-red-100'
@@ -92,7 +94,7 @@
         </template>
 
         <!-- Enum → select dropdown -->
-        <select v-else-if="column.type === 'enum' && mode !== 'display'" :class="error
+        <select v-else-if="effectiveType === 'enum' && displayMode !== 'display'" :class="error
             ? 'border-red-300 bg-red-50/40 focus:border-red-400 focus:ring-red-100'
             : 'border-border-admin-subtle bg-white focus:border-accent focus:ring-slate-100'"
             class="w-full rounded-lg border px-3 py-2 text-sm text-slate-900 outline-none transition focus:ring-2"
@@ -100,7 +102,8 @@
             <option v-for="opt in column.options" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
         </select>
 
-        <div v-else-if="column.type === 'multiselect' && mode !== 'display'" class="rounded-lg border bg-white p-2"
+        <div v-else-if="effectiveType === 'multiselect' && displayMode !== 'display'"
+            class="rounded-lg border bg-white p-2"
             :class="error ? 'border-red-300 bg-red-50/40' : 'border-border-admin-subtle'">
             <div v-if="!column.options?.length" class="py-2 text-center text-sm text-slate-400">
                 Đang tải...
@@ -116,14 +119,14 @@
         </div>
 
         <!-- Textarea -->
-        <textarea v-else-if="column.type === 'textarea' && mode !== 'display'" :class="error
+        <textarea v-else-if="effectiveType === 'textarea' && displayMode !== 'display'" :class="error
             ? 'border-red-300 bg-red-50/40 focus:border-red-400 focus:ring-red-100'
             : 'border-border-admin-subtle bg-white focus:border-accent focus:ring-slate-100'"
             class="w-full rounded-lg border px-3 py-2 text-sm text-slate-900 outline-none transition focus:ring-2"
             rows="3" :value="String(modelValue ?? '')"
             @input="emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)" />
 
-        <label v-else-if="column.type === 'boolean' && mode !== 'display'"
+        <label v-else-if="effectiveType === 'boolean' && displayMode !== 'display'"
             class="relative inline-flex items-center cursor-pointer gap-3">
             <input type="checkbox" :checked="!!modelValue"
                 @change="emit('update:modelValue', ($event.target as HTMLInputElement).checked)" class="sr-only peer" />
@@ -138,23 +141,47 @@
             <span class="text-sm text-slate-600">{{ modelValue ? 'Có' : 'Không' }}</span>
         </label>
 
-        <!-- Text / Number / Email / Date -->
-        <input v-else-if="mode !== 'display'" :class="error
+        <!-- Currency (VNĐ) — edit mode -->
+        <div v-else-if="effectiveType === 'currency' && displayMode !== 'display'" class="relative">
+            <input :class="error
+                ? 'border-red-300 bg-red-50/40 focus:border-red-400 focus:ring-red-100'
+                : 'border-border-admin-subtle bg-white focus:border-accent focus:ring-slate-100'"
+                class="w-full rounded-lg border px-3 py-2 pr-8 text-sm text-slate-900 outline-none transition focus:ring-2"
+                type="text" inputmode="numeric" :value="isCurrencyFocused ? (modelValue ?? '') : formattedCurrencyValue"
+                :placeholder="column.label" @focus="onCurrencyFocus" @blur="onCurrencyBlur" @input="onCurrencyInput" />
+            <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">₫</span>
+        </div>
+
+        <!-- DATE -->
+        <CalendarPicker v-else-if="effectiveType === 'date' && displayMode !== 'display'" mode="date"
+            :variant="variant ?? 'admin'" :modelValue="toDateObj(modelValue)" :hasError="!!error"
+            :minDate="effectiveMinDate" :autoSelectToday="autoSelectToday"
+            @update:modelValue="emit('update:modelValue', fromDateObj($event, false))"
+            @blur="emit('blur', column.key)" />
+
+        <!-- DATETIME -->
+        <CalendarPicker v-else-if="effectiveType === 'datetime' && displayMode !== 'display'" mode="datetime"
+            :variant="variant ?? 'admin'" :modelValue="toDateObj(modelValue)" :hasError="!!error"
+            :minDate="effectiveMinDate" :autoSelectToday="autoSelectToday"
+            @update:modelValue="emit('update:modelValue', fromDateObj($event, true))"
+            @blur="emit('blur', column.key)" />
+        <!-- Text / Number / Email (date và datetime đã handled ở trên) -->
+        <input v-else-if="displayMode !== 'display'" :class="error
             ? 'border-red-300 bg-red-50/40 focus:border-red-400 focus:ring-red-100'
             : 'border-border-admin-subtle bg-white focus:border-accent focus:ring-slate-100'"
             class="w-full rounded-lg border px-3 py-2 text-sm text-slate-900 outline-none transition focus:ring-2"
-            :type="column.type === 'datetime' ? 'datetime-local' : column.type" :value="modelValue"
+            :type="effectiveType" :value="modelValue"
             @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
-            @blur="emit('blur', column.key)" />
+            @blur="emit('blur', column.key)" @wheel="onNumberWheel" />
 
-        <div v-if="mode === 'display'" class="text-sm text-slate-700">
+        <div v-if="displayMode === 'display'" class="text-sm text-slate-700">
             <!-- Relation display -->
-            <template v-if="column.type === 'relation'">
+            <template v-if="effectiveType === 'relation'">
                 <span v-if="isLoadingOptions" class="text-slate-400 italic">Đang tải...</span>
                 <span v-else class="line-clamp-1">{{ resolvedLabel }}</span>
             </template>
             <!-- Boolean display -->
-            <template v-else-if="column.type === 'boolean'">
+            <template v-else-if="effectiveType === 'boolean'">
                 <span class="inline-flex items-center gap-1.5">
                     <span class="w-2 h-2 rounded-full" :class="modelValue ? 'bg-green-500' : 'bg-gray-300'">
                     </span>
@@ -162,14 +189,14 @@
                 </span>
             </template>
             <!-- Enum display -->
-            <template v-else-if="column.type === 'enum'">
+            <template v-else-if="effectiveType === 'enum'">
                 <span class="inline-block rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
                     {{ getEnumLabel(modelValue) ?? modelValue ?? '—' }}
                 </span>
             </template>
 
             <!-- Multiselect display -->
-            <template v-else-if="column.type === 'multiselect'">
+            <template v-else-if="effectiveType === 'multiselect'">
                 <span v-if="normalizedMultiselectValue.length === 0">—</span>
                 <span v-for="val in normalizedMultiselectValue" :key="val"
                     class="mr-1 mb-1 inline-block rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
@@ -178,10 +205,10 @@
             </template>
 
             <!-- Date display -->
-            <template v-else-if="column.type === 'date'">
+            <template v-else-if="effectiveType === 'date'">
                 <span>{{ modelValue ? formatDateOnly(String(modelValue)) : '—' }}</span>
             </template>
-            <template v-else-if="column.type === 'datetime'">
+            <template v-else-if="effectiveType === 'datetime'">
                 <span>{{ modelValue ? formatDateTime(String(modelValue)) : '—' }}</span>
             </template>
 
@@ -192,13 +219,18 @@
         </div>
 
         <!-- Error message từ backend -->
-        <p v-if="error && mode !== 'display'" class="text-xs text-red-500">{{ error }}</p>
+        <p v-if="error && displayMode !== 'display'" class="text-xs text-red-500">{{ error }}</p>
     </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 import type { ColumnDef, RelationOption } from '@/components/common/table/types/table'
+import { isReadonlyInEdit }
+    from '@/components/common/table/utils/column'
+
+import CalendarPicker from '@/components/ui/calendar/CalenderPicker.vue'
+import { dateToISOString, parseISODate } from '@/utils/dateFormat'
 
 
 const props = defineProps<{
@@ -208,9 +240,29 @@ const props = defineProps<{
     mode?: 'edit' | 'display' | 'readonly'
 
     depValues?: Record<string, unknown>
+    variant?: 'web' | 'admin'
 }>()
 
 const displayMode = computed(() => props.mode ?? 'edit')
+
+const futureOnly = computed(() => props.column.futureOnly !== false)
+
+const autoSelectToday = computed(() => {
+    if (props.column.autoSelectToday !== undefined) {
+        return props.column.autoSelectToday
+    }
+    return futureOnly.value // giữ nguyên hành vi mặc định
+})
+
+const effectiveMinDate = computed<Date | null>(() => {
+    // Nếu cột không bật futureOnly → không giới hạn ngày
+    if (!futureOnly.value) return null
+
+    const now = new Date()
+    now.setDate(now.getDate() + (props.column.minDateOffset ?? 0))
+    now.setHours(0, 0, 0, 0) // chuẩn về đầu ngày
+    return now
+})
 
 const emit = defineEmits<{
     'update:modelValue': [value: unknown]
@@ -275,6 +327,12 @@ function getEnumLabel(value: unknown): string | undefined {
     return opt?.label ?? opt?.name
 }
 
+
+const effectiveType = computed(() =>
+    props.column.typeResolver
+        ? props.column.typeResolver(props.depValues ?? {})
+        : props.column.type
+)
 /**
  * Kiểm tra tất cả deps đã có giá trị chưa (để biết khi nào có thể fetch dependent).
  */
@@ -353,20 +411,20 @@ async function loadDependent(deps: Record<string, unknown>) {
 
 watch(
     () => props.depValues,
-    (newDeps) => {
-        if (props.column.dependentLoader && !props.column.readonly && newDeps) {
-            loadDependent(newDeps)
+    (newDeps, oldDeps) => {
+        if (JSON.stringify(newDeps) === JSON.stringify(oldDeps)) return
+        if (props.column.dependentLoader && !props.column.readonly) {
+            loadDependent(newDeps || {})
         }
     },
-    { deep: true }
+    { deep: true, immediate: true }
 )
-
 // ─── Mount ────────────────────────────────────────────────────────────────────
 
 // FieldRenderer.vue – phần onMounted()
 
 onMounted(() => {
-    if (props.column.type !== 'relation') return
+    if (effectiveType.value !== 'relation') return
     if (props.column.staticOptions?.length) return
 
     if (props.column.readonly && props.column.optionsLoader) {
@@ -375,7 +433,7 @@ onMounted(() => {
     }
 
     // Nếu là display mode hoặc không có depValues, ưu tiên optionsLoader
-    if ((props.mode === 'display' || !props.depValues) && props.column.optionsLoader) {
+    if ((displayMode === 'display' || !props.depValues) && props.column.optionsLoader) {
         loadOptions()
         return
     }
@@ -400,7 +458,7 @@ function onRelationChange(e: Event) {
 }
 
 const normalizedMultiselectValue = computed(() => {
-    if (props.column.type !== 'multiselect') return []
+    if (effectiveType.value !== 'multiselect') return []
     const val = props.modelValue
     if (!Array.isArray(val) || val.length === 0) return []
     if (typeof val[0] === 'object' && val[0] !== null) {
@@ -415,6 +473,15 @@ function onCheckboxChange(value: number | string, event: Event) {
     const current = normalizedMultiselectValue.value
     const next = checked ? [...current, value] : current.filter(v => v !== value)
     emit('update:modelValue', next)
+}
+
+function onNumberWheel(event: WheelEvent) {
+
+    if (effectiveType.value !== 'number') {
+        return
+    }
+
+    (event.target as HTMLInputElement).blur()
 }
 
 function getOptionName(value: number | string) {
@@ -440,5 +507,48 @@ function formatDateTime(iso: string): string {
             hour: '2-digit', minute: '2-digit',
         })
     } catch { return iso }
+}
+
+// ─── Date input helpers ───────────────────────────────────────────────────────
+
+function toDateObj(val: unknown): Date | null {
+    if (!val) return null
+    return parseISODate(String(val))
+}
+
+function fromDateObj(d: Date | null, isDatetime: boolean): string {
+    if (!d) return ''
+    return dateToISOString(d, isDatetime)
+}
+
+// ─── Currency state ───────────────────────────────────────────────────────────
+const isCurrencyFocused = ref(false)
+
+function formatVND(value: number): string {
+    if (isNaN(value)) return ''
+    return new Intl.NumberFormat('vi-VN').format(value)
+}
+
+const formattedCurrencyValue = computed(() => {
+    const n = Number(props.modelValue)
+    if (props.modelValue === '' || props.modelValue == null || isNaN(n)) return ''
+    return formatVND(n)
+})
+
+function onCurrencyFocus() {
+    isCurrencyFocused.value = true
+}
+
+function onCurrencyBlur(e: FocusEvent) {
+    isCurrencyFocused.value = false
+    // Bỏ mọi ký tự không phải số (người dùng có thể paste "1.500.000")
+    const raw = (e.target as HTMLInputElement).value.replace(/\D/g, '')
+    emit('update:modelValue', raw ? Number(raw) : '')
+    emit('blur', props.column.key)
+}
+
+function onCurrencyInput(e: Event) {
+    const raw = (e.target as HTMLInputElement).value.replace(/\D/g, '')
+    emit('update:modelValue', raw ? Number(raw) : '')
 }
 </script>

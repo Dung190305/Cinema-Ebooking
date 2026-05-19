@@ -12,15 +12,6 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdateCouponRequest {
-
-    private String code;
-    private CouponType type;
-    private BigDecimal value;
     private Integer usageLimit;
-    private Integer perUserUsage;
-    private Integer pointsToRedeem;
-    private BigDecimal minimumBookingValue;
-    private BigDecimal maximumDiscountAmount;
-    private LocalDate startDate;
     private LocalDate endDate;
 }

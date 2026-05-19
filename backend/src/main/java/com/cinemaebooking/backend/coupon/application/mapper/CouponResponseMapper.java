@@ -16,12 +16,14 @@ public class CouponResponseMapper {
                 coupon.getType(),
                 coupon.getValue(),
                 coupon.getUsageLimit(),
+                coupon.getRemainingUsage(),
                 coupon.getPerUserUsage(),
                 coupon.getPointsToRedeem(),
                 coupon.getMinimumBookingValue(),
                 coupon.getMaximumDiscountAmount(),
                 coupon.getStartDate(),
-                coupon.getEndDate()
+                coupon.getEndDate(),
+                coupon.getEffectiveStatus()
         );
     }
 }

@@ -5,6 +5,7 @@ import com.cinemaebooking.backend.coupon.application.dto.CreateCouponRequest;
 import com.cinemaebooking.backend.coupon.application.mapper.CouponResponseMapper;
 import com.cinemaebooking.backend.coupon.application.port.CouponRepository;
 import com.cinemaebooking.backend.coupon.application.validator.CouponCommandValidator;
+import com.cinemaebooking.backend.coupon.domain.enums.CouponStatus;
 import com.cinemaebooking.backend.coupon.domain.model.Coupon;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,14 +32,15 @@ public class CreateCouponUseCase {
                 .type(request.getType())
                 .value(request.getValue())
                 .usageLimit(request.getUsageLimit())
+                .remainingUsage(request.getUsageLimit())
                 .perUserUsage(request.getPerUserUsage())
                 .pointsToRedeem(request.getPointsToRedeem())
                 .minimumBookingValue(request.getMinimumBookingValue())
                 .maximumDiscountAmount(request.getMaximumDiscountAmount())
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
+                .status(CouponStatus.DRAFT)
                 .build();
-        coupon.validateAll();
         return coupon;
     }
 }

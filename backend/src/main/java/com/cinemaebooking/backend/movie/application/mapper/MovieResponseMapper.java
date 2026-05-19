@@ -23,6 +23,7 @@ public class MovieResponseMapper {
                 movie.getDuration(),
                 movie.getAgeRating(),
                 movie.getReleaseDate(),
+                movie.getShowingEndDate(),
                 movie.getStatus(),
                 movie.getPosterUrl(),
                 movie.getBannerUrl(),

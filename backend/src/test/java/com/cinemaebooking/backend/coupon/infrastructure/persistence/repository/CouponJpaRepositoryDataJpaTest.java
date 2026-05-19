@@ -72,13 +72,13 @@ class CouponJpaRepositoryDataJpaTest {
         @Test
         @DisplayName("existsByCode should return true when coupon exists")
         void shouldReturnTrueWhenCodeExists() {
-            assertThat(couponJpaRepository.existsByCode(VALID_CODE)).isTrue();
+            assertThat(couponJpaRepository.existsByCodeIgnoreCase(VALID_CODE)).isTrue();
         }
 
         @Test
         @DisplayName("existsByCode should return false when coupon does not exist")
         void shouldReturnFalseWhenCodeNotExists() {
-            assertThat(couponJpaRepository.existsByCode("INVALID")).isFalse();
+            assertThat(couponJpaRepository.existsByCodeIgnoreCase("INVALID")).isFalse();
         }
 
         @Test
@@ -100,7 +100,7 @@ class CouponJpaRepositoryDataJpaTest {
         @DisplayName("Should return true for valid coupon (not expired and has usage)")
         void shouldReturnTrueWhenCouponIsValid() {
             boolean exists = couponJpaRepository
-                    .existsByCodeAndEndDateAfterAndUsageLimitGreaterThan(VALID_CODE, TODAY, 10);
+                    .existsByCodeIgnoreCaseAndEndDateAfterAndUsageLimitGreaterThan(VALID_CODE, TODAY, 10);
 
             assertThat(exists).isTrue();
         }
@@ -109,7 +109,7 @@ class CouponJpaRepositoryDataJpaTest {
         @DisplayName("Should return false when coupon is expired")
         void shouldReturnFalseWhenCouponIsExpired() {
             boolean exists = couponJpaRepository
-                    .existsByCodeAndEndDateAfter(EXPIRED_CODE, TODAY);
+                    .existsByCodeIgnoreCaseAndEndDateAfter(EXPIRED_CODE, TODAY);
 
             assertThat(exists).isFalse();
         }
@@ -118,7 +118,7 @@ class CouponJpaRepositoryDataJpaTest {
         @DisplayName("Should return false when usage limit is exceeded")
         void shouldReturnFalseWhenUsageLimitExceeded() {
             boolean exists = couponJpaRepository
-                    .existsByCodeAndUsageLimitGreaterThan(VALID_CODE, 200);
+                    .existsByCodeIgnoreCaseAndUsageLimitGreaterThan(VALID_CODE, 200);
 
             assertThat(exists).isFalse();
         }
@@ -133,10 +133,10 @@ class CouponJpaRepositoryDataJpaTest {
         @Test
         @DisplayName("existsByCodeAndIdNot should detect duplicate except for the same id")
         void shouldDetectDuplicateExceptSameId() {
-            boolean otherId = couponJpaRepository.existsByCodeAndIdNot(VALID_CODE, 999L);
+            boolean otherId = couponJpaRepository.existsByCodeIgnoreCaseAndIdNot(VALID_CODE, 999L);
             assertThat(otherId).isTrue();
 
-            boolean sameId = couponJpaRepository.existsByCodeAndIdNot(VALID_CODE, activeCoupon.getId());
+            boolean sameId = couponJpaRepository.existsByCodeIgnoreCaseAndIdNot(VALID_CODE, activeCoupon.getId());
             assertThat(sameId).isFalse();
         }
     }
@@ -177,7 +177,7 @@ class CouponJpaRepositoryDataJpaTest {
             entityManager.flush();
 
             // Standard queries
-            assertThat(couponJpaRepository.existsByCode(VALID_CODE)).isFalse();
+            assertThat(couponJpaRepository.existsByCodeIgnoreCase(VALID_CODE)).isFalse();
             assertThat(couponJpaRepository.findByCodeIgnoreCase(VALID_CODE)).isEmpty();
 
             List<CouponJpaEntity> allCoupons = couponJpaRepository.findAll();
@@ -187,11 +187,11 @@ class CouponJpaRepositoryDataJpaTest {
 
             // Business logic queries
             assertThat(couponJpaRepository
-                    .existsByCodeAndEndDateAfterAndUsageLimitGreaterThan(VALID_CODE, TODAY, 10))
+                    .existsByCodeIgnoreCaseAndEndDateAfterAndUsageLimitGreaterThan(VALID_CODE, TODAY, 10))
                     .isFalse();
 
             assertThat(couponJpaRepository
-                    .existsByCodeAndEndDateAfter(VALID_CODE, TODAY))
+                    .existsByCodeIgnoreCaseAndEndDateAfter(VALID_CODE, TODAY))
                     .isFalse();
         }
 
@@ -202,7 +202,7 @@ class CouponJpaRepositoryDataJpaTest {
             couponJpaRepository.delete(expiredCoupon);
             entityManager.flush();
 
-            assertThat(couponJpaRepository.existsByCode(EXPIRED_CODE)).isFalse();
+            assertThat(couponJpaRepository.existsByCodeIgnoreCase(EXPIRED_CODE)).isFalse();
 
             List<CouponJpaEntity> all = couponJpaRepository.findAll();
             assertThat(all)
@@ -219,7 +219,7 @@ class CouponJpaRepositoryDataJpaTest {
             // Try to re-persist
             entityManager.persistAndFlush(expiredCoupon);
 
-            assertThat(couponJpaRepository.existsByCode(EXPIRED_CODE)).isFalse();
+            assertThat(couponJpaRepository.existsByCodeIgnoreCase(EXPIRED_CODE)).isFalse();
             assertThat(couponJpaRepository.findAll())
                     .extracting(CouponJpaEntity::getCode)
                     .doesNotContain(EXPIRED_CODE);

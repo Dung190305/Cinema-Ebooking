@@ -24,18 +24,9 @@ public class UpdateCouponUseCase {
 
     public CouponResponse execute(CouponId id, UpdateCouponRequest request) {
         validator.validateUpdateRequest(id, request);
-
         Coupon coupon = loadCoupon(id);
         coupon.update(
-                request.getCode(),
-                request.getType(),
-                request.getValue(),
                 request.getUsageLimit(),
-                request.getPerUserUsage(),
-                request.getPointsToRedeem(),
-                request.getMinimumBookingValue(),
-                request.getMaximumDiscountAmount(),
-                request.getStartDate(),
                 request.getEndDate()
         );
 

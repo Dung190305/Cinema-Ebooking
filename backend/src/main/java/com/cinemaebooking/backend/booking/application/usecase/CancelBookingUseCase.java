@@ -23,10 +23,8 @@ public class CancelBookingUseCase {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> BookingExceptions.notFound(BookingId.of(bookingId)));
 
-        // 1. Logic hủy trong Domain (đổi trạng thái)
         booking.cancel();
 
-        // 2. Giải phóng tài nguyên ở các module khác (Orchestration)
         releaseSeatsUseCase.execute(booking.getShowtimeId(), booking.getTickets());
         releaseCouponUseCase.execute(bookingId);
 

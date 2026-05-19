@@ -2,6 +2,8 @@
 package com.cinemaebooking.backend.movie.infrastructure.adapter;
 
 import com.cinemaebooking.backend.movie.application.port.MovieRepository;
+import com.cinemaebooking.backend.movie.domain.enums.AgeRating;
+import com.cinemaebooking.backend.movie.domain.enums.MovieStatus;
 import com.cinemaebooking.backend.movie.domain.model.Movie;
 import com.cinemaebooking.backend.movie.domain.valueobject.MovieId;
 import com.cinemaebooking.backend.movie.infrastructure.mapper.movie.MovieMapper;
@@ -45,6 +47,12 @@ public class MovieRepositoryImpl implements MovieRepository {
     @Override
     public Page<Movie> findAll(Pageable pageable) {
         return jpaRepository.findAll(pageable).map(mapper::toDomain);
+    }
+
+    @Override
+    public Page<Movie> findByFilters(MovieStatus status, AgeRating ageRating, Pageable pageable) {
+        return jpaRepository.findByFilters(status, ageRating, pageable)
+                .map(mapper::toDomain);
     }
 /*
     @Override

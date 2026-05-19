@@ -15,7 +15,7 @@ public class UpdateComboRequest {
     private String name;
     private String description;
     private BigDecimal price;
-    private BigDecimal originalPrice;
+    private Integer stock;
     private String imageUrl;
     private ComboStatus status;
 }

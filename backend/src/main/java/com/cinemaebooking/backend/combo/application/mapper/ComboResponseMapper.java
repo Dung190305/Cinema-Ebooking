@@ -16,8 +16,10 @@ public class ComboResponseMapper {
                 combo.getDescription(),
                 combo.getPrice(),
                 combo.getOriginalPrice(),
+                combo.getStock(),
                 combo.getImageUrl(),
-                combo.getStatus()
+                combo.getStatus(),
+                combo.getDisplayStatus()
         );
     }
 }

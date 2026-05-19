@@ -17,12 +17,14 @@ public class CouponMapperImpl implements CouponMapper {
                 .type(domain.getType())
                 .value(domain.getValue())
                 .usageLimit(domain.getUsageLimit())
+                .remainingUsage(domain.getRemainingUsage())
                 .perUserUsage(domain.getPerUserUsage())
                 .pointsToRedeem(domain.getPointsToRedeem())
                 .minimumBookingValue(domain.getMinimumBookingValue())
                 .maximumDiscountAmount(domain.getMaximumDiscountAmount())
                 .startDate(domain.getStartDate())
                 .endDate(domain.getEndDate())
+                .status(domain.getStatus())
                 .build();
     }
 
@@ -35,12 +37,14 @@ public class CouponMapperImpl implements CouponMapper {
                 .type(entity.getType())
                 .value(entity.getValue())
                 .usageLimit(entity.getUsageLimit())
+                .remainingUsage(entity.getRemainingUsage())
                 .perUserUsage(entity.getPerUserUsage())
                 .pointsToRedeem(entity.getPointsToRedeem())
                 .minimumBookingValue(entity.getMinimumBookingValue())
                 .maximumDiscountAmount(entity.getMaximumDiscountAmount())
                 .startDate(entity.getStartDate())
                 .endDate(entity.getEndDate())
+                .status(entity.getStatus())
                 .build();
     }
 
@@ -51,6 +55,7 @@ public class CouponMapperImpl implements CouponMapper {
         entity.setType(domain.getType());
         entity.setValue(domain.getValue());
         entity.setUsageLimit(domain.getUsageLimit());
+        entity.setRemainingUsage(domain.getRemainingUsage());
         entity.setPerUserUsage(domain.getPerUserUsage());
         entity.setPointsToRedeem(domain.getPointsToRedeem());
         entity.setMinimumBookingValue(domain.getMinimumBookingValue());

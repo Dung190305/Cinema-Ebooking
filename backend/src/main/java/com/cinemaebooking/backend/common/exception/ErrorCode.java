@@ -218,10 +218,13 @@ public enum ErrorCode {
     REVIEW_ALREADY_EXISTS       (4702, "Đánh giá đã tồn tại cho đặt vé này",               HttpStatus.CONFLICT,              ErrorType.BUSINESS),
     REVIEW_INVALID_RATING       (4703, "Điểm đánh giá không hợp lệ",                       HttpStatus.BAD_REQUEST,           ErrorType.BUSINESS),
     REVIEW_NOT_ELIGIBLE         (4704, "Người dùng không đủ điều kiện đánh giá phim này",  HttpStatus.BAD_REQUEST,           ErrorType.BUSINESS),
+    REVIEW_NOT_OWNED_BY_USER    (4705, "Đánh giá không thuộc về người dùng hiện tại",    HttpStatus.FORBIDDEN,             ErrorType.BUSINESS),
+    REVIEW_CANNOT_EDIT          (4706, "Đánh giá không thể chỉnh sửa",                    HttpStatus.BAD_REQUEST,           ErrorType.BUSINESS),
+    REVIEW_AI_REJECTED          (4707, "Bình luận chứa nội dung không phù hợp và bị từ chối", HttpStatus.FORBIDDEN,             ErrorType.BUSINESS),
 
-    NOTIFICATION_NOT_FOUND      (4705, "Không tìm thấy thông báo",                         HttpStatus.NOT_FOUND,             ErrorType.BUSINESS),
-    NOTIFICATION_SEND_FAILED    (4706, "Gửi thông báo thất bại",                           HttpStatus.INTERNAL_SERVER_ERROR, ErrorType.TECHNICAL),
-    NOTIFICATION_INVALID_TYPE   (4707, "Loại thông báo không hợp lệ",                      HttpStatus.BAD_REQUEST,           ErrorType.BUSINESS),
+    NOTIFICATION_NOT_FOUND      (4708, "Không tìm thấy thông báo",                         HttpStatus.NOT_FOUND,             ErrorType.BUSINESS),
+    NOTIFICATION_SEND_FAILED    (4709, "Gửi thông báo thất bại",                           HttpStatus.INTERNAL_SERVER_ERROR, ErrorType.TECHNICAL),
+    NOTIFICATION_INVALID_TYPE   (4710, "Loại thông báo không hợp lệ",                      HttpStatus.BAD_REQUEST,           ErrorType.BUSINESS),
 
     // ===================== SUPPORTING =====================
     USER_COUPON_NOT_FOUND       (4901, "Không tìm thấy mã giảm giá của người dùng",        HttpStatus.NOT_FOUND,             ErrorType.BUSINESS),

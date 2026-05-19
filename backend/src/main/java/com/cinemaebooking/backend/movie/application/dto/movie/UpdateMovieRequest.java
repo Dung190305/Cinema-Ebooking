@@ -1,7 +1,6 @@
 package com.cinemaebooking.backend.movie.application.dto.movie;
 
 import com.cinemaebooking.backend.movie.domain.enums.AgeRating;
-import com.cinemaebooking.backend.movie.domain.enums.MovieStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,7 +17,7 @@ public class UpdateMovieRequest {
     private Integer duration;
     private AgeRating ageRating;
     private LocalDate releaseDate;
-    private MovieStatus status;
+    private LocalDate showingEndDate;
     private String posterUrl;
     private String bannerUrl;
     private String director;

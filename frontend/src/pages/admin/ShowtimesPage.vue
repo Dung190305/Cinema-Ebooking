@@ -121,6 +121,8 @@ import type { ShowtimeResponse, CreateShowtimeRequest } from '@/types/showtime'
 import type { ColumnDef } from '@/components/common/table/types/table'
 import SeatMapPreview from '@/components/showtime/SeatMapPreview.vue'
 import SeatMapDialog from '@/components/showtime/SeatMapDialog.vue';
+import { dateToISOString, parseISODate } from '@/utils/dateFormat'
+
 
 const route = useRoute()
 const initialCinemaId = route.params.cinemaId ? Number(route.params.cinemaId) : null
@@ -214,6 +216,14 @@ const columns: ColumnDef<ShowtimeResponse>[] = [
         width: '200px'
     },
     {
+        key: 'formatId',
+        label: 'Định dạng',
+        type: 'enum',
+        readonlyInEdit: true,
+        options: formatStaticOptions,
+        width: '100px'
+    },
+    {
         key: 'roomId',
         label: 'Phòng',
         type: 'relation',
@@ -223,17 +233,9 @@ const columns: ColumnDef<ShowtimeResponse>[] = [
         dependsOn: ['formatId'],
         width: '150px'
     },
-    {
-        key: 'formatId',
-        label: 'Định dạng',
-        type: 'enum',
-        readonlyInEdit: true,
-        options: formatStaticOptions,
-        width: '100px'
-    },
-    { key: 'startTime', label: 'Bắt đầu', type: 'datetime', width: '150px', readonlyInEdit: true },
-    { key: 'endTime', label: 'Kết thúc', type: 'datetime', width: '150px', readonlyInEdit: true },
-    { key: 'audioLanguage', label: 'Âm thanh', type: 'enum', options: languageOptions, width: '120px', readonlyInEdit: true, },
+    { key: 'startTime', label: 'Bắt đầu', type: 'datetime', width: '150px', readonlyInEdit: true, futureOnly: true, minDateOffset: 1 },
+    { key: 'endTime', label: 'Kết thúc', type: 'datetime', width: '150px', readonlyInEdit: true, futureOnly: true, minDateOffset: 1 },
+    { key: 'audioLanguage', label: 'Âm thanh', type: 'enum', options: languageOptions, width: '120px', readonlyInEdit: true },
     { key: 'subtitleLanguage', label: 'Phụ đề', type: 'enum', options: languageOptions, width: '120px', readonlyInEdit: true },
     {
         key: 'status',
@@ -265,14 +267,26 @@ function openCreateModal() {
 }
 
 function onFieldBlur(key: string, draft: Record<string, unknown>) {
-    if (key === 'startTime' && typeof draft.startTime === 'string') {
-        // Kiểm tra startTime đầy đủ ngày giờ
-        const isValidDateTime = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(draft.startTime)
-        const endTimeEmpty = !draft.endTime || (typeof draft.endTime === 'string' && draft.endTime.trim() === '')
+    if (key !== 'startTime') return
 
-        if (isValidDateTime && endTimeEmpty) {
-            draft.endTime = draft.startTime
-        }
+    const val = draft.startTime
+    let startDate: Date | null = null
+
+    if (val instanceof Date) {
+        startDate = val
+    } else if (typeof val === 'string') {
+        startDate = parseISODate(val)   // dùng chung tiện ích
+    }
+
+    if (!startDate || isNaN(startDate.getTime())) return
+
+    const endEmpty =
+        !draft.endTime ||
+        (typeof draft.endTime === 'string' && draft.endTime.trim() === '') ||
+        (draft.endTime instanceof Date && isNaN(draft.endTime.getTime()))
+
+    if (endEmpty) {
+        draft.endTime = dateToISOString(startDate, true)
     }
 }
 

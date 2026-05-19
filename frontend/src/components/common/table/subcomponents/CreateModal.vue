@@ -26,7 +26,7 @@
                                     :modelValue="draft[col.key]" :error="localErrors[col.key]"
                                     :depValues="depValuesMap[col.key]"
                                     @update:modelValue="onFieldUpdate(col.key, $event)"
-                                    @blur="onFieldBlur(col.key, $event)" />
+                                    @blur="onFieldBlur(col.key, draft)" />
                             </div>
                             <slot name="extra" :draft="draft" :fieldErrors="localErrors" />
                         </div>
@@ -182,13 +182,16 @@ watch(
 //
 // FieldRenderer watch prop này, re-fetch dependentLoader khi deps thay đổi.
 // Với column không có dependsOn → depValuesMap[key] = undefined → ignored.
-const depValuesMap = computed<Record<string, Record<string, unknown>>>(() => {
+const depValuesMap = computed(() => {
     const result: Record<string, Record<string, unknown>> = {}
+    const draftObj = draft.value
+
     for (const col of creatableColumns.value) {
         if (col.dependsOn?.length) {
-            result[col.key] = Object.fromEntries(
-                col.dependsOn.map((dep) => [dep, draft.value[dep]])
-            )
+            result[col.key] = {}
+            for (const dep of col.dependsOn) {
+                result[col.key][dep] = draftObj[dep]  // Luôn lấy từ draft hiện tại
+            }
         }
     }
     return result

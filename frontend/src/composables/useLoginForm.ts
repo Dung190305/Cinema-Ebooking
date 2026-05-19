@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth.store'
 import { useRouter } from 'vue-router'
-import { authApi } from '@/api/auth.api'
+import { authApi, loyaltyApi } from '@/api/auth.api'
 import { userApi } from '@/api/user.api'
 
 export function useLoginForm(emit: (event: string) => void) {
@@ -67,7 +67,17 @@ export function useLoginForm(emit: (event: string) => void) {
             })
 
             const userProfile = await userApi.getMe(loginData.accessToken)
+
             auth.setAuth(userProfile, loginData.accessToken, loginData.refreshToken)
+
+            try {
+                const loyaltySummary = await loyaltyApi.getMySummary();
+                auth.setLoyaltyAccount(loyaltySummary.data);
+            } catch (loyaltyErr) {
+                // Loyalty có thể không bắt buộc, chỉ log lỗi
+                console.warn('Không thể lấy thông tin loyalty:', loyaltyErr);
+                auth.setLoyaltyAccount(null);
+            }
 
             router.push(
                 loginData.role === 'ADMIN'

@@ -7,3 +7,11 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+
+# ================== AI SERVICE CONFIG ==================
+ai:
+  service:
+    url: http://localhost:8081/api/v1/ai/analyze
+    enabled: true
+    timeout-connect: 5000
+    timeout-read: 10000

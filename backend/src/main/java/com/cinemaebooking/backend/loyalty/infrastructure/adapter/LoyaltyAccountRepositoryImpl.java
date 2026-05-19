@@ -37,11 +37,19 @@ public class LoyaltyAccountRepositoryImpl implements LoyaltyAccountRepository {
 
     @Override
     public LoyaltyAccount save(LoyaltyAccount account) {
-        LoyaltyAccountJpaEntity entity = mapper.toEntity(account);
+        LoyaltyAccountJpaEntity entity;
 
-        // Gán tier bằng managed entity
-        if (account.getTier() != null) {
-            MembershipTierJpaEntity tierRef = tierJpaRepository.getReferenceById(account.getTier().getId().getValue());
+        if (account.getId() == null) {
+            entity = mapper.toEntity(account);
+        } else {
+            entity = jpaRepository.findById(account.getId().getValue())
+                    .orElseThrow(() -> new RuntimeException(
+                            "LoyaltyAccount not found: " + account.getId().getValue()));
+            mapper.updateEntity(entity, account);
+        }
+
+        if (account.getTierId() != null) {
+            MembershipTierJpaEntity tierRef = tierJpaRepository.getReferenceById(account.getTierId());
             entity.setMembershipTier(tierRef);
         }
 

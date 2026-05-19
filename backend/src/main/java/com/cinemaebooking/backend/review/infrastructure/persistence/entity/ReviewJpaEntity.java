@@ -11,7 +11,10 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.LocalDateTime;
 
 /**
  * ReviewJpaEntity - Persistence model for reviews table.
@@ -45,7 +48,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder(toBuilder = true)
+@SuperBuilder(toBuilder = true)
 @EntityListeners(AuditingEntityListener.class)
 public class ReviewJpaEntity extends BaseJpaEntity {
 
@@ -82,4 +85,7 @@ public class ReviewJpaEntity extends BaseJpaEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private ReviewStatus status;
+
+    @Column(name = "edited_at")
+    private LocalDateTime editedAt;
 }

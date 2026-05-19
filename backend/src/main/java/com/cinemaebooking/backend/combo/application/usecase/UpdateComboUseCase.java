@@ -13,6 +13,7 @@ import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -22,16 +23,18 @@ public class UpdateComboUseCase {
     private final ComboResponseMapper mapper;
     private final ComboCommandValidator validator;
 
+    @Transactional
     public ComboResponse execute(ComboId id, UpdateComboRequest request) {
         validator.validateUpdateRequest(id, request);
 
-        Combo combo = loadCombo(id);
+        Combo combo = loadComboForUpdate(id);
+
+        applyStockIncrease(combo, request.getStock());
 
         combo.update(
                 request.getName(),
                 request.getDescription(),
                 request.getPrice(),
-                request.getOriginalPrice(),
                 request.getImageUrl(),
                 request.getStatus()
         );
@@ -40,9 +43,21 @@ public class UpdateComboUseCase {
         return mapper.toResponse(saved);
     }
 
-    private Combo loadCombo(ComboId id) {
-        return comboRepository.findById(id)
+    private Combo loadComboForUpdate(ComboId id) {
+        return comboRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> ComboExceptions.notFound(id));
+    }
+
+    private void applyStockIncrease(Combo combo, Integer newStock) {
+        if (newStock == null) {
+            return;
+        }
+
+        int currentStock = combo.getStock() == null ? 0 : combo.getStock();
+        int increaseAmount = newStock - currentStock;
+        if (increaseAmount > 0) {
+            combo.increaseStock(increaseAmount);
+        }
     }
 
     private Combo persist(Combo combo) {

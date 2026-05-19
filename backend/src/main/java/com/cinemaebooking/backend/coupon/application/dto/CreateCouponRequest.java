@@ -11,7 +11,7 @@ import java.time.LocalDate;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreateCouponRequest {
+public class CreateCouponRequest implements CouponFullUpdateRequest {
 
     private String code;
     private CouponType type;

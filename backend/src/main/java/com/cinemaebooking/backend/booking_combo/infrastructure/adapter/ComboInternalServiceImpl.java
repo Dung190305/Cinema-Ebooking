@@ -5,7 +5,6 @@ import com.cinemaebooking.backend.booking_combo.application.port.ComboInternalSe
 import com.cinemaebooking.backend.booking_combo.domain.model.BookingCombo;
 import com.cinemaebooking.backend.combo.application.port.ComboRepository;
 import com.cinemaebooking.backend.combo.domain.valueobject.ComboId;
-import com.cinemaebooking.backend.common.exception.domain.ComboExceptions;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -29,8 +28,8 @@ public class ComboInternalServiceImpl implements ComboInternalService {
         return selections.stream()
                 .map(item -> {
 
-                    var combo = comboRepository.findById(ComboId.of(item.getComboId()))
-                            .orElseThrow(() -> ComboExceptions.notFound(ComboId.of(item.getComboId())));
+                    ComboId comboId = ComboId.of(item.getComboId());
+                    var combo = comboRepository.reserveStock(comboId, item.getQuantity());
 
                     var bookingCombo = BookingCombo.builder()
                             .comboId(combo.getId().getValue())

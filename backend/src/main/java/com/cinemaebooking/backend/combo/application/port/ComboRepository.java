@@ -15,6 +15,10 @@ public interface ComboRepository {
 
     Optional<Combo> findById(ComboId id);
 
+    Optional<Combo> findByIdForUpdate(ComboId id);
+
+    Combo reserveStock(ComboId id, Integer quantity);
+
     Page<Combo> findAll(Pageable pageable);
 
     void deleteById(ComboId id);

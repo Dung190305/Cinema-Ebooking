@@ -1,5 +1,6 @@
 package com.cinemaebooking.backend.coupon.infrastructure.persistence.entity;
 
+import com.cinemaebooking.backend.coupon.domain.enums.CouponStatus;
 import com.cinemaebooking.backend.coupon.domain.enums.CouponType;
 import com.cinemaebooking.backend.infrastructure.persistence.entity.BaseJpaEntity;
 import jakarta.persistence.*;
@@ -52,6 +53,9 @@ public class CouponJpaEntity extends BaseJpaEntity {
     @Column(name = "usage_limit", nullable = false)
     private Integer usageLimit;
 
+    @Column(name = "remaining_usage", nullable = false)
+    private Integer remainingUsage;
+
     @Column(name = "per_user_usage", nullable = false)
     private Integer perUserUsage;
 
@@ -69,6 +73,10 @@ public class CouponJpaEntity extends BaseJpaEntity {
 
     @Column(name = "end_date", nullable = false)
     private LocalDate endDate;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private CouponStatus status;
 
     @Override
     protected void beforeSoftDelete() {

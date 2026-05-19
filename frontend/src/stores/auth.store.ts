@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { UserProfile } from '@/types/auth.types'
+import type { UserProfile, LoyaltyAccountSummaryResponse } from '@/types/auth.types'
 import { apiClient } from '@/api/axios'
 
 export const useAuthStore = defineStore('auth', () => {
@@ -10,6 +10,8 @@ export const useAuthStore = defineStore('auth', () => {
     const accessToken = ref<string | null>(localStorage.getItem('accessToken'))
     const refreshToken = ref<string | null>(localStorage.getItem('refreshToken'))
 
+    const loyaltyAccount = ref<LoyaltyAccountSummaryResponse | null>(null)
+
     const setAuth = (userProfile: UserProfile, access: string, refresh: string) => {
         user.value = userProfile
         accessToken.value = access
@@ -18,10 +20,15 @@ export const useAuthStore = defineStore('auth', () => {
         localStorage.setItem('refreshToken', refresh)
     }
 
+    const setLoyaltyAccount = (loyalty: LoyaltyAccountSummaryResponse | null) => {
+        loyaltyAccount.value = loyalty;
+    };
+
     const logout = () => {
         user.value = null
         accessToken.value = null
         refreshToken.value = null
+        loyaltyAccount.value = null
         localStorage.removeItem('accessToken')
         localStorage.removeItem('refreshToken')
         delete apiClient.defaults.headers.common.Authorization;
@@ -35,7 +42,9 @@ export const useAuthStore = defineStore('auth', () => {
         user,
         accessToken,
         refreshToken,
+        loyaltyAccount,
         setAuth,
+        setLoyaltyAccount,
         logout,
         isLoggedIn,
         isAdmin,
@@ -44,6 +53,6 @@ export const useAuthStore = defineStore('auth', () => {
 },{
     persist: {
         key: 'auth',
-        paths: ['user'],   // chỉ persist user, token đã tự lưu localStorage thủ công
+        paths: ['user', 'loyaltyAccount'],   // chỉ persist user, token đã tự lưu localStorage thủ công
     }
 })

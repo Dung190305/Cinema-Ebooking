@@ -4,6 +4,7 @@ import com.cinemaebooking.backend.combo.domain.enums.ComboStatus;
 import com.cinemaebooking.backend.infrastructure.persistence.entity.BaseJpaEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -50,8 +51,12 @@ public class ComboJpaEntity extends BaseJpaEntity {
     private BigDecimal price;
 
     @Positive
-    @Column(name = "original_price", precision = 12, scale = 2)
+    @Column(name = "original_price", precision = 12, scale = 2, nullable = false)
     private BigDecimal originalPrice;
+
+    @PositiveOrZero
+    @Column(name = "stock", nullable = false)
+    private Integer stock;
 
     @Column(name = "image_url", length = 500)
     private String imageUrl;

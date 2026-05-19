@@ -43,7 +43,10 @@ public class BookingMapperImpl implements BookingMapper {
                 .status(entity.getStatus())
                 .totalTicketPrice(entity.getTotalTicketPrice())
                 .totalComboPrice(entity.getTotalComboPrice())
-                .discountAmount(entity.getDiscountAmount())
+                .tierDiscountAmount(entity.getTierDiscountAmount())
+                .couponDiscountAmount(entity.getCouponDiscountAmount())
+                .membershipTierName(entity.getMembershipTierName())
+                .membershipDiscountPercent(entity.getMembershipDiscountPercent())
                 .finalAmount(entity.getFinalAmount())
                 .tickets(entity.getTickets() != null ?
                         entity.getTickets().stream()
@@ -73,7 +76,10 @@ public class BookingMapperImpl implements BookingMapper {
                 .showtimeStartTime(domain.getShowtimeStartTime())
                 .totalTicketPrice(domain.getTotalTicketPrice())
                 .totalComboPrice(domain.getTotalComboPrice())
-                .discountAmount(domain.getDiscountAmount())
+                .tierDiscountAmount(domain.getTierDiscountAmount())
+                .couponDiscountAmount(domain.getCouponDiscountAmount())
+                .membershipTierName(domain.getMembershipTierName())
+                .membershipDiscountPercent(domain.getMembershipDiscountPercent())
                 .finalAmount(domain.getFinalAmount())
                 .status(domain.getStatus())
                 .expiredAt(domain.getExpiredAt())
@@ -107,7 +113,10 @@ public class BookingMapperImpl implements BookingMapper {
 
         target.setTotalTicketPrice(source.getTotalTicketPrice());
         target.setTotalComboPrice(source.getTotalComboPrice());
-        target.setDiscountAmount(source.getDiscountAmount());
+        target.setTierDiscountAmount(source.getTierDiscountAmount());
+        target.setCouponDiscountAmount(source.getCouponDiscountAmount());
+        target.setMembershipTierName(source.getMembershipTierName());
+        target.setMembershipDiscountPercent(source.getMembershipDiscountPercent());
         target.setFinalAmount(source.getFinalAmount());
     }
 }

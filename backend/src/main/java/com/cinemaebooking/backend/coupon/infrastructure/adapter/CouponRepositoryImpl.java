@@ -28,21 +28,56 @@ public class CouponRepositoryImpl implements CouponRepository {
 
     @Override
     public Coupon update(Coupon coupon) {
-        CouponJpaEntity existing = jpaRepository.findByIdOrThrow(coupon.getId().getValue());
 
+        CouponJpaEntity existing =
+                jpaRepository.findByIdOrThrow(
+                        coupon.getId().getValue()
+                );
+
+        existing.setUsageLimit(coupon.getUsageLimit());
+        existing.setRemainingUsage(coupon.getRemainingUsage());
+        existing.setEndDate(coupon.getEndDate());
+        existing.setStatus(coupon.getStatus());
+
+        return mapper.toDomain(
+                jpaRepository.save(existing)
+        );
+    }
+
+    @Override
+    public Coupon updateDraft(Coupon coupon){
+        CouponJpaEntity existing =
+                jpaRepository.findByIdOrThrow(
+                        coupon.getId().getValue()
+                );
         existing.setCode(coupon.getCode());
         existing.setType(coupon.getType());
         existing.setValue(coupon.getValue());
         existing.setUsageLimit(coupon.getUsageLimit());
+        existing.setRemainingUsage(coupon.getRemainingUsage());
         existing.setPerUserUsage(coupon.getPerUserUsage());
-        existing.setPointsToRedeem(coupon.getPointsToRedeem());
         existing.setMinimumBookingValue(coupon.getMinimumBookingValue());
         existing.setMaximumDiscountAmount(coupon.getMaximumDiscountAmount());
-        existing.setStartDate(coupon.getStartDate());
         existing.setEndDate(coupon.getEndDate());
+        existing.setEndDate(coupon.getEndDate());
+        existing.setStatus(coupon.getStatus());
 
-        return mapper.toDomain(jpaRepository.save(existing));
+        return mapper.toDomain(
+                jpaRepository.save(existing)
+        );
     }
+
+    @Override
+    public void updateStatus(Coupon coupon) {
+        CouponJpaEntity existing =
+                jpaRepository.findByIdOrThrow(
+                        coupon.getId().getValue()
+                );
+
+        existing.setStatus(coupon.getStatus());
+        jpaRepository.save(existing);
+    }
+
 
     @Override
     public Optional<Coupon> findById(CouponId id) {
@@ -69,11 +104,11 @@ public class CouponRepositoryImpl implements CouponRepository {
 
     @Override
     public boolean existsByCode(String code) {
-        return jpaRepository.existsByCode(code);
+        return jpaRepository.existsByCodeIgnoreCase(code);
     }
 
     @Override
     public boolean existsByCodeAndIdNot(String code, CouponId id) {
-        return jpaRepository.existsByCodeAndIdNot(code, id.getValue());
+        return jpaRepository.existsByCodeIgnoreCaseAndIdNot(code, id.getValue());
     }
 }

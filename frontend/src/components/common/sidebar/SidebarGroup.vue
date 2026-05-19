@@ -15,11 +15,10 @@
             :class="isExpanded && !ui.isSidebarCollapsed ? 'max-h-96' : 'max-h-0'">
             <div class="mt-0.5 flex flex-col gap-0.5">
                 <RouterLink v-for="child in item.children" :key="child.key" :to="child.to"
-                    class="rounded-r-md px-12 py-1.5 text-sm transition-all group relative" :class="route.path === child.to
+                    class="rounded-r-md px-12 py-1.5 text-sm transition-all group relative" :class="route.path.startsWith(child.to)
                         ? 'text-text-on-accent bg-accent'
-                        : 'text-text-admin-secondary hover:text-text-admin-primary'
-                        ">
-                    <div v-if="!(route.path === child.to)"
+                        : 'text-text-admin-secondary hover:text-text-admin-primary'">
+                    <div v-if="!route.path.startsWith(child.to)"
                         class="absolute left-0 top-0 h-full w-0 bg-accent transition-all ease-in-out group-hover:w-2">
                     </div>
                     {{ child.label }}
@@ -43,7 +42,7 @@ const route = useRoute()
 const isExpanded = ref(false)
 
 const hasActiveChild = computed(() =>
-    props.item.children?.some((c) => route.path === c.to)
+    props.item.children?.some((c) => route.path.startsWith(c.to))
 )
 const handleGroupClick = () => {
     if (ui.isSidebarCollapsed) {

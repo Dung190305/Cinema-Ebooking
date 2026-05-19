@@ -18,6 +18,7 @@ public class ComboMapperImpl implements ComboMapper {
                 .description(domain.getDescription())
                 .price(domain.getPrice())
                 .originalPrice(domain.getOriginalPrice())
+                .stock(domain.getStock())
                 .imageUrl(domain.getImageUrl())
                 .status(domain.getStatus())
                 .build();
@@ -33,6 +34,7 @@ public class ComboMapperImpl implements ComboMapper {
                 .description(entity.getDescription())
                 .price(entity.getPrice())
                 .originalPrice(entity.getOriginalPrice())
+                .stock(entity.getStock())
                 .imageUrl(entity.getImageUrl())
                 .status(entity.getStatus())
                 .build();
@@ -46,6 +48,7 @@ public class ComboMapperImpl implements ComboMapper {
         entity.setDescription(domain.getDescription());
         entity.setPrice(domain.getPrice());
         entity.setOriginalPrice(domain.getOriginalPrice());
+        entity.setStock(domain.getStock());
         entity.setImageUrl(domain.getImageUrl());
         entity.setStatus(domain.getStatus());
     }

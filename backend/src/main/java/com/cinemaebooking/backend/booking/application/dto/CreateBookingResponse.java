@@ -21,8 +21,13 @@ public class CreateBookingResponse {
 
     private BigDecimal totalTicketPrice;
     private BigDecimal totalComboPrice;
+    private BigDecimal tierDiscountAmount;
+    private BigDecimal couponDiscountAmount;
     private BigDecimal discountAmount;
     private BigDecimal finalAmount;
+
+    private String membershipTierName;
+    private BigDecimal membershipDiscountPercent;
 
     private BookingStatus status;
     private LocalDateTime expiredAt;

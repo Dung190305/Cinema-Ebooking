@@ -27,10 +27,11 @@
                             readonlyInEdit: field editable trong Create nhưng readonly trong Detail.
                             Spread column và override readonly = true khi readonlyInEdit được set.
                         -->
-                        <FieldRenderer v-for="col in editableColumns" :key="col.key"
-                            :column="col.readonlyInEdit ? { ...col, readonly: true } : col" :modelValue="draft[col.key]"
-                            :error="localErrors[col.key]" :depValues="depValuesMap[col.key]"
-                            @update:modelValue="onFieldUpdate(col.key, $event)" />
+                        <FieldRenderer v-for="col in editableColumns" :key="col.key" :column="isReadonlyInEdit(col, draft)
+                            ? { ...col, readonly: true }
+                            : col
+                            " :modelValue="draft[col.key]" :error="localErrors[col.key]"
+                            :depValues="depValuesMap[col.key]" @update:modelValue="onFieldUpdate(col.key, $event)" />
                     </div>
                 </div>
 
@@ -42,7 +43,7 @@
                     </p>
 
                     <!-- Slot cho actions bổ sung từ parent (vd: nút "Quản lý phòng") -->
-                    <slot name="actions" :item="draft" />
+                    <slot name="actions" :item="draft" :close="tryClose" />
 
                     <BaseButton v-if="showSave" variant="primary" size="md" rounded="lg" class="w-full"
                         :class="!canSave && 'opacity-50 cursor-not-allowed pointer-events-none'" :disabled="!canSave"
@@ -66,6 +67,8 @@ import BaseButton from '@/components/ui/button/BaseButton.vue'
 import FieldRenderer from '@/components/common/table/subcomponents/FieldRenderer.vue'
 import ConfirmDialog from '@/components/common/table/subcomponents/ConfirmDialog.vue'
 import type { ColumnDef, RowItem } from '@/components/common/table/types/table'
+import { isReadonlyInEdit }
+    from '@/components/common/table/utils/column'
 
 const props = defineProps<{
     item: RowItem | null
@@ -149,7 +152,7 @@ const isDirty = computed(() => {
 const emptyFields = computed(() =>
     props.columns
         .filter((c) => {
-            if (c.readonly || c.readonlyInEdit || c.required === false) return false
+            if (c.readonly || isReadonlyInEdit(c, draft.value) || c.required === false) return false
             const val = draft.value[c.key]
             if (c.type === 'multiselect') {
                 return !Array.isArray(val) || val.length === 0

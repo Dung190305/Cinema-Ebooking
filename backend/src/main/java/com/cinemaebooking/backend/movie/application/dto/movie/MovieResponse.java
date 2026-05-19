@@ -18,6 +18,7 @@ public class MovieResponse {
     private Integer duration;
     private AgeRating ageRating;
     private LocalDate releaseDate;
+    private LocalDate showingEndDate;
     private MovieStatus status;
     private String posterUrl;
     private String bannerUrl;
