@@ -1,5 +1,5 @@
 // src/composables/useMovie.ts
-import { ref } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { movieApi } from '@/api/movie.api'
 import { genreApi } from '@/api/genre.api'
 import type { MovieResponse, CreateMovieRequest, UpdateMovieRequest } from '@/types/movie.types'
@@ -13,6 +13,9 @@ export function useMovie() {
   const fieldErrors = ref<Record<string, string>>({})
   const globalErrors = ref<string[]>([])
 
+  const selectedStatus = ref<MovieStatus | 'ALL'>('ALL')
+  const selectedAgeRating = ref<AgeRating | 'ALL'>('ALL')
+
   const currentPage = ref(0)
   const totalPages = ref(0)
   const totalItems = ref(0)
@@ -21,6 +24,14 @@ export function useMovie() {
   // Prefetch state
   const nextPageCache = ref<MovieResponse[]>([])
   const nextPageDirty = ref(false)
+
+  const filteredMovies = computed(() => {
+    return movies.value.filter(m => {
+      const statusMatch = selectedStatus.value === 'ALL' || m.status === selectedStatus.value
+      const ratingMatch = selectedAgeRating.value === 'ALL' || m.ageRating === selectedAgeRating.value
+      return statusMatch && ratingMatch
+    })
+  })
 
   // ── Helpers ────────────────────────────────────────────────────────────
   const handleError = (err: any) => {
@@ -46,7 +57,12 @@ export function useMovie() {
       return
     }
     try {
-      const res = await movieApi.getList(page, pageSize)
+      const res = await movieApi.getList({
+        page,
+        size: pageSize,
+        status: selectedStatus.value === 'ALL' ? undefined : selectedStatus.value,
+        ageRating: selectedAgeRating.value === 'ALL' ? undefined : selectedAgeRating.value,
+      })
       nextPageCache.value = res.content
       nextPageDirty.value = false
     } catch {
@@ -59,7 +75,12 @@ export function useMovie() {
     isLoading.value = true
     clearErrors()
     try {
-      const res = await movieApi.getList(page, pageSize)
+      const res = await movieApi.getList({
+        page,
+        size: pageSize,
+        status: selectedStatus.value === 'ALL' ? undefined : selectedStatus.value,
+        ageRating: selectedAgeRating.value === 'ALL' ? undefined : selectedAgeRating.value,
+      })
       movies.value = res.content
       currentPage.value = res.page.number
       totalPages.value = res.page.totalPages
@@ -74,6 +95,24 @@ export function useMovie() {
       isLoading.value = false
     }
   }
+
+  // ── Thêm watch filter — smart logic ───────────────────────────────────
+  watch([selectedStatus, selectedAgeRating], () => {
+    // Client-side preview trước khi quyết định fetch
+    const clientFiltered = movies.value.filter(m => {
+      const statusMatch = selectedStatus.value === 'ALL' || m.status === selectedStatus.value
+      const ratingMatch = selectedAgeRating.value === 'ALL' || m.ageRating === selectedAgeRating.value
+      return statusMatch && ratingMatch
+    })
+
+    if (clientFiltered.length >= pageSize) {
+      // ✅ Đủ dữ liệu — filteredMovies computed tự xử lý, không query
+      return
+    }
+
+    // ⚠️ Thiếu — cần query lại từ đầu với filter mới
+    fetchList(0)
+  })
 
   // ── Navigate (with cache) ──────────────────────────────────────────────
   const goToPage = async (page: number) => {
@@ -151,7 +190,7 @@ export function useMovie() {
       duration: item.duration,
       ageRating: item.ageRating,
       releaseDate: item.releaseDate,
-      status: item.status,
+      showingEndDate: item.showingEndDate ?? null,
       posterUrl: item.posterUrl,
       bannerUrl: item.bannerUrl,
       director: item.director,
@@ -215,7 +254,10 @@ export function useMovie() {
     currentPage,
     totalPages,
     totalItems,
-    pageSize,      // added for consistency, but original didn't expose it – optional
+    pageSize,     
+    filteredMovies,      
+    selectedStatus,      
+    selectedAgeRating, 
     fetchList,
     fetchGenres,
     create,

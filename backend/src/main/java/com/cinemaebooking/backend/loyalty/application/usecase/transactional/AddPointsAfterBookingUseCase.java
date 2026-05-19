@@ -2,6 +2,7 @@ package com.cinemaebooking.backend.loyalty.application.usecase.transactional;
 
 import com.cinemaebooking.backend.common.exception.domain.CommonExceptions;
 import com.cinemaebooking.backend.common.exception.domain.exception_loyalty.LoyaltyExceptions;
+import com.cinemaebooking.backend.common.exception.domain.exception_loyalty.MembershipTierExceptions;
 import com.cinemaebooking.backend.loyalty.application.port.EarningRuleRepository;
 import com.cinemaebooking.backend.loyalty.application.port.LoyaltyAccountRepository;
 import com.cinemaebooking.backend.loyalty.application.port.LoyaltyTransactionRepository;
@@ -26,92 +27,97 @@ import java.time.LocalDateTime;
 @Service
 @RequiredArgsConstructor
 public class AddPointsAfterBookingUseCase {
-        private final LoyaltyAccountRepository loyaltyAccountRepository;
-        private final EarningRuleRepository earningRuleRepository;
-        private final MembershipTierRepository membershipTierRepository;
-        private final LoyaltyTransactionRepository transactionRepository;
+    private final LoyaltyAccountRepository loyaltyAccountRepository;
+    private final EarningRuleRepository earningRuleRepository;
+    private final MembershipTierRepository membershipTierRepository;
+    private final LoyaltyTransactionRepository transactionRepository;
 
-        @Transactional
-        public void execute(Long userId, BigDecimal totalTicketPrice, BigDecimal totalComboPrice) {
-            log.info("=== AddPointsAfterBooking === userId={}, totalTicketPrice={}, totalComboPrice={}", userId, totalTicketPrice, totalComboPrice);
+    private static final BigDecimal ONE_HUNDRED = new BigDecimal("100");
 
-            if (userId == null) {
-                throw CommonExceptions.invalidInput("userId must not be null");
-            }
+    @Transactional
+    public void execute(Long userId, BigDecimal totalTicketPrice, BigDecimal totalComboPrice) {
+        log.info("=== AddPointsAfterBooking === userId={}, totalTicketPrice={}, totalComboPrice={}", userId, totalTicketPrice, totalComboPrice);
 
-            LoyaltyAccount account = loyaltyAccountRepository.findByUserId(userId)
-                    .orElseThrow(() -> LoyaltyExceptions.notFoundByUserId(userId));
-
-            log.info("Account found: id={}, currentPoints={}, tier={}", account.getId(), account.getCurrentPoints(), account.getTier());
-
-            MembershipTier currentTier = account.getTier();
-            BigDecimal pointsEarned = BigDecimal.ZERO;
-
-            if (totalTicketPrice != null && totalTicketPrice.compareTo(BigDecimal.ZERO) > 0) {
-                EarningRule ticketRule = findRuleForType(currentTier, EarningType.TICKET);
-                log.info("Ticket rule: {}", ticketRule);
-                BigDecimal rate = ticketRule != null ? ticketRule.getMultiplier() : BigDecimal.ZERO;
-                log.info("Ticket rate={}", rate);
-                BigDecimal base = totalTicketPrice.divide(new BigDecimal("1000"), 2, RoundingMode.HALF_UP);
-                log.info("Ticket base={} (totalTicketPrice/1000)", base);
-                pointsEarned = pointsEarned.add(base.multiply(rate));
-                log.info("Ticket pointsEarned so far={}", pointsEarned);
-            }
-
-            if (totalComboPrice != null && totalComboPrice.compareTo(BigDecimal.ZERO) > 0) {
-                EarningRule comboRule = findRuleForType(currentTier, EarningType.CONCESSION);
-                log.info("Combo rule: {}", comboRule);
-                BigDecimal rate = comboRule != null ? comboRule.getMultiplier() : BigDecimal.ZERO;
-                log.info("Combo rate={}", rate);
-                BigDecimal base = totalComboPrice.divide(new BigDecimal("1000"), 2, RoundingMode.HALF_UP);
-                log.info("Combo base={}, comboPoints={}", base, base.multiply(rate));
-                pointsEarned = pointsEarned.add(base.multiply(rate));
-            }
-
-            log.info("Total pointsEarned={}", pointsEarned);
-
-            // Cộng điểm
-            account.setCurrentPoints(account.getCurrentPoints().add(pointsEarned));
-            account.setLifetimePoints(account.getLifetimePoints().add(pointsEarned));
-
-            // Cộng tổng chi tiêu (totalSpending)
-            BigDecimal totalSpendingToAdd = (totalTicketPrice != null ? totalTicketPrice : BigDecimal.ZERO)
-                    .add(totalComboPrice != null ? totalComboPrice : BigDecimal.ZERO);
-            account.addSpending(totalSpendingToAdd);
-
-            // Re-evaluate tier
-            MembershipTier newTier = evaluateTier(account.getTotalSpending());
-            if (!newTier.getId().equals(account.getTier().getId())) {
-                account.updateTier(newTier);
-            }
-
-            LoyaltyAccount saved = loyaltyAccountRepository.save(account);
-
-            if (pointsEarned.compareTo(BigDecimal.ZERO) > 0) {
-                LoyaltyTransaction transaction = LoyaltyTransaction.builder()
-                        .loyaltyAccountId(saved.getId().getValue())
-                        .type(LoyaltyTransactionType.EARN_FROM_BOOKING)
-                        .changePoint(pointsEarned)
-                        .balanceAfter(saved.getCurrentPoints())
-                        .changeDate(LocalDateTime.now())
-                        .build();
-                transactionRepository.save(transaction);
-            }
+        if (userId == null) {
+            throw CommonExceptions.invalidInput("userId must not be null");
         }
 
-        private EarningRule findRuleForType(MembershipTier tier, EarningType type) {
-            List<EarningRule> rules = earningRuleRepository.findByTierAndType(
-                    MembershipTierId.of(tier.getId().getValue()), type);
-            log.info("findRuleForType: tier={} (id={}), type={}, rules found={}", tier.getName(), tier.getId(), type, rules.size());
-            rules.forEach(r -> log.info("  rule: id={}, multiplier={}, active={}", r.getId(), r.getMultiplier(), r.getActive()));
-            return rules.stream().filter(EarningRule::getActive).findFirst().orElse(null);
+        LoyaltyAccount account = loyaltyAccountRepository.findByUserId(userId)
+                .orElseThrow(() -> LoyaltyExceptions.notFoundByUserId(userId));
+
+        MembershipTier currentTier = membershipTierRepository.findById(MembershipTierId.of(account.getTierId())).orElseThrow();
+
+        log.info("Account found: id={}, currentPoints={}, tier={}", account.getId(), account.getCurrentPoints(), currentTier.getName());
+
+
+        BigDecimal pointsEarned = BigDecimal.ZERO;
+
+        // Ticket points
+        if (totalTicketPrice != null && totalTicketPrice.compareTo(BigDecimal.ZERO) > 0) {
+            EarningRule ticketRule = findRuleForType(currentTier, EarningType.TICKET);
+            BigDecimal ratePercent = ticketRule != null ? ticketRule.getMultiplier() : BigDecimal.ZERO;
+            log.info("Ticket rule: ratePercent={}%", ratePercent);
+            BigDecimal ticketPoints = totalTicketPrice.multiply(ratePercent)
+                    .divide(ONE_HUNDRED, 0, RoundingMode.HALF_UP);
+            pointsEarned = pointsEarned.add(ticketPoints);
+            log.info("Ticket points earned: {}", ticketPoints);
         }
 
-        private MembershipTier evaluateTier(BigDecimal totalSpending) {
-            // Lấy tier cao nhất có minSpending <= totalSpending
-            return membershipTierRepository.findAllByMinSpendingRequiredLessThanEqualOrderByTierLevelDesc(totalSpending)
-                    .stream().findFirst()
-                    .orElseThrow(() -> CommonExceptions.resourceNotFound(
-                            "No membership tier found for spending: " + totalSpending));
+        // Combo points
+        if (totalComboPrice != null && totalComboPrice.compareTo(BigDecimal.ZERO) > 0) {
+            EarningRule comboRule = findRuleForType(currentTier, EarningType.CONCESSION);
+            BigDecimal ratePercent = comboRule != null ? comboRule.getMultiplier() : BigDecimal.ZERO;
+            log.info("Combo rule: ratePercent={}%", ratePercent);
+            BigDecimal comboPoints = totalComboPrice.multiply(ratePercent)
+                    .divide(ONE_HUNDRED, 0, RoundingMode.HALF_UP);
+            pointsEarned = pointsEarned.add(comboPoints);
+            log.info("Combo points earned: {}", comboPoints);
+        }
+
+        log.info("Total pointsEarned={}", pointsEarned);
+
+        // Cộng điểm
+        account.setCurrentPoints(account.getCurrentPoints().add(pointsEarned));
+        account.setLifetimePoints(account.getLifetimePoints().add(pointsEarned));
+
+        // Cộng tổng chi tiêu (totalSpending)
+        BigDecimal totalSpendingToAdd = (totalTicketPrice != null ? totalTicketPrice : BigDecimal.ZERO)
+                .add(totalComboPrice != null ? totalComboPrice : BigDecimal.ZERO);
+        account.addSpending(totalSpendingToAdd);
+
+        // Re-evaluate tier
+        MembershipTier newTier = evaluateTier(account.getTotalSpending());
+        if (!newTier.getId().getValue().equals(account.getTierId())) {
+            account.updateTier(newTier.getId());
+        }
+
+        LoyaltyAccount saved = loyaltyAccountRepository.save(account);
+
+        if (pointsEarned.compareTo(BigDecimal.ZERO) > 0) {
+            LoyaltyTransaction transaction = LoyaltyTransaction.builder()
+                    .loyaltyAccountId(saved.getId().getValue())
+                    .type(LoyaltyTransactionType.EARN_FROM_BOOKING)
+                    .changePoint(pointsEarned)
+                    .balanceAfter(saved.getCurrentPoints())
+                    .changeDate(LocalDateTime.now())
+                    .build();
+            transactionRepository.save(transaction);
         }
     }
+
+    private EarningRule findRuleForType(MembershipTier tier, EarningType type) {
+        List<EarningRule> rules = earningRuleRepository.findByTierAndType(
+                MembershipTierId.of(tier.getId().getValue()), type);
+        log.info("findRuleForType: tier={} (id={}), type={}, rules found={}", tier.getName(), tier.getId(), type, rules.size());
+        rules.forEach(r -> log.info("  rule: id={}, multiplier={}, active={}", r.getId(), r.getMultiplier(), r.getActive()));
+        return rules.stream().filter(EarningRule::getActive).findFirst().orElse(null);
+    }
+
+    private MembershipTier evaluateTier(BigDecimal totalSpending) {
+        // Lấy tier cao nhất có minSpending <= totalSpending
+        return membershipTierRepository.findAllByMinSpendingRequiredLessThanEqualOrderByTierLevelDesc(totalSpending)
+                .stream().findFirst()
+                .orElseThrow(() -> CommonExceptions.resourceNotFound(
+                        "No membership tier found for spending: " + totalSpending));
+    }
+}

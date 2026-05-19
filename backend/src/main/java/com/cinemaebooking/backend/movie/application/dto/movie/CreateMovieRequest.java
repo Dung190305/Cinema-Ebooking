@@ -17,8 +17,8 @@ public class CreateMovieRequest {
     private String description;
     private Integer duration;
     private AgeRating ageRating;
-    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate releaseDate;
+    private LocalDate showingEndDate;
     private String posterUrl;
     private String bannerUrl;
     private String director;

@@ -12,6 +12,12 @@ const routes: RouteRecordRaw[] = [
       {
         path: '',
         name: 'home',
+        component: () => import('@/pages/HomePage.vue')
+      },
+      {
+        path: 'movies',               // ← Thêm dòng này
+        name: 'movies',
+        component: () => import('@/pages/MoviesPage.vue')
       },
     ],
   },
@@ -171,6 +177,13 @@ const routes: RouteRecordRaw[] = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition;
+    } else {
+      return { top: 0, left: 0 };
+    }
+  },
 })
 
 export default router

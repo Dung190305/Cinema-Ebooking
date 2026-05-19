@@ -6,6 +6,7 @@ import com.cinemaebooking.backend.loyalty.application.port.MembershipTierReposit
 import com.cinemaebooking.backend.loyalty.domain.enums.LoyaltyAccountStatus;
 import com.cinemaebooking.backend.loyalty.domain.model.LoyaltyAccount;
 import com.cinemaebooking.backend.loyalty.domain.model.MembershipTier;
+import com.cinemaebooking.backend.loyalty.domain.valueobject.MembershipTierId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,13 +33,14 @@ public class CreateLoyaltyAccountUseCase {
                 .findFirst()
                 .orElseThrow(() -> CommonExceptions.resourceNotFound("No basic membership tier configured"));
 
+        Long basicTierId = basicTier.getId().getValue();
         LoyaltyAccount account = LoyaltyAccount.builder()
                 .userId(userId)
                 .loyaltyNumber("LY" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
                 .totalSpending(BigDecimal.ZERO)
                 .lifetimePoints(BigDecimal.ZERO)
                 .currentPoints(BigDecimal.ZERO)
-                .tier(basicTier)
+                .tierId(basicTierId)
                 .joinedDate(LocalDateTime.now())
                 .status(LoyaltyAccountStatus.ACTIVE)
                 .build();

@@ -38,9 +38,12 @@ public class SecurityConfig {
                         // Auth
                         .requestMatchers("/api/v1/auth/**").permitAll()
 
-                        // Public APIs
-                        .requestMatchers(HttpMethod.GET, "/api/v1/cinemas/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/showtimes/**").permitAll()
+                        .requestMatchers("/api/v1/users/me/**").authenticated()
+                        .requestMatchers("/api/v1/loyalty/my-account/**").authenticated()
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+
+                        // ✅ Tất cả GET còn lại → public
+                        .requestMatchers(HttpMethod.GET, "/**").permitAll()
 
                         // User
                         .requestMatchers("/api/v1/users/me/**").authenticated()
