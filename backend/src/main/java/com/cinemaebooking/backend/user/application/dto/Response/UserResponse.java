@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @AllArgsConstructor
@@ -20,4 +21,5 @@ public class UserResponse {
     private String avatarUrl;
     private UserRole role;
     private UserStatus status;
+    private LocalDateTime createdAt;
 }

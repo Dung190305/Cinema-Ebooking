@@ -5,10 +5,12 @@ import com.cinemaebooking.backend.booking.infrastructure.persistence.entity.Book
 import com.cinemaebooking.backend.infrastructure.persistence.repository.SoftDeleteJpaRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -37,4 +39,21 @@ public interface BookingJpaRepository extends SoftDeleteJpaRepository<BookingJpa
             LocalDateTime now,
             BookingStatus status
     );
+
+    // ── Admin user detail ──────────────────────────────────────────────────────
+    long countByUserIdAndDeletedFalse(Long userId);
+
+    @Query("""
+            SELECT COALESCE(SUM(b.finalAmount), 0)
+            FROM BookingJpaEntity b
+            WHERE b.user.id = :userId
+              AND b.deleted = false
+              AND b.status = :status
+            """)
+    BigDecimal sumFinalAmountByUserIdAndStatusPaid(
+            @Param("userId") Long userId,
+            @Param("status") BookingStatus status);
+
+    // Thay thế cả cụm @Query và hàm cũ bằng dòng này:
+    Optional<BookingJpaEntity> findFirstByUserIdAndDeletedFalseOrderByCreatedAtDesc(Long userId);
 }

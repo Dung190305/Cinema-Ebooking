@@ -1,5 +1,7 @@
 package com.cinemaebooking.backend.user.application.port;
 
+import com.cinemaebooking.backend.user.domain.enums.UserRole;
+import com.cinemaebooking.backend.user.domain.enums.UserStatus;
 import com.cinemaebooking.backend.user.domain.model.User;
 import com.cinemaebooking.backend.user.domain.valueObject.UserId;
 import org.springframework.data.domain.Page;
@@ -18,6 +20,11 @@ public interface UserRepository {
     Optional<User> findByEmail(String email);
 
     Page<User> findAll(Pageable pageable);
+
+    Page<User> findByFilters(String fullName, String email, UserRole role, UserStatus status, Pageable pageable);
+
+    Page<User> searchByFullNameContainingIgnoreCaseAndEmailContainingIgnoreCase(
+            String fullName, String email, Pageable pageable);
 
     void deleteById(UserId id);
 

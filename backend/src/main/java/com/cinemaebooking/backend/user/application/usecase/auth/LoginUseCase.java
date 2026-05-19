@@ -1,5 +1,7 @@
 package com.cinemaebooking.backend.user.application.usecase.auth;
 
+import com.cinemaebooking.backend.common.exception.BaseException;
+import com.cinemaebooking.backend.common.exception.ErrorCode;
 import com.cinemaebooking.backend.common.exception.domain.CommonExceptions;
 import com.cinemaebooking.backend.common.exception.domain.UserExceptions;
 import com.cinemaebooking.backend.user.application.dto.AuthDTO.LoginRequest;
@@ -35,7 +37,8 @@ public class LoginUseCase {
             throw UserExceptions.invalidCredentials();
         }
         if (user.getStatus() == UserStatus.INACTIVE) {
-            throw UserExceptions.inactiveUser(user.getId());
+            throw new BaseException(ErrorCode.USER_NOT_VERIFIED,
+                    "Tài khoản chưa được xác minh email. Vui lòng kiểm tra hộp thư và nhập mã OTP.");
         }
 
         // Tạo access token (ngắn hạn, ví dụ 15-30 phút)
