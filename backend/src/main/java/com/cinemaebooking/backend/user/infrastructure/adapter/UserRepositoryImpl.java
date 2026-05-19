@@ -2,6 +2,8 @@ package com.cinemaebooking.backend.user.infrastructure.adapter;
 
 import com.cinemaebooking.backend.user.infrastructure.mapper.UserMapper;
 import com.cinemaebooking.backend.user.application.port.UserRepository;
+import com.cinemaebooking.backend.user.domain.enums.UserRole;
+import com.cinemaebooking.backend.user.domain.enums.UserStatus;
 import com.cinemaebooking.backend.user.domain.model.User;
 import com.cinemaebooking.backend.user.domain.valueObject.UserId;
 import com.cinemaebooking.backend.user.infrastructure.persistence.entity.UserJpaEntity;
@@ -59,6 +61,19 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public Page<User> findAll(Pageable pageable) {
         return userJpaRepository.findAll(pageable)
+                .map(userMapper::toDomain);
+    }
+
+    @Override
+    public Page<User> findByFilters(String fullName, String email, UserRole role, UserStatus status, Pageable pageable) {
+        return userJpaRepository.findByAllFilters(fullName, email, role, status, pageable)
+                .map(userMapper::toDomain);
+    }
+
+    @Override
+    public Page<User> searchByFullNameContainingIgnoreCaseAndEmailContainingIgnoreCase(
+            String fullName, String email, Pageable pageable) {
+        return userJpaRepository.searchByFullNameAndEmail(fullName, email, pageable)
                 .map(userMapper::toDomain);
     }
 

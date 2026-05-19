@@ -23,7 +23,8 @@ const PUBLIC_ENDPOINTS = [
 
 const PROTECTED_GET_PATHS = [
   '/users/me',
-  '/loyalty/my-account',  
+  '/loyalty/my-account',
+  '/admin',
 ]
 
 const isPublicEndpoint = (url?: string): boolean => {

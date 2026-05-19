@@ -21,7 +21,7 @@ class UserJpaEntityTest {
                 .phoneNumber("0987654321")
                 .dateOfBirth(LocalDate.of(1995, 5, 15))
                 .avatarUrl("https://example.com/avatar.jpg")
-                .role(UserRole.CUSTOMER)
+                .role(UserRole.USER)
                 .status(UserStatus.ACTIVE)
                 .loyaltyAccountId(100L)
                 .build();
@@ -29,7 +29,7 @@ class UserJpaEntityTest {
         assertNotNull(user);
         assertEquals("Nguyen Van A", user.getFullName());
         assertEquals("nguyenvana@gmail.com", user.getEmail());
-        assertEquals(UserRole.CUSTOMER, user.getRole());
+        assertEquals(UserRole.USER, user.getRole());
         assertEquals(UserStatus.ACTIVE, user.getStatus());
         assertEquals(100L, user.getLoyaltyAccountId());
     }
@@ -41,7 +41,7 @@ class UserJpaEntityTest {
                 .fullName("Old Name")
                 .email("old@email.com")
                 .password("oldpass")
-                .role(UserRole.CUSTOMER)
+                .role(UserRole.USER)
                 .status(UserStatus.ACTIVE)
                 .build();
 

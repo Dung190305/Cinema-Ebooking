@@ -23,6 +23,7 @@ public class UserMapperImpl implements UserMapper {
                 .avatarUrl(entity.getAvatarUrl())
                 .role(entity.getRole())
                 .status(entity.getStatus())
+                .createdAt(entity.getCreatedAt())
                 .build();
     }
 
