@@ -27,7 +27,8 @@ public class UpdateCurrentUserProfileUseCase {
         user.updateProfile(
                 request.getFullName(),
                 request.getPhoneNumber(),
-                request.getAvatarUrl()
+                request.getDateOfBirth(),
+                request.getGender()
         );
 
         User saved = userRepository.update(user);
