@@ -53,7 +53,7 @@
                         class="absolute right-0 top-full mt-2 w-56 bg-bg-surface border border-border-default rounded-md shadow-lg z-50">
                         <div class="">
 
-                            <div
+                            <div @click="goToProfile"
                                 class="block rounded-t-md px-4 py-2 text-sm text-text-primary hover:bg-accent cursor-pointer">
                                 Hồ sơ cá nhân
                             </div>
@@ -145,5 +145,10 @@ function goToAdminPage() {
     router.push(
         '/admin/analystics/dashboard'
     )
+}
+
+function goToProfile() {
+    router.push('/profile')
+    showDropdown.value = false // đóng dropdown
 }
 </script>

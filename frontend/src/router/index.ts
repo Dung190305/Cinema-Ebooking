@@ -15,9 +15,15 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/pages/HomePage.vue')
       },
       {
-        path: 'movies',               // ← Thêm dòng này
+        path: 'movies',               
         name: 'movies',
         component: () => import('@/pages/MoviesPage.vue')
+      },
+      {
+        path: 'profile',
+        name: 'profile',
+        component: () => import('@/pages/ProfilePage.vue'),
+        meta: { requiresAuth: true }
       },
     ],
   },
@@ -184,6 +190,15 @@ const router = createRouter({
       return { top: 0, left: 0 };
     }
   },
+})
+
+router.beforeEach((to, from, next) => {
+  const token = localStorage.getItem('accessToken')
+  if (to.meta.requiresAuth && !token) {
+    next('/') // hoặc mở modal đăng nhập
+  } else {
+    next()
+  }
 })
 
 export default router
