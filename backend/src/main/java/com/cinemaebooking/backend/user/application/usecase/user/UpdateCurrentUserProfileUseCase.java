@@ -5,6 +5,7 @@ import com.cinemaebooking.backend.user.application.dto.Response.UserResponse;
 import com.cinemaebooking.backend.user.application.dto.UserDTO.UpdateUserRequest;
 import com.cinemaebooking.backend.user.application.mapper.UserResponseMapper;
 import com.cinemaebooking.backend.user.application.port.UserRepository;
+import com.cinemaebooking.backend.user.application.validator.User.UserCommandValidator;
 import com.cinemaebooking.backend.user.domain.model.User;
 import com.cinemaebooking.backend.user.domain.valueObject.UserId;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ public class UpdateCurrentUserProfileUseCase {
 
     private final UserRepository userRepository;
     private final UserResponseMapper mapper;
+    private final UserCommandValidator userCommandValidator;
 
     public UserResponse execute(Long userIdRaw, UpdateUserRequest request) {
 
@@ -23,6 +25,8 @@ public class UpdateCurrentUserProfileUseCase {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(UserExceptions::unauthorized);
+
+        userCommandValidator.validateUpdateRequest(userId, request);
 
         user.updateProfile(
                 request.getFullName(),
