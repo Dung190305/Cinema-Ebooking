@@ -34,6 +34,7 @@ public interface ShowtimeRepository {
             Long roomId,
             ShowtimeStatus status,
             LocalDate date,
+            String city,
             Pageable pageable
     );
 

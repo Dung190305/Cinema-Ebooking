@@ -26,13 +26,15 @@ public interface ShowtimeJpaRepository extends SoftDeleteJpaRepository<ShowtimeJ
           AND (:roomId IS NULL OR s.room.id = :roomId)
           AND (:status IS NULL OR s.status = :status)
           AND (:date IS NULL OR DATE(s.startTime) = :date)
+          AND (:city IS NULL OR s.room.cinema.city = :city)
     """)
     Page<ShowtimeJpaEntity> search(
-            Long cinemaId,
-            Long movieId,
-            Long roomId,
-            ShowtimeStatus status,
-            LocalDate date,
+            @Param("cinemaId") Long cinemaId,
+            @Param("movieId") Long movieId,
+            @Param("roomId") Long roomId,
+            @Param("status") ShowtimeStatus status,
+            @Param("date") LocalDate date,
+            @Param("city") String city,      // ← thêm
             Pageable pageable
     );
 
