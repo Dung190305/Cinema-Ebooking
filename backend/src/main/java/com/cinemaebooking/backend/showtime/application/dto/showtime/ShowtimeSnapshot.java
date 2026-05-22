@@ -3,8 +3,8 @@ package com.cinemaebooking.backend.showtime.application.dto.showtime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.Value;
-import java.time.LocalDateTime;
+
+import java.time.Instant;
 
 /**
  * ShowtimeSnapshot - Đối tượng vận chuyển dữ liệu Snapshot từ Showtime sang Booking.
@@ -16,5 +16,5 @@ public class ShowtimeSnapshot {
     String movieTitle;
     String cinemaName;
     String roomName;
-    LocalDateTime startTime;
+    Instant startTime;
 }

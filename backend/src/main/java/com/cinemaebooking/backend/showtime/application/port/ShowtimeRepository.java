@@ -7,8 +7,8 @@ import com.cinemaebooking.backend.showtime.domain.valueobject.ShowtimeId;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,8 +40,8 @@ public interface ShowtimeRepository {
 
     boolean existsRoomConflict(
             Long roomId,
-            LocalDateTime startTime,
-            LocalDateTime endTime,
+            Instant startTime,
+            Instant endTime,
             ShowtimeId excludeId
     );
 

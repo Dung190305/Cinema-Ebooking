@@ -22,6 +22,12 @@ spring:
       connection-timeout: 30000
       max-lifetime: 1800000
 
+  jackson:
+    features:
+      serialization:
+        WRITE_DATES_AS_TIMESTAMPS: false
+    time-zone: UTC
+
 # ================== LOGGING ==================
 logging:
   level:
@@ -38,3 +44,4 @@ jwt:
     expiration: 900000      # 15 phút (miligiây)
   refresh:
     expiration: 604800000   # 7 ngày
+
