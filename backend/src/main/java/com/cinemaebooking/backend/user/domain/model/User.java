@@ -7,6 +7,7 @@ import com.cinemaebooking.backend.user.domain.enums.UserStatus;
 import com.cinemaebooking.backend.user.domain.valueObject.UserGender;
 import com.cinemaebooking.backend.user.domain.valueObject.UserId;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDate;
@@ -22,6 +23,7 @@ public class User extends BaseEntity<UserId> {
     private String phoneNumber;
     private LocalDate dateOfBirth;
     private UserGender gender;
+    @Setter
     private String avatarUrl;
     private UserRole role;
     private UserStatus status;
@@ -32,13 +34,14 @@ public class User extends BaseEntity<UserId> {
     /**
      * Update basic profile fields (not including password or role)
      */
-    public void updateProfile(String fullName, String phoneNumber, String avatarUrl) {
+    public void updateProfile(String fullName, String phoneNumber, LocalDate dateOfBirth, UserGender gender) {
         validateName(fullName);
         validatePhone(phoneNumber);
 
         this.fullName = fullName;
         this.phoneNumber = phoneNumber;
-        this.avatarUrl = avatarUrl;
+        this.dateOfBirth = dateOfBirth;
+        this.gender = gender;
     }
 
     /**

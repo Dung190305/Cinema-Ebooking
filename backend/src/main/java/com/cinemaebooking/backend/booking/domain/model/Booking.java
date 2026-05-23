@@ -14,6 +14,7 @@ import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +30,7 @@ public class Booking extends BaseEntity<BookingId> {
     private final String movieTitle;
     private final String cinemaName;
     private final String roomName;
-    private final LocalDateTime showtimeStartTime;
+    private final Instant showtimeStartTime;
     private final LocalDateTime createdAt;
     @Builder.Default
     private List<Ticket> tickets = new ArrayList<>();

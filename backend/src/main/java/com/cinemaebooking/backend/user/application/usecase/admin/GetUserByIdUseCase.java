@@ -64,7 +64,7 @@ public class GetUserByIdUseCase {
             latestCinemaName = latest.getCinemaName();
             latestRoomName = latest.getRoomName();
             latestShowtimeStartTime = latest.getShowtimeStartTime() != null
-                    ? latest.getShowtimeStartTime().format(DATETIME_FORMATTER)
+                    ? latest.getShowtimeStartTime().toString()
                     : null;
             latestFinalAmount = formatVND(latest.getFinalAmount());
             latestStatus = latest.getStatus() != null ? latest.getStatus().name() : null;

@@ -1,7 +1,8 @@
 import { ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth.store'
 import { useRouter } from 'vue-router'
-import { authApi, loyaltyApi } from '@/api/auth.api'
+import { authApi } from '@/api/auth.api'
+import { loyaltyApi } from '@/api/loyalty.api'
 import { userApi } from '@/api/user.api'
 
 export function useLoginForm(emit: (event: string) => void) {

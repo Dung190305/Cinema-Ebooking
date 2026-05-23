@@ -9,7 +9,7 @@ import lombok.Getter;
  * <p>
  * Chịu trách nhiệm:
  * <ul>
- *     <li>Định nghĩa danh sách các ngôn ngữ hỗ trợ (EN, VI,...)</li>
+ *     <li>Định nghĩa danh sách các ngôn ngữ hỗ trợ (EN, VI, JA, KO, ZH, FR, DE, ES, ...)</li>
  *     <li>Dùng cho audioLanguage và subtitleLanguage trong Showtime</li>
  * </ul>
  *
@@ -45,7 +45,47 @@ public enum Language {
     /**
      * Tiếng Hàn
      */
-    KO("Korean");
+    KO("Korean"),
+
+    /**
+     * Tiếng Trung (Phổ thông)
+     */
+    ZH("Chinese"),
+
+    /**
+     * Tiếng Pháp
+     */
+    FR("French"),
+
+    /**
+     * Tiếng Đức
+     */
+    DE("German"),
+
+    /**
+     * Tiếng Tây Ban Nha
+     */
+    ES("Spanish"),
+
+    /**
+     * Tiếng Thái
+     */
+    TH("Thai"),
+
+    /**
+     * Tiếng Nga
+     */
+    RU("Russian"),
+
+    /**
+     * Tiếng Ý
+     */
+    IT("Italian"),
+
+    /**
+     * Tiếng Bồ Đào Nha
+     */
+    PT("Portuguese");
 
     /**
      * Tên hiển thị của ngôn ngữ
@@ -56,9 +96,4 @@ public enum Language {
         this.displayName = displayName;
     }
 
-    @JsonCreator
-    public static Language fromString(String value) {
-        if (value == null) return null;
-        return Language.valueOf(value.toUpperCase());
-    }
 }

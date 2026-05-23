@@ -25,7 +25,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 @Service
@@ -45,9 +47,11 @@ public class CreateShowtimeUseCase {
     @Transactional
     public ShowtimeResponse execute(CreateShowtimeRequest request) {
         validator.validateCreateRequest(request);
+        Instant startInstant = request.getStartTime();
+        Instant endInstant = request.getEndTime();
 
-        // Lấy layout hiện tại tại thời điểm startTime
-        LocalDate startDate = request.getStartTime().toLocalDate();
+        LocalDate startDate = startInstant.atZone(ZoneId.of("Asia/Ho_Chi_Minh")).toLocalDate();
+
         RoomLayout layout = roomLayoutRepository.findCurrentByRoomIdAndDate(request.getRoomId(), startDate)
                 .orElseThrow(() -> new IllegalStateException("No active layout for room " + request.getRoomId() + " at " + startDate));
         int totalCols = layout.getTotalCols();
@@ -66,7 +70,7 @@ public class CreateShowtimeUseCase {
         showtime.validateForCreate();
 
         Showtime saved = showtimeRepository.create(showtime);
-        if (!layout.isUsed()) roomLayoutRepository.markAsUsedAndSetLastUsedDate(layout, showtime.getStartTime().toLocalDate());
+        if (!layout.isUsed()) roomLayoutRepository.markAsUsedAndSetLastUsedDate(layout, startDate);
         // Lấy tất cả ghế của layout
         List<RoomLayoutSeat> layoutSeats = roomLayoutSeatRepository.findByRoomLayoutId(layout.getId().getValue());
 

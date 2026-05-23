@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -29,7 +30,7 @@ public class BookingDetailResponse {
     private String movieTitle;
     private String cinemaName;
     private String roomName;
-    private LocalDateTime showtimeStartTime;
+    private Instant showtimeStartTime;
 
     private BigDecimal totalTicketPrice;
     private BigDecimal totalComboPrice;
