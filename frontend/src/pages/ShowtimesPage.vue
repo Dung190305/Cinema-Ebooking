@@ -32,8 +32,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import ShowtimeFilters from '@/components/showtime/ShowtimeFilters.vue'
 import ShowtimeCard from '@/components/showtime/ShowtimeCard.vue'
 import Skeleton from '@/components/ui/skeleton/Skeleton.vue'
@@ -61,6 +61,47 @@ const {
 const authStore = useAuthStore()
 const router = useRouter()
 const formats = ref<ShowtimeFormatResponse[]>([])
+
+const route = useRoute()
+
+let updatingFromUrl = false
+
+// 1. Khi URL query thay đổi → cập nhật selectedDate (nếu khác)
+watch(
+  () => route.query.date,
+  (newDate) => {
+    if (updatingFromUrl) return
+    updatingFromUrl = true
+    const dateValue = typeof newDate === 'string' ? newDate : ''
+    if (dateValue && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+      if (selectedDate.value !== dateValue) {
+        selectedDate.value = dateValue
+      }
+    } else if (!dateValue && selectedDate.value !== '') {
+      selectedDate.value = ''  // xóa bộ lọc ngày
+    }
+    updatingFromUrl = false
+  },
+  { immediate: true } // chạy ngay khi mount
+)
+
+// 2. Khi selectedDate thay đổi (do user chọn trên filter) → cập nhật URL
+watch(
+  () => selectedDate.value,
+  (newDate) => {
+    if (updatingFromUrl) return
+    updatingFromUrl = true
+    const currentQuery = { ...route.query }
+    if (newDate && newDate.trim() !== '') {
+      router.replace({ query: { ...currentQuery, date: newDate } })
+    } else {
+      // Xóa query date nếu không có giá trị
+      const { date, ...restQuery } = currentQuery
+      router.replace({ query: restQuery })
+    }
+    updatingFromUrl = false
+  }
+)
 
 const groupedShowtimes = computed(() => {
   const today = new Date()

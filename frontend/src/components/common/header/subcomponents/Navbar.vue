@@ -1,25 +1,25 @@
 <template>
-    <nav class="flex gap-6 items-center">
+    <nav class="flex gap-3 sm:gap-6 items-center whitespace-nowrap ">
         <!-- Dropdown Phim -->
         <NavDropdownItem label="Phim" :items="movieMenuItems" />
 
         <!-- Dropdown Lịch chiếu -->
         <NavDropdownItem label="Lịch chiếu" :items="showtimeMenuItems" />
 
-        <!-- Dropdown Khuyến mãi (tùy chọn) -->
+        <!-- Dropdown Khuyến mãi -->
         <NavDropdownItem label="Khuyến mãi" :items="promotionMenuItems" />
 
         <!-- Link vé của tôi -->
-        <router-link to="/profile?tab=tickets" class="hover:underline hover:text-accent text-text-primary text-body">
+        <router-link to=""
+            class="hover:underline hover:text-accent text-text-primary text-body-sm sm:text-body whitespace-nowrap">
             Vé của tôi
         </router-link>
     </nav>
 </template>
-
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import NavDropdownItem, { type NavDropdownItemData } from '@/components/common/header/subcomponents/NavDropdownItem.vue';
-
+import { getDateKeyVN } from '@/utils/dateFormat'
 const router = useRouter()
 // Danh sách item cho dropdown "Phim"
 const movieMenuItems: NavDropdownItemData[] = [
@@ -42,13 +42,14 @@ const showtimeMenuItems: NavDropdownItemData[] = [
     {
         label: 'Suất chiếu hôm nay',
         onClick: () => {
-            const today = new Date().toISOString().split('T')[0]
-            router.push({ path: '/showtimes', query: { date: today } })
+            // Lấy ngày hôm nay theo giờ VN
+            const todayVN = new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' })
+            const todayDate = new Date(todayVN)
+            const todayStr = getDateKeyVN(todayDate.toISOString())   // hoặc tự format
+            // Hoặc dùng trực tiếp:
+            // const todayStr = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' })
+            router.push({ path: '/showtimes', query: { date: todayStr } })
         }
-    },
-    {
-        label: 'Suất chiếu theo rạp',
-        onClick: () => router.push('/showtimes')
     },
     {
         label: 'Tất cả suất chiếu',

@@ -49,6 +49,8 @@
 
   --color-border-admin-default: var(--color-border-admin-default);
   --color-border-admin-subtle: var(--color-border-admin-subtle);
+
+  --breakpoint-xs: 30rem;
 }
 
 @utility text-display {
