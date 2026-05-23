@@ -43,7 +43,7 @@ public class SendOtpResponse {
      * Frontend có thể hiển thị lại để user biết đã gửi đúng email.
      */
     private String email;
-
+    private String generatedOtpCode;
     /**
      * Thời điểm OTP hết hiệu lực.
      * Frontend dùng để:

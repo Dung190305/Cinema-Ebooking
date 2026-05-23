@@ -1,77 +1,86 @@
 package com.cinemaebooking.backend.user.application.usecase.verification;
 
+import com.cinemaebooking.backend.common.exception.domain.CommonExceptions;
 import com.cinemaebooking.backend.otp.application.dto.RegisterWithOtpRequest;
 import com.cinemaebooking.backend.otp.application.dto.SendOtpResponse;
 import com.cinemaebooking.backend.otp.application.port.OtpService;
 import com.cinemaebooking.backend.user.application.dto.AuthDTO.RegisterRequest;
+import com.cinemaebooking.backend.user.application.port.EmailService;
+import com.cinemaebooking.backend.user.application.validator.Auth.RegisterValidator;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-/**
- * SendVerificationEmailUseCase - Gửi email chứa mã OTP để xác minh email.
- *
- * <p>Lớp này đóng vai trò adapter: nhận RegisterRequest (từ AuthController),
- * convert sang RegisterWithOtpRequest, rồi delegate xuống OtpService.
- *
- * <p>Việc tách riêng UseCase này giúp:
- * <ul>
- *   <li>Giữ backward compatibility với các chỗ khác đã dùng SendVerificationEmailUseCase</li>
- *   <li>Có thể thêm logic validation/transform trước khi gọi OtpService</li>
- *   <li>Controller chỉ biết UseCase, không biết OtpService trực tiếp</li>
- * </ul>
- *
- * <p>Luồng:
- * <pre>
- * AuthController.register()
- *   → SendVerificationEmailUseCase.execute(RegisterRequest)
- *       → OtpService.registerAndSendOtp(RegisterWithOtpRequest)
- *           → Tạo user INACTIVE
- *           → Tạo OTP
- *           → Gửi email
- *           → Trả SendOtpResponse
- * </pre>
- *
- * @author Hieu Nguyen
- * @since 2026
- */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class SendVerificationEmailUseCase {
 
     private final OtpService otpService;
+    private final RegisterValidator registerValidator;
+    private final EmailService emailService;
 
-    /**
-     * Thực hiện đăng ký và gửi OTP.
-     *
-     * <p>Convert RegisterRequest (sử dụng LocalDate, UserGender)
-     * sang RegisterWithOtpRequest (sử dụng String) rồi delegate sang OtpService.
-     *
-     * @param request thông tin đăng ký từ user
-     * @return SendOtpResponse chứa userId và thời điểm hết hạn OTP
-     */
     public SendOtpResponse execute(RegisterRequest request) {
-        // Convert từ RegisterRequest (domain types) sang RegisterWithOtpRequest (String types)
+        if (request == null) {
+            throw CommonExceptions.invalidInput("Register request must not be null");
+        }
+
+        // Thực hiện validation sớm tại tầng Application (Fail-fast)
+        registerValidator.validate(request);
+
         RegisterWithOtpRequest otpRequest = RegisterWithOtpRequest.builder()
                 .fullName(request.getFullName())
                 .email(request.getEmail())
                 .password(request.getPassword())
                 .phoneNumber(request.getPhoneNumber())
-                // Convert LocalDate → String (yyyy-MM-dd) để tránh phụ thuộc type cụ thể
                 .dateOfBirth(request.getDateOfBirth() != null ? request.getDateOfBirth().toString() : null)
-                // Convert UserGender enum → String để tránh phụ thuộc type cụ thể
                 .gender(request.getGender() != null ? request.getGender().name() : null)
                 .build();
 
-        return otpService.registerAndSendOtp(otpRequest);
+        // 1. Lưu thông tin xuống Database (Chạy & Commit biệt lập trong Transaction)
+        SendOtpResponse response = otpService.registerAndSendOtp(otpRequest);
+
+        // 2. Gửi Email ngoài Transaction (Nếu mail lỗi, DB vẫn toàn vẹn, user có thể "Resend")
+        try {
+            sendOtpEmail(response.getEmail(), response.getGeneratedOtpCode());
+        } catch (Exception e) {
+            log.error("Không thể gửi email OTP đến {}: {}", response.getEmail(), e.getMessage());
+            // Tuỳ chọn: Có thể throw custom exception hoặc cứ trả về response bình thường
+            // để client hiển thị nút "Gửi lại mã" mà không làm mất thông tin tài khoản đã tạo.
+        }
+
+        return response;
     }
 
-    /**
-     * Gửi lại mã OTP cho user đã đăng ký nhưng chưa verify.
-     *
-     * @param userId ID của user cần gửi lại OTP
-     * @return SendOtpResponse chứa OTP mới
-     */
     public SendOtpResponse resend(Long userId) {
-        return otpService.resendOtp(userId);
+        // 1. Tạo OTP mới trong Database transaction
+        SendOtpResponse response = otpService.resendOtp(userId);
+
+        // 2. Gửi mail ngoài Transaction
+        try {
+            sendOtpEmail(response.getEmail(), response.getGeneratedOtpCode());
+        } catch (Exception e) {
+            log.error("Không thể gửi lại email OTP cho userId {}: {}", userId, e.getMessage());
+        }
+
+        return response;
+    }
+
+    private void sendOtpEmail(String to, String otpCode) {
+        String subject = "Mã xác minh đăng ký tài khoản - Cinema E-Booking";
+        String body = String.format("""
+                Xin chào,
+
+                Cảm ơn bạn đã đăng ký tài khoản tại Cinema E-Booking.
+
+                Mã xác minh của bạn là: %s
+
+                Mã này có hiệu lực trong 5 phút.
+                Vui lòng không chia sẻ mã này với bất kỳ ai.
+
+                Trân trọng,
+                Đội ngũ Cinema E-Booking
+                """, otpCode);
+        emailService.send(to, subject, body);
     }
 }

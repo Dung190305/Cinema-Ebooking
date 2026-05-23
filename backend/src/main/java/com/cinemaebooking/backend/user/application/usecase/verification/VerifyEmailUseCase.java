@@ -1,56 +1,35 @@
 package com.cinemaebooking.backend.user.application.usecase.verification;
 
-import com.cinemaebooking.backend.otp.application.dto.VerifyOtpRequest;
+import com.cinemaebooking.backend.loyalty.application.usecase.loyalty_account.CreateLoyaltyAccountUseCase;
 import com.cinemaebooking.backend.otp.application.dto.VerifyOtpResponse;
 import com.cinemaebooking.backend.otp.application.port.OtpService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-/**
- * VerifyEmailUseCase - Xác minh mã OTP để kích hoạt tài khoản.
- *
- * <p>Lớp này đóng vai trò adapter: nhận code và userId từ Controller,
- * wrap thành VerifyOtpRequest rồi delegate xuống OtpService.
- *
- * <p>Tương tự SendVerificationEmailUseCase, việc tách riêng giúp:
- * <ul>
- *   <li>Giữ backward compatibility với các chỗ đã dùng VerifyEmailUseCase</li>
- *   <li>Có thể thêm logic validation/transform trước khi gọi OtpService</li>
- *   <li>Tách biệt presentation layer và application logic</li>
- * </ul>
- *
- * <p>Luồng:
- * <pre>
- * AuthController.verifyOtp()
- *   → VerifyEmailUseCase.execute(code, userId)
- *       → OtpService.verifyOtp(code, userId)
- *           → Kiểm tra user, OTP
- *           → user.activate()
- *           → Trả VerifyOtpResponse
- * </pre>
- *
- * @author ducthinhn
- * @since 2026
- */
 @Service
 @RequiredArgsConstructor
 public class VerifyEmailUseCase {
 
     private final OtpService otpService;
+    private final CreateLoyaltyAccountUseCase createLoyaltyAccountUseCase;
 
     /**
-     * Xác minh mã OTP và kích hoạt tài khoản user.
-     *
-     * @param code   mã OTP 6 chữ số do user nhập vào
-     * @param userId ID của user đang thực hiện verify
-     * @return VerifyOtpResponse chứa kết quả xác minh
+     * Xác minh mã OTP, kích hoạt tài khoản user và đồng thời khởi tạo ví Loyalty.
+     * Sử dụng @Transactional tại đây để đảm bảo tính nguyên tử (Atomicity):
+     * Kích hoạt user thành công thì buộc phải có tài khoản Loyalty được gán kèm.
      */
+    @Transactional
     public VerifyOtpResponse execute(String code, Long userId) {
-        // Wrap thành VerifyOtpRequest để OtpService nhận
-        VerifyOtpRequest request = VerifyOtpRequest.builder()
-                .code(code)
-                .userId(userId)
-                .build();
-        return otpService.verifyOtp(code, userId);
+
+        // 1. Xác thực OTP và chuyển trạng thái user thành ACTIVE
+        VerifyOtpResponse response = otpService.verifyOtp(code, userId);
+
+        // 2. Khởi tạo tài khoản Loyalty ngay khi user vừa ACTIVE thành công
+        if (response.isActivated()) {
+            createLoyaltyAccountUseCase.execute(userId);
+        }
+
+        return response;
     }
 }
