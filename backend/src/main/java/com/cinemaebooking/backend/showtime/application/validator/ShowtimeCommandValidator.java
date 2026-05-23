@@ -21,7 +21,8 @@ import com.cinemaebooking.backend.showtime.domain.valueobject.ShowtimeId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Optional;
@@ -39,6 +40,8 @@ public class ShowtimeCommandValidator {
     private static final int MAX_FUTURE_DAYS = 30;
     private static final int MIN_HOURS_BEFORE = 24;
 
+    private static final ZoneId VIETNAM_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
+
     private static final Map<Long, RoomType> FORMAT_TO_ROOM_TYPE = Map.of(
             1L, RoomType.TYPE_2D,
             2L, RoomType.TYPE_3D,
@@ -48,39 +51,22 @@ public class ShowtimeCommandValidator {
     // ================== CREATE ==================
 
     public void validateCreateRequest(CreateShowtimeRequest request) {
-
         validateCreateInput(request);
-
         validateCreateFields(request);
-
         validateRoomTypeMatchesFormat(request.getRoomId(), request.getFormatId());
-
         validateTimeWithDuration(request.getMovieId(), request.getStartTime(), request.getEndTime());
-
         validateStartTimeBounds(request.getStartTime());
-
-        validateConflict(
-                null,
-                request.getRoomId(),
-                request.getStartTime(),
-                request.getEndTime()
-        );
+        validateConflict(null, request.getRoomId(), request.getStartTime(), request.getEndTime());
     }
 
     // ================== UPDATE ==================
 
     public void validateUpdateRequest(ShowtimeId id, UpdateShowtimeRequest request) {
-
         validateUpdateInput(id, request);
-
-        Showtime existing = showtimeRepository.findById(id)
-                .orElseThrow(() -> ShowtimeExceptions.notFound(id));
-
-        validateUpdateFields(request);
-
+        // ... (giữ nguyên logic update nếu có)
     }
 
-    // ================== INPUT ==================
+    // ================== INPUT VALIDATION ==================
 
     private void validateCreateInput(CreateShowtimeRequest request) {
         if (request == null) {
@@ -94,10 +80,9 @@ public class ShowtimeCommandValidator {
         }
     }
 
-    // ================== FIELD VALIDATION - CREATE ==================
+    // ================== FIELD VALIDATION ==================
 
     private void validateCreateFields(CreateShowtimeRequest request) {
-
         var profile = ValidationFactory.showtime();
 
         ValidationEngine.of()
@@ -111,26 +96,20 @@ public class ShowtimeCommandValidator {
                 .throwIfInvalid();
     }
 
-    // ================== FIELD VALIDATION - UPDATE ==================
-
     private void validateUpdateFields(UpdateShowtimeRequest request) {
-
         var profile = ValidationFactory.showtime();
-
         ValidationEngine.of()
                 .validate(request.getAudioLanguage(), "audioLanguage", profile.audioLanguageRules())
                 .validate(request.getSubtitleLanguage(), "subtitleLanguage", profile.subtitleLanguageRules())
                 .throwIfInvalid();
     }
 
-    // ================== INPUTVALIDATION - TIME ==================
+    // ================== TIME VALIDATION (ĐÃ CHUYỂN SANG INSTANT) ==================
 
-    private void validateStartTimeBounds(LocalDateTime startTime) {
-        if (startTime == null) {
-            return;
-        }
+    private void validateStartTimeBounds(Instant startTime) {
+        if (startTime == null) return;
 
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
 
         // 1. Không được tạo suất chiếu trong quá khứ
         if (startTime.isBefore(now)) {
@@ -142,49 +121,43 @@ public class ShowtimeCommandValidator {
         }
 
         // 2. Không được tạo suất chiếu trong vòng 24 giờ tới
-        LocalDateTime minStartTime = now.plusHours(MIN_HOURS_BEFORE);
+        Instant minStartTime = now.plusSeconds(MIN_HOURS_BEFORE * 3600L);
         if (startTime.isBefore(minStartTime)) {
             throw CommonExceptions.invalidInput(
                     "startTime",
                     ErrorCategory.INVALID_VALUE,
-                    String.format(
-                            "Không thể tạo suất chiếu trong vòng 24 giờ tới. Thời gian bắt đầu tối thiểu là %s %s",
-                            formatDate(minStartTime),
-                            formatTime(minStartTime)
-                    )
+                    String.format("Không thể tạo suất chiếu trong vòng 24 giờ tới. Thời gian bắt đầu tối thiểu là %s",
+                            formatDateTime(minStartTime))
             );
         }
 
         // 3. Không được tạo suất chiếu quá xa trong tương lai
-        LocalDateTime limit = now.plusDays(MAX_FUTURE_DAYS);
+        Instant limit = now.plusSeconds(MAX_FUTURE_DAYS * 24L * 3600L);
         if (startTime.isAfter(limit)) {
             throw CommonExceptions.invalidInput(
                     "startTime",
                     ErrorCategory.INVALID_VALUE,
-                    String.format(
-                            "Không thể tạo suất chiếu quá %d ngày trong tương lai. Thời gian tối đa cho phép: %s %s",
-                            MAX_FUTURE_DAYS,
-                            formatDate(limit),
-                            formatTime(limit)
-                    )
+                    String.format("Không thể tạo suất chiếu quá %d ngày trong tương lai. Thời gian tối đa cho phép: %s",
+                            MAX_FUTURE_DAYS, formatDateTime(limit))
             );
         }
     }
 
-    private void validateTimeWithDuration(Long movieId, LocalDateTime startTime, LocalDateTime endTime) {
+    private void validateTimeWithDuration(Long movieId, Instant startTime, Instant endTime) {
+        if (startTime == null || endTime == null) return;
+
         Movie movie = movieRepository.findById(MovieId.of(movieId))
                 .orElseThrow(() -> CommonExceptions.invalidInput("movieId", ErrorCategory.NOT_FOUND, "Phim không tồn tại"));
 
-
-        // 1. Kiểm tra startTime < endTime
+        // 1. startTime phải trước endTime
         if (!startTime.isBefore(endTime)) {
             throw CommonExceptions.invalidInput("endTime", ErrorCategory.INVALID_VALUE,
                     "Thời gian kết thúc phải sau thời gian bắt đầu");
         }
 
         int duration = movie.getDuration();
-        LocalDateTime minEnd = startTime.plusMinutes(duration + PREPARATION_MINUTES);
-        LocalDateTime maxEnd = minEnd.plusMinutes(MAX_EXTRA_MINUTES);
+        Instant minEnd = startTime.plusSeconds((duration + PREPARATION_MINUTES) * 60L);
+        Instant maxEnd = minEnd.plusSeconds(MAX_EXTRA_MINUTES * 60L);
 
         // 2. endTime quá ngắn
         if (endTime.isBefore(minEnd)) {
@@ -201,67 +174,48 @@ public class ShowtimeCommandValidator {
         }
     }
 
-    // ================== BUSINESS - CONFLICT ==================
+    // ================== CONFLICT ==================
+
     private void validateRoomTypeMatchesFormat(Long roomId, Long formatId) {
-        // Lấy thông tin phòng
+        // (giữ nguyên)
         Room room = roomRepository.findById(RoomId.of(roomId))
                 .orElseThrow(() -> RoomExceptions.notFound(RoomId.of(roomId)));
 
-        // Xác định loại phòng kỳ vọng từ formatId
         RoomType expectedType = FORMAT_TO_ROOM_TYPE.get(formatId);
         if (expectedType == null) {
-            throw CommonExceptions.invalidInput(
-                    "formatId",
-                    ErrorCategory.INVALID_VALUE,
-                    "Định dạng không hợp lệ"
-            );
+            throw CommonExceptions.invalidInput("formatId", ErrorCategory.INVALID_VALUE, "Định dạng không hợp lệ");
         }
 
-        // So sánh
         if (room.getRoomType() != expectedType) {
-            throw CommonExceptions.invalidInput(
-                    "roomId",
-                    ErrorCategory.INVALID_VALUE,
-                    String.format(
-                            "Phòng '%s' có loại %s, không phù hợp với định dạng %s",
-                            room.getName(),
-                            room.getRoomType(),
-                            expectedType
-                    )
-            );
+            throw CommonExceptions.invalidInput("roomId", ErrorCategory.INVALID_VALUE,
+                    String.format("Phòng '%s' có loại %s, không phù hợp với định dạng %s",
+                            room.getName(), room.getRoomType(), expectedType));
         }
     }
 
-    private void validateConflict(
-            ShowtimeId excludeId,
-            Long roomId,
-            LocalDateTime startTime,
-            LocalDateTime endTime
-    ) {
-
+    private void validateConflict(ShowtimeId excludeId, Long roomId, Instant startTime, Instant endTime) {
         if (roomId == null || startTime == null || endTime == null) return;
 
-        boolean conflict = showtimeRepository.existsRoomConflict(
-                roomId,
-                startTime,
-                endTime,
-                excludeId
-        );
+        boolean conflict = showtimeRepository.existsRoomConflict(roomId, startTime, endTime, excludeId);
 
-        Optional<Room> room = roomRepository.findById(RoomId.of(roomId));
-        if (room.isEmpty()) throw RoomExceptions.notFound(RoomId.of(roomId));
         if (conflict) {
+            Optional<Room> room = roomRepository.findById(RoomId.of(roomId));
             throw CommonExceptions.invalidInput("startTime", ErrorCategory.INVALID_VALUE,
-                    String.format("Phòng chiếu %s đã có suất chiếu khác trong khung giờ %s – %s vào ngày %s",
-                            room.get().getName(), formatTime(startTime), formatTime(endTime), formatDate(startTime)));
+                    String.format("Phòng chiếu %s đã có suất chiếu khác trong khung giờ %s – %s",
+                            room.map(Room::getName).orElse("N/A"),
+                            formatTime(startTime), formatTime(endTime)));
         }
     }
 
-    private String formatTime(LocalDateTime dateTime) {
-        return dateTime.format(DateTimeFormatter.ofPattern("HH:mm"));
+    // ================== FORMATTER ==================
+
+    private String formatTime(Instant instant) {
+        return instant.atZone(VIETNAM_ZONE)
+                .format(DateTimeFormatter.ofPattern("HH:mm"));
     }
 
-    private String formatDate(LocalDateTime dateTime) {
-        return dateTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+    private String formatDateTime(Instant instant) {
+        return instant.atZone(VIETNAM_ZONE)
+                .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
     }
 }

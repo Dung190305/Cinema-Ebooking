@@ -1,3 +1,4 @@
+import { User } from 'lucide-vue-next';
 
 export type UserRole = 'ADMIN' | 'USER'
 export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'BANNED'
@@ -37,26 +38,21 @@ export interface UserProfile {
     status: UserStatus
 }
 
-// Loyalty account status
-export type LoyaltyAccountStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | 'CLOSED';
-
-// DTO từ backend LoyaltyAccountResponse
-export interface LoyaltyAccountResponse {
-    loyaltyAccountId: number;
-    loyaltyNumber: string;
-    totalSpending: number;     // BigDecimal -> number
-    lifetimePoints: number;
-    currentPoints: number;
-    tierId: number;
-    lastActivityDate: string;  // LocalDateTime -> ISO string
-    joinedDate: string;
-    status: LoyaltyAccountStatus;
+export interface UpdateUserRequest {
+    fullName?: string
+    phoneNumber?: string
+    dateOfBirth?: string  // ISO date
+    gender?: UserGender
 }
 
-// DTO từ backend LoyaltyAccountSummaryResponse
-export interface LoyaltyAccountSummaryResponse {
-    loyaltyAccountId: number;
-    currentPoints: number;
-    tierName: string;
-} 
+export interface UpdateAvatarRequest {
+    avatarUrl: string
+}
+
+export interface ChangePasswordRequest {
+  oldPassword: string
+  newPassword: string
+}
+
+
 

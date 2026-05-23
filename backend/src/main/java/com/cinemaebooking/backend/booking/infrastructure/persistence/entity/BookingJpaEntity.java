@@ -13,6 +13,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -67,7 +68,7 @@ public class BookingJpaEntity extends BaseJpaEntity {
     private String roomName;
 
     @Column(name = "showtime_start_time", nullable = false)
-    private LocalDateTime showtimeStartTime;
+    private Instant showtimeStartTime;
 
     @Positive
     @Column(name = "total_ticket_price", nullable = false, precision = 12, scale = 2)

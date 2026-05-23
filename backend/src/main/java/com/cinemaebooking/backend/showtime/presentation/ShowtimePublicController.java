@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -20,19 +21,22 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class ShowtimePublicController {
 
-    private final GetShowtimeUseCase getShowtimesUseCase;
+    private final GetShowtimeUseCase getShowtimeUseCase;
     private final GetShowtimeDetailUsecase getShowtimeDetailUseCase;
     private final GetSeatMapByShowtimeUseCase getSeatMapByShowtimeUseCase;
 
     // ================== LIST (PUBLIC) ==================
     @GetMapping
-    public Page<ShowtimeResponse> searchShowtimes(
+    public Page<ShowtimeResponse> searchShowtime(
             @RequestParam(required = false) Long cinemaId,
             @RequestParam(required = false) Long movieId,
-            @RequestParam(required = false) LocalDate date,
+            @RequestParam(required = false) Long roomId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(required = false) String city,
             @PageableDefault(size = 8) Pageable pageable
     ) {
-        return getShowtimesUseCase.execute(cinemaId, movieId,null, null, date, pageable);
+        return getShowtimeUseCase.execute(cinemaId, movieId,roomId, status, date, city, pageable);
     }
 
     // ================== DETAIL (PUBLIC) ==================

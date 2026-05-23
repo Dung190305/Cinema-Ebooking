@@ -15,6 +15,8 @@ public interface UserRepository {
 
     User update(User user);
 
+    User updateAvatar(User user);
+
     Optional<User> findById(UserId id);
 
     Optional<User> findByEmail(String email);

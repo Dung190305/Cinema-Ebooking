@@ -63,16 +63,13 @@ const processQueue = (error, token) => {
     failedQueue.forEach(({ resolve, reject }) => {
         error ? reject(error) : resolve(token)  // resolve với token
     })
+    failedQueue = []
 }
 
 const logout = () => {
     localStorage.removeItem('accessToken')
     localStorage.removeItem('refreshToken')
     window.dispatchEvent(new CustomEvent('auth:logout'))  // giữ để store cleanup nếu cần
-
-    if (!window.location.pathname.includes('/')) {
-        window.location.href = '/'
-    }
 }
 
 apiClient.interceptors.response.use(
@@ -157,7 +154,10 @@ apiClient.interceptors.response.use(
             return new Promise((resolve, reject) => {
                 failedQueue.push({ resolve, reject, config: originalRequest })
             })
-                .then(() => apiClient(originalRequest))
+                .then((token) => {
+                    if (token) originalRequest.headers.Authorization = `Bearer ${token}`
+                    return apiClient(originalRequest)
+                })
                 .catch(err => Promise.reject(err))
         }
 

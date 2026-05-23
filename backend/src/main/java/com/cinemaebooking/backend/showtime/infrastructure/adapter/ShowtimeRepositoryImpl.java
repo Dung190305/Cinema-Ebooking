@@ -5,7 +5,6 @@ import com.cinemaebooking.backend.movie.infrastructure.persistence.repository.Mo
 import com.cinemaebooking.backend.room.infrastructure.persistence.repository.RoomJpaRepository;
 import com.cinemaebooking.backend.showtime.application.dto.showtime.ShowtimeSnapshot;
 import com.cinemaebooking.backend.showtime.application.port.ShowtimeRepository;
-import com.cinemaebooking.backend.showtime.domain.enums.Language;
 import com.cinemaebooking.backend.showtime.domain.enums.ShowtimeStatus;
 import com.cinemaebooking.backend.showtime.domain.model.Showtime;
 import com.cinemaebooking.backend.showtime.domain.valueobject.ShowtimeId;
@@ -18,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -99,15 +99,15 @@ public class ShowtimeRepositoryImpl implements ShowtimeRepository {
 
     @Override
     public Page<Showtime> search(Long cinemaId, Long movieId, Long roomId,
-                                 ShowtimeStatus status, LocalDate date, Pageable pageable) {
-        return jpaRepository.search(cinemaId, movieId, roomId, status, date, pageable)
+                                 ShowtimeStatus status, LocalDate date, String city, Pageable pageable) {
+        return jpaRepository.search(cinemaId, movieId, roomId, status, date, city, pageable)
                 .map(mapper::toDomain);
     }
 
     @Override
     public boolean existsRoomConflict(Long roomId,
-                                      LocalDateTime startTime,
-                                      LocalDateTime endTime,
+                                      Instant startTime,
+                                      Instant endTime,
                                       ShowtimeId excludeId) {
 
         Long exclude = (excludeId != null) ? excludeId.getValue() : null;

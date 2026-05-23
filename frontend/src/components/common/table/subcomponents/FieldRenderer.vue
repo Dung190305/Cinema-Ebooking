@@ -28,8 +28,8 @@
                 <template v-else-if="effectiveType === 'date'">
                     {{ modelValue ? formatDateOnly(String(modelValue)) : '—' }}
                 </template>
-                <template v-else-if="effectiveType === 'datetime'"> <!-- thêm mới -->
-                    {{ modelValue ? formatDateTime(String(modelValue)) : '—' }}
+                <template v-else-if="effectiveType === 'datetime'">
+                    {{ modelValue ? formatDateTimeVN(modelValue) : '—' }}
                 </template>
                 <template v-else-if="effectiveType === 'currency'">
                     {{ modelValue != null && modelValue !== '' ? formatVND(Number(modelValue)) + ' ₫' : '—' }}
@@ -209,7 +209,7 @@
                 <span>{{ modelValue ? formatDateOnly(String(modelValue)) : '—' }}</span>
             </template>
             <template v-else-if="effectiveType === 'datetime'">
-                <span>{{ modelValue ? formatDateTime(String(modelValue)) : '—' }}</span>
+                <span>{{ modelValue ? formatDateTimeVN(modelValue) : '—' }}</span>
             </template>
 
             <!-- Default display -->
@@ -230,7 +230,7 @@ import { isReadonlyInEdit }
     from '@/components/common/table/utils/column'
 
 import CalendarPicker from '@/components/ui/calendar/CalenderPicker.vue'
-import { dateToISOString, parseISODate } from '@/utils/dateFormat'
+import { dateToISOString, parseDateSafe, createLocalDate, formatDateTimeVN } from '@/utils/dateFormat'
 
 
 const props = defineProps<{
@@ -255,13 +255,20 @@ const autoSelectToday = computed(() => {
 })
 
 const effectiveMinDate = computed<Date | null>(() => {
-    // Nếu cột không bật futureOnly → không giới hạn ngày
     if (!futureOnly.value) return null
 
     const now = new Date()
-    now.setDate(now.getDate() + (props.column.minDateOffset ?? 0))
-    now.setHours(0, 0, 0, 0) // chuẩn về đầu ngày
-    return now
+    const offset = props.column.minDateOffset ?? 0
+
+    // Tạo ngày tối thiểu an toàn theo múi giờ VN
+    const minDate = createLocalDate(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() + offset
+    )
+
+    minDate.setHours(0, 0, 0, 0)
+    return minDate
 })
 
 const emit = defineEmits<{
@@ -490,37 +497,40 @@ function getOptionName(value: number | string) {
     return opt?.label || String(value)
 }
 
-// date-only: "15/05/2026"
 function formatDateOnly(iso: string): string {
+    if (!iso) return '—'
     try {
         return new Date(iso).toLocaleDateString('vi-VN', {
-            day: '2-digit', month: '2-digit', year: 'numeric',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
         })
     } catch { return iso }
 }
 
-// datetime: "15/05/2026, 14:00"
 function formatDateTime(iso: string): string {
+    if (!iso) return '—'
     try {
-        return new Date(iso).toLocaleString('vi-VN', {
-            day: '2-digit', month: '2-digit', year: 'numeric',
-            hour: '2-digit', minute: '2-digit',
-        })
+        // Sử dụng formatDateTimeVN từ utils để nhất quán
+        return formatDateTimeVN(new Date(iso))
     } catch { return iso }
 }
 
 // ─── Date input helpers ───────────────────────────────────────────────────────
 
 function toDateObj(val: unknown): Date | null {
-    if (!val) return null
-    return parseISODate(String(val))
+    return parseDateSafe(val)  // ← Dùng hàm mới thay vì parseISODate
 }
 
 function fromDateObj(d: Date | null, isDatetime: boolean): string {
     if (!d) return ''
-    return dateToISOString(d, isDatetime)
-}
 
+    // Quan trọng: luôn trả về string YYYY-MM-DD hoặc ISO đúng format
+    if (!isDatetime) {
+        return dateToISOString(d, false)  // YYYY-MM-DD
+    }
+    return dateToISOString(d, true)       // full ISO
+}
 // ─── Currency state ───────────────────────────────────────────────────────────
 const isCurrencyFocused = ref(false)
 

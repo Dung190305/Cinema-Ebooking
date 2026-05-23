@@ -28,7 +28,6 @@ public class AdminController {
     private final DeactivateUserUseCase deactivateUserUseCase;
     private final ChangeUserRoleUseCase changeUserRoleUseCase;
     private final DeleteUserUseCase deleteUserUseCase;
-    private final UpdateUserUseCase updateUserUseCase;
 
     @GetMapping("/{id}")
     public UserDetailResponse getUserById(@PathVariable Long id) {
@@ -66,14 +65,6 @@ public class AdminController {
                 .last(page.isLast())
                 .empty(page.isEmpty())
                 .build();
-    }
-
-    @PutMapping("/{id}")
-    public UserResponse updateUser(
-            @PathVariable Long id,
-            @Valid @RequestBody AdminUpdateUserRequest request
-    ) {
-        return updateUserUseCase.execute(UserId.of(id), request);
     }
 
     @PutMapping("/{id}/activate")

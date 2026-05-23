@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { UserProfile, LoyaltyAccountSummaryResponse } from '@/types/auth.types'
 import { apiClient } from '@/api/axios'
+import { userApi } from '@/api/user.api'
 
 export const useAuthStore = defineStore('auth', () => {
 
@@ -38,6 +39,30 @@ export const useAuthStore = defineStore('auth', () => {
     const isAdmin = computed(() => user.value?.role === 'ADMIN')
     const isActive = computed(() => user.value?.status === 'ACTIVE')
 
+    const updateUserProfile = (updatedData: Partial<UserProfile>) => {
+        if (user.value) {
+            user.value = { ...user.value, ...updatedData }
+        }
+    }
+
+    const updateLoyalty = (updatedData: Partial<LoyaltyAccountSummaryResponse>) => {
+        if (loyaltyAccount.value) {
+            loyaltyAccount.value = { ...loyaltyAccount.value, ...updatedData }
+        } else if (updatedData) {
+            // Trường hợp chưa có loyalty (lần đầu)
+            loyaltyAccount.value = updatedData as LoyaltyAccountSummaryResponse
+        }
+    }
+
+    const refreshUserProfile = async () => {
+        try {
+            const response = await userApi.getMe(accessToken)
+            user.value = response
+        } catch (error) {
+            console.error('Refresh profile failed', error)
+        }
+    }
+
     return {
         user,
         accessToken,
@@ -49,6 +74,9 @@ export const useAuthStore = defineStore('auth', () => {
         isLoggedIn,
         isAdmin,
         isActive,
+        updateUserProfile,
+        updateLoyalty,
+        refreshUserProfile,
     }
 },{
     persist: {

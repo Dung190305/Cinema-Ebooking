@@ -166,6 +166,19 @@ export function useSafeTriangleHover(hideDelay = 450) {
     }
   }
 
+  function forceClose() {
+    if (hideTimer) {
+      clearTimeout(hideTimer)
+      hideTimer = null
+    }
+    if (globalMouseMoveListener) {
+      document.removeEventListener('mousemove', globalMouseMoveListener)
+      globalMouseMoveListener = null
+    }
+    showDropdown.value = false
+  }
+
+
   return {
     showDropdown,
     handleTriggerEnter,
@@ -175,5 +188,6 @@ export function useSafeTriangleHover(hideDelay = 450) {
     setDropdownElement,
     setTriggerElement,
     cleanup,
+    forceClose,
   }
 }

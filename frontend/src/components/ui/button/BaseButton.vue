@@ -12,6 +12,7 @@ const props = defineProps<{
   iconOnly?: boolean
   isAdmin?: boolean
   disabled?: boolean
+  customClass?: string
 }>()
 
 /* ================= CONFIG ================= */
@@ -109,7 +110,9 @@ const buttonClass = computed(() => [
 
   ...getCompoundClasses(),
 
-  props.disabled && 'opacity-50 pointer-events-none'
+  props.disabled && 'opacity-50 pointer-events-none',
+
+  props.customClass,
 ])
 </script>
 

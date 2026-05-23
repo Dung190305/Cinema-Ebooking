@@ -82,6 +82,13 @@
                     {{ statusLabel(value) }}
                 </span>
             </template>
+
+            <template #cell-audioLanguage="{ value }">
+                <span>{{ getLanguageLabel(value) }}</span>
+            </template>
+            <template #cell-subtitleLanguage="{ value }">
+                <span>{{ getLanguageLabel(value) }}</span>
+            </template>
         </DataTable>
 
         <!-- Pagination -->
@@ -121,7 +128,8 @@ import type { ShowtimeResponse, CreateShowtimeRequest } from '@/types/showtime'
 import type { ColumnDef } from '@/components/common/table/types/table'
 import SeatMapPreview from '@/components/showtime/SeatMapPreview.vue'
 import SeatMapDialog from '@/components/showtime/SeatMapDialog.vue';
-import { dateToISOString, parseISODate } from '@/utils/dateFormat'
+import { languageOptions, getLanguageLabel } from '@/constants/languages'
+import { dateToISOString, parseISODate, toUTCInstant, fromUTCToLocal, formatDateTimeVN } from '@/utils/dateFormat'
 
 
 const route = useRoute()
@@ -197,12 +205,6 @@ const formatStaticOptions = [
     { value: 3, label: 'IMAX' },
 ]
 
-const languageOptions = [
-    { value: 'EN', label: 'English' },
-    { value: 'VI', label: 'Vietnamese' },
-    { value: 'JA', label: 'Japanese' },
-    { value: 'KO', label: 'Korean' },
-]
 
 // Định nghĩa columns (sửa key 'id')
 const columns: ColumnDef<ShowtimeResponse>[] = [
@@ -269,37 +271,47 @@ function openCreateModal() {
 function onFieldBlur(key: string, draft: Record<string, unknown>) {
     if (key !== 'startTime') return
 
-    const val = draft.startTime
     let startDate: Date | null = null
+    const val = draft.startTime
 
     if (val instanceof Date) {
         startDate = val
     } else if (typeof val === 'string') {
-        startDate = parseISODate(val)   // dùng chung tiện ích
+        startDate = parseISODate(val)
     }
 
-    if (!startDate || isNaN(startDate.getTime())) return
+    if (!startDate) return
 
-    const endEmpty =
-        !draft.endTime ||
+    const endEmpty = !draft.endTime ||
         (typeof draft.endTime === 'string' && draft.endTime.trim() === '') ||
-        (draft.endTime instanceof Date && isNaN(draft.endTime.getTime()))
+        (draft.endTime instanceof Date && isNaN((draft.endTime as Date).getTime()))
 
     if (endEmpty) {
-        draft.endTime = dateToISOString(startDate, true)
+        const endDate = new Date(startDate.getTime())
+        endDate.setHours(endDate.getHours() + 2) // mặc định +2 tiếng
+        draft.endTime = dateToISOString(endDate, true)
     }
 }
 
 async function handleCreate(draft: Record<string, unknown>) {
+    const startTimeStr = typeof draft.startTime === 'string'
+        ? draft.startTime
+        : (draft.startTime as Date)?.toISOString()
+
+    const endTimeStr = typeof draft.endTime === 'string'
+        ? draft.endTime
+        : (draft.endTime as Date)?.toISOString()
+
     const ok = await create({
         movieId: Number(draft.movieId),
         roomId: Number(draft.roomId),
         formatId: Number(draft.formatId),
-        startTime: String(draft.startTime),
-        endTime: String(draft.endTime),
+        startTime: toUTCInstant(new Date(startTimeStr!)),
+        endTime: toUTCInstant(new Date(endTimeStr!)),
         audioLanguage: String(draft.audioLanguage),
         subtitleLanguage: String(draft.subtitleLanguage),
     })
+
     if (ok) showCreateModal.value = false
 }
 

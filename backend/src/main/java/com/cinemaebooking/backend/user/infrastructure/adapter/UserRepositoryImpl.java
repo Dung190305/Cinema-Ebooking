@@ -47,6 +47,13 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
+    public User updateAvatar(User user){
+        UserJpaEntity oldEntity = userJpaRepository.findByIdOrThrow(user.getId().getValue());
+        oldEntity.setAvatarUrl(user.getAvatarUrl());
+        return userMapper.toDomain(userJpaRepository.save(oldEntity));
+    }
+
+    @Override
     public Optional<User> findById(UserId id) {
         return userJpaRepository.findById(id.getValue())
                 .map(userMapper::toDomain);

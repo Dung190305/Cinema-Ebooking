@@ -9,7 +9,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 /**
  * ShowtimeJpaEntity - Persistence model for showtimes table.
@@ -41,10 +41,10 @@ import java.time.LocalDateTime;
 public class ShowtimeJpaEntity extends BaseJpaEntity {
 
     @Column(nullable = false)
-    private LocalDateTime startTime;
+    private Instant startTime;
 
     @Column(nullable = false)
-    private LocalDateTime endTime;
+    private Instant endTime;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 10)
