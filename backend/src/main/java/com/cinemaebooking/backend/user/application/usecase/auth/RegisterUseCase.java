@@ -22,6 +22,10 @@ public class RegisterUseCase {
     private final RegisterValidator registerValidator;
     private final CreateLoyaltyAccountUseCase createLoyaltyAccountUseCase;
 
+    /**
+     * Original register — tạo tài khoản ACTIVE ngay (không qua OTP).
+     * Giữ lại để backward compatibility.
+     */
     @Transactional
     public void execute(RegisterRequest request) {
 

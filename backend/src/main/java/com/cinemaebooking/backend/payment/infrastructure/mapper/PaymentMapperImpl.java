@@ -20,7 +20,8 @@ public class PaymentMapperImpl implements PaymentMapper {
     public Payment toDomain(PaymentJpaEntity e) {
         if (e == null) return null;
 
-        Payment domain = Payment.builder()
+        return Payment.builder()
+                .id(PaymentId.ofNullable(e.getId()))
                 .paymentCode(e.getPaymentCode())
                 .bookingId(e.getBooking() != null ? e.getBooking().getId() : null)
                 .amount(e.getAmount())
@@ -31,9 +32,6 @@ public class PaymentMapperImpl implements PaymentMapper {
                 .paidAt(e.getPaidAt())
                 .expiredAt(e.getExpiredAt())
                 .build();
-        // Assign id after build using Unsafe to bypass Lombok's field hiding
-        assignIdFromEntity(domain, e.getId());
-        return domain;
     }
 
     @Override
@@ -86,22 +84,5 @@ public class PaymentMapperImpl implements PaymentMapper {
         e.setTransactionId(d.getTransactionId());
         e.setProviderResponse(d.getProviderResponse());
         e.setPaidAt(d.getPaidAt());
-    }
-
-    /**
-     * Uses Unsafe to bypass Lombok's @SuperBuilder field-hiding.
-     * This is safe because Payment has @SuperBuilder and id is protected.
-     */
-    @SuppressWarnings("restriction")
-    private void assignIdFromEntity(Payment domain, Long id) {
-        try {
-            var unsafe = sun.misc.Unsafe.class.getDeclaredField("theUnsafe");
-            unsafe.setAccessible(true);
-            sun.misc.Unsafe u = (sun.misc.Unsafe) unsafe.get(null);
-            var field = Payment.class.getSuperclass().getDeclaredField("id");
-            u.putObjectVolatile(domain, u.objectFieldOffset(field), PaymentId.of(id));
-        } catch (Exception ex) {
-            throw new RuntimeException("Cannot assign id to Payment domain", ex);
-        }
     }
 }

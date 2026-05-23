@@ -11,6 +11,7 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @SuperBuilder(toBuilder = true)
@@ -26,6 +27,7 @@ public class User extends BaseEntity<UserId> {
     private String avatarUrl;
     private UserRole role;
     private UserStatus status;
+    private LocalDateTime createdAt;
 
     // ================== BUSINESS METHODS ==================
 

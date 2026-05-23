@@ -176,11 +176,21 @@ const routes: RouteRecordRaw[] = [
       // ── Users ──────────────────────────────────────────────────────────────
       {
         path: 'users',
-        name: 'admin-users',
-        component: () => import('@/pages/admin/UsersPage.vue'),
-        meta: {
-          sidebar: { label: 'Users', icon: User },
-        },
+        meta: { sidebar: { label: 'Users', icon: User } },
+        children: [
+          {
+            path: '',
+            name: 'admin-users',
+            component: () => import('@/pages/admin/UsersPage.vue'),
+            meta: { sidebar: { label: 'All Users' } },
+          },
+          {
+            path: ':id',
+            name: 'admin-user-detail',
+            component: () => import('@/pages/admin/UserDetailPage.vue'),
+            meta: { hidden: true },
+          },
+        ],
       },
     ],
   },
