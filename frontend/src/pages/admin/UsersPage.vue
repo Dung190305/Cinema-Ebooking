@@ -101,8 +101,8 @@
             :showSave="false"
             @save="() => {}"
         >
-            <!-- Avatar cell -->
-            <template #cell-avatarUrl="{ value, item }">
+            <!-- FullName cell -->
+            <template #cell-fullName="{ item }">
                 <div class="flex items-center gap-3">
                     <div
                         class="flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white"
@@ -112,6 +112,11 @@
                     </div>
                     <span class="truncate text-sm font-medium text-slate-900">{{ item.fullName }}</span>
                 </div>
+            </template>
+
+            <!-- Avatar URL cell (hidden in table, shown in detail panel) -->
+            <template #cell-avatarUrl="{ value }">
+                <span class="text-sm text-slate-600">{{ value || '—' }}</span>
             </template>
 
             <!-- Phone number cell -->
@@ -264,40 +269,62 @@ async function clearAllFilters() {
 // ── Column definitions ────────────────────────────────────────────────────────
 const columns: ColumnDef<UserResponse>[] = [
     {
-        key: 'avatarUrl',
+        key: 'fullName',
         label: 'Họ tên',
         type: 'text',
         width: '220px',
+        required: false,
+    },
+    {
+        key: 'avatarUrl',
+        label: 'Avatar URL',
+        type: 'text',
+        hideInTable: true,
+        required: false,
     },
     {
         key: 'email',
         label: 'Email',
         type: 'text',
         width: '240px',
+        required: false,
     },
     {
         key: 'phoneNumber',
         label: 'Số điện thoại',
         type: 'text',
         width: '150px',
+        required: false,
     },
     {
         key: 'role',
         label: 'Vai trò',
         type: 'enum',
         width: '100px',
+        required: false,
+        options: [
+            { value: 'USER', label: 'USER' },
+            { value: 'ADMIN', label: 'ADMIN' },
+        ],
     },
     {
         key: 'status',
         label: 'Trạng thái',
         type: 'enum',
         width: '110px',
+        required: false,
+        options: [
+            { value: 'ACTIVE', label: 'ACTIVE' },
+            { value: 'INACTIVE', label: 'INACTIVE' },
+            { value: 'BANNED', label: 'BANNED' },
+        ],
     },
     {
         key: 'createdAt',
         label: 'Ngày tạo',
         type: 'text',
         width: '140px',
+        required: false,
     },
 ]
 
