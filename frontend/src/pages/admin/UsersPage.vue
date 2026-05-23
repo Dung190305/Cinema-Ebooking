@@ -1,11 +1,11 @@
 <template>
     <div class="flex flex-col gap-6 py-6 pr-6">
-        
+
         <div class="flex flex-col gap-1.5">
             <div class="flex items-center text-xs font-medium text-text-admin-tertiary">
                 <span>Users</span>
             </div>
-            
+
             <div class="flex items-center justify-between">
                 <div>
                     <h1 class="text-xl font-bold text-slate-900 tracking-tight">
@@ -18,10 +18,8 @@
             </div>
         </div>
 
-        <div 
-            v-if="globalErrors.length" 
-            class="rounded-xl bg-red-50 border border-red-100 p-4 shadow-sm animate-in fade-in duration-300"
-        >
+        <div v-if="globalErrors.length"
+            class="rounded-xl bg-red-50 border border-red-100 p-4 shadow-sm animate-in fade-in duration-300">
             <p v-for="err in globalErrors" :key="err" class="text-sm text-red-600 flex items-center gap-2">
                 <span class="size-1.5 rounded-full bg-red-500 shrink-0" />
                 {{ err }}
@@ -29,43 +27,31 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-3 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
-            <div class="relative flex-1 min-w-[200px]">
+            <div class="relative flex-1 min-w-50">
                 <Search class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400 pointer-events-none" />
-                <input
-                    v-model.trim="searchName"
-                    type="text"
-                    placeholder="Tìm theo tên..."
+                <input v-model.trim="searchName" type="text" placeholder="Tìm theo tên..."
                     class="w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 py-2 text-sm text-slate-900 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/5 placeholder:text-slate-400"
-                    @keyup.enter="applySearch"
-                />
+                    @keyup.enter="applySearch" />
             </div>
 
-            <div class="relative flex-1 min-w-[200px]">
+            <div class="relative flex-1 min-w-50">
                 <Mail class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400 pointer-events-none" />
-                <input
-                    v-model.trim="searchEmail"
-                    type="email"
-                    placeholder="Tìm theo email..."
+                <input v-model.trim="searchEmail" type="email" placeholder="Tìm theo email..."
                     class="w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 py-2 text-sm text-slate-900 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/5 placeholder:text-slate-400"
-                    @keyup.enter="applySearch"
-                />
+                    @keyup.enter="applySearch" />
             </div>
 
-            <select
-                v-model="filterRole"
-                class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/5 cursor-pointer min-w-[140px]"
-                @change="applySearch"
-            >
+            <select v-model="filterRole"
+                class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/5 cursor-pointer min-w-35"
+                @change="applySearch">
                 <option value="">Tất cả vai trò</option>
                 <option value="USER">USER</option>
                 <option value="ADMIN">ADMIN</option>
             </select>
 
-            <select
-                v-model="filterStatus"
-                class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/5 cursor-pointer min-w-[150px]"
-                @change="applySearch"
-            >
+            <select v-model="filterStatus"
+                class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/5 cursor-pointer min-w-37.5"
+                @change="applySearch">
                 <option value="">Tất cả trạng thái</option>
                 <option value="ACTIVE">ACTIVE</option>
                 <option value="INACTIVE">INACTIVE</option>
@@ -75,17 +61,14 @@
             <div class="flex items-center gap-2 ml-auto">
                 <button
                     class="flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-text-on-accent transition-all shadow-sm hover:bg-accent/90 active:scale-[0.98]"
-                    @click="applySearch"
-                >
+                    @click="applySearch">
                     <Search class="size-4" />
                     Tìm kiếm
                 </button>
 
-                <button
-                    v-if="hasActiveFilters"
+                <button v-if="hasActiveFilters"
                     class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 shadow-xs"
-                    @click="clearAllFilters"
-                >
+                    @click="clearAllFilters">
                     <X class="size-4" />
                     Xóa lọc
                 </button>
@@ -93,21 +76,12 @@
         </div>
 
         <div class="relative overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm">
-            <DataTable
-                :rows="users"
-                :columns="columns"
-                :fieldErrors="fieldErrors"
-                :showDelete="false"
-                :showCreate="false"
-                :showSave="false"
-                @save="() => {}"
-            >
+            <DataTable :rows="users" :columns="columns" :fieldErrors="fieldErrors" :showDelete="false"
+                :showCreate="false" :showSave="false" @save="() => { }">
                 <template #cell-fullName="{ item }">
-                    <div class="flex items-center gap-3 max-w-[200px]">
-                        <div
-                            class="flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-xs"
-                            :style="{ backgroundColor: getAvatarColor(item.fullName) }"
-                        >
+                    <div class="flex items-center gap-3 max-w-50">
+                        <div class="flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-xs"
+                            :style="{ backgroundColor: getAvatarColor(item.fullName) }">
                             {{ getInitials(item.fullName) }}
                         </div>
                         <span class="truncate text-sm font-semibold text-slate-900">{{ item.fullName }}</span>
@@ -115,7 +89,7 @@
                 </template>
 
                 <template #cell-avatarUrl="{ value }">
-                    <span class="text-sm text-slate-500 truncate block max-w-[150px]">{{ value || '—' }}</span>
+                    <span class="text-sm text-slate-500 truncate block max-w-37.5">{{ value || '—' }}</span>
                 </template>
 
                 <template #cell-phoneNumber="{ value }">
@@ -123,26 +97,23 @@
                 </template>
 
                 <template #cell-role="{ value }">
-                    <span
-                        class="inline-block rounded-md px-2 py-0.5 text-xs font-semibold uppercase tracking-wider"
+                    <span class="inline-block rounded-md px-2 py-0.5 text-xs font-semibold uppercase tracking-wider"
                         :class="value === 'ADMIN'
                             ? 'bg-purple-50 text-purple-700 border border-purple-100'
-                            : 'bg-blue-50 text-blue-700 border border-blue-100'"
-                    >
+                            : 'bg-blue-50 text-blue-700 border border-blue-100'">
                         {{ value }}
                     </span>
                 </template>
 
                 <template #cell-status="{ value }">
-                    <span
-                        class="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-semibold border"
+                    <span class="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-semibold border"
                         :class="value === 'ACTIVE'
                             ? 'bg-green-50 border-green-100 text-green-700'
                             : value === 'INACTIVE'
-                            ? 'bg-gray-50 border-gray-200 text-gray-500'
-                            : 'bg-red-50 border-red-100 text-red-700'"
-                    >
-                        <span class="size-1.5 rounded-full" :class="value === 'ACTIVE' ? 'bg-green-500' : value === 'INACTIVE' ? 'bg-gray-400' : 'bg-red-500'" />
+                                ? 'bg-gray-50 border-gray-200 text-gray-500'
+                                : 'bg-red-50 border-red-100 text-red-700'">
+                        <span class="size-1.5 rounded-full"
+                            :class="value === 'ACTIVE' ? 'bg-green-500' : value === 'INACTIVE' ? 'bg-gray-400' : 'bg-red-500'" />
                         {{ value }}
                     </span>
                 </template>
@@ -154,8 +125,7 @@
                 <template #detail-actions="{ item }">
                     <button
                         class="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white py-2.5 text-sm font-medium text-slate-700 transition-all shadow-xs hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
-                        @click="goToDetail(item.id)"
-                    >
+                        @click="goToDetail(item.id)">
                         <Eye class="size-4 text-slate-500" />
                         Xem chi tiết
                     </button>
@@ -163,32 +133,24 @@
             </DataTable>
         </div>
 
-        <div v-if="totalPages > 1" class="flex justify-center items-center gap-1.5 mt-2 animate-in fade-in duration-300">
+        <div v-if="totalPages > 1"
+            class="flex justify-center items-center gap-1.5 mt-2 animate-in fade-in duration-300">
             <button
                 class="flex items-center justify-center size-8 rounded-lg border border-slate-200 bg-white text-slate-600 transition-all hover:bg-slate-50 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
-                :disabled="currentPage === 0"
-                @click="goToPage(currentPage - 1)"
-            >
+                :disabled="currentPage === 0" @click="goToPage(currentPage - 1)">
                 <ChevronLeft class="size-4" />
             </button>
 
-            <button
-                v-for="page in visiblePages"
-                :key="page"
-                class="min-w-8 h-8 rounded-lg text-sm font-medium transition-all active:scale-95"
-                :class="page === currentPage
+            <button v-for="page in visiblePages" :key="page"
+                class="min-w-8 h-8 rounded-lg text-sm font-medium transition-all active:scale-95" :class="page === currentPage
                     ? 'bg-accent text-text-on-accent shadow-xs font-semibold'
-                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'"
-                @click="goToPage(page)"
-            >
+                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'" @click="goToPage(page)">
                 {{ page + 1 }}
             </button>
 
             <button
                 class="flex items-center justify-center size-8 rounded-lg border border-slate-200 bg-white text-slate-600 transition-all hover:bg-slate-50 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
-                :disabled="currentPage === totalPages - 1"
-                @click="goToPage(currentPage + 1)"
-            >
+                :disabled="currentPage === totalPages - 1" @click="goToPage(currentPage + 1)">
                 <ChevronRight class="size-4" />
             </button>
         </div>
@@ -259,24 +221,24 @@ const columns: ColumnDef<UserResponse>[] = [
     { key: 'avatarUrl', label: 'Avatar URL', type: 'text', readonly: true, hideInTable: true, required: false },
     { key: 'email', label: 'Email', type: 'text', readonly: true, width: '240px', required: false },
     { key: 'phoneNumber', label: 'Số điện thoại', type: 'text', readonly: true, width: '150px', required: false },
-    { 
-        key: 'role', 
-        label: 'Vai trò', 
-        type: 'enum', 
-        readonly: true, 
-        width: '100px', 
+    {
+        key: 'role',
+        label: 'Vai trò',
+        type: 'enum',
+        readonly: true,
+        width: '100px',
         required: false,
         options: [
             { value: 'USER', label: 'USER' },
             { value: 'ADMIN', label: 'ADMIN' },
         ],
     },
-    { 
-        key: 'status', 
-        label: 'Trạng thái', 
-        type: 'enum', 
-        readonly: true, 
-        width: '120px', 
+    {
+        key: 'status',
+        label: 'Trạng thái',
+        type: 'enum',
+        readonly: true,
+        width: '120px',
         required: false,
         options: [
             { value: 'ACTIVE', label: 'ACTIVE' },
@@ -302,7 +264,7 @@ function formatDate(iso: string | null | undefined): string {
 }
 
 const AVATAR_COLORS = [
-    '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316', 
+    '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316',
     '#eab308', '#22c55e', '#14b8a6', '#06b6d4', '#3b82f6'
 ]
 
