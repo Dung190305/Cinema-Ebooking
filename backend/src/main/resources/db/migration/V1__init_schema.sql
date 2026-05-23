@@ -598,35 +598,54 @@ CREATE TABLE IF NOT EXISTS notifications (
 
 -- ================== REVIEWS ==================
 CREATE TABLE IF NOT EXISTS reviews (
-    id          BIGINT      NOT NULL AUTO_INCREMENT,
-    user_id     BIGINT      NOT NULL,
-    movie_id    BIGINT      NOT NULL,
-    booking_id  BIGINT      NOT NULL,
-    rating      INT         NOT NULL,
-    comment     TEXT        NOT NULL,
-    sentiment   VARCHAR(20) NOT NULL,
-    edited_at   DATETIME,
-    status      VARCHAR(20) NOT NULL,
-    created_at  DATETIME    NOT NULL,
-    updated_at  DATETIME    NOT NULL,
-    deleted_at  DATETIME,
-    deleted     BOOLEAN     NOT NULL DEFAULT FALSE,
-    version     BIGINT,
-    CONSTRAINT fk_reviews_user FOREIGN KEY (user_id) REFERENCES users(id),
-    CONSTRAINT fk_reviews_booking FOREIGN KEY (booking_id) REFERENCES bookings(id),
-    CONSTRAINT chk_reviews_rating CHECK (rating >= 1 AND rating <= 10),
+    id              BIGINT      NOT NULL AUTO_INCREMENT,
+    user_id         BIGINT      NOT NULL,
+    movie_id        BIGINT      NOT NULL,
+    booking_id      BIGINT      NOT NULL,
+    rating          INT         NOT NULL,
+    comment         TEXT        NOT NULL,
+    final_text      TEXT,
+    sentiment       VARCHAR(20) NOT NULL,
+    status          VARCHAR(20) NOT NULL,
+    is_spoiler      BOOLEAN     NOT NULL DEFAULT FALSE,
+    spoiler_conf    DOUBLE      NOT NULL DEFAULT 0.0,
+    edited_at       DATETIME,
+    created_at      DATETIME    NOT NULL,
+    updated_at      DATETIME    NOT NULL,
+    deleted_at      DATETIME,
+    deleted         BOOLEAN     NOT NULL DEFAULT FALSE,
+    version         BIGINT,
 
     PRIMARY KEY (id),
+
+    -- ================== FOREIGN KEYS ==================
+    CONSTRAINT fk_reviews_user
+    FOREIGN KEY (user_id) REFERENCES users(id),
+
+    CONSTRAINT fk_reviews_booking
+    FOREIGN KEY (booking_id) REFERENCES bookings(id),
+
+    -- ================== CHECK CONSTRAINTS ==================
+    CONSTRAINT chk_reviews_rating
+    CHECK (rating >= 1 AND rating <= 10),
+
+    -- ================== INDEXES ==================
     INDEX idx_reviews_movie_id (movie_id),
     INDEX idx_reviews_user_id (user_id),
     INDEX idx_reviews_booking_id (booking_id),
+
     INDEX idx_reviews_status (status),
     INDEX idx_reviews_deleted (deleted),
+    INDEX idx_reviews_is_spoiler (is_spoiler),
 
+    -- ================== UNIQUE KEYS ==================
     -- Mỗi user chỉ review 1 phim 1 lần (soft-delete aware)
-    UNIQUE KEY uk_reviews_user_movie_deleted (user_id, movie_id, deleted),
+    UNIQUE KEY uk_reviews_user_movie_deleted
+(user_id, movie_id, deleted),
+
     -- Mỗi booking chỉ review 1 lần (soft-delete aware)
-    UNIQUE KEY uk_reviews_booking_deleted (booking_id, deleted)
+    UNIQUE KEY uk_reviews_booking_deleted
+(booking_id, deleted)
 );
 
 -- ================== LOYALTY TRANSACTIONS ==================
