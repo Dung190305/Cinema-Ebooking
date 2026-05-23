@@ -1,5 +1,6 @@
 package com.cinemaebooking.backend.user.presentation;
 
+import com.cinemaebooking.backend.common.dto.PageResponse;
 import com.cinemaebooking.backend.user.application.dto.ChangeDTO.ChangeUserRoleRequest;
 import com.cinemaebooking.backend.user.application.dto.Response.UserDetailResponse;
 import com.cinemaebooking.backend.user.application.dto.Response.UserResponse;
@@ -34,25 +35,36 @@ public class AdminController {
     }
 
     @GetMapping
-    public Page<UserResponse> getAllUsers(
+    public PageResponse<UserResponse> getAllUsers(
             Pageable pageable,
             @RequestParam(required = false) String fullName,
             @RequestParam(required = false) String email,
             @RequestParam(required = false) String role,
             @RequestParam(required = false) String status
     ) {
+        Page<UserResponse> page;
         if (fullName == null && email == null && role == null && status == null) {
-            return getUserListUseCase.execute(pageable);
+            page = getUserListUseCase.execute(pageable);
+        } else {
+            UserFilterRequest filter = UserFilterRequest.builder()
+                    .fullName(fullName)
+                    .email(email)
+                    .role(role != null ? com.cinemaebooking.backend.user.domain.enums.UserRole.valueOf(role) : null)
+                    .status(status != null ? com.cinemaebooking.backend.user.domain.enums.UserStatus.valueOf(status) : null)
+                    .build();
+            page = getUserListUseCase.executeWithFilters(filter, pageable);
         }
 
-        UserFilterRequest filter = UserFilterRequest.builder()
-                .fullName(fullName)
-                .email(email)
-                .role(role != null ? com.cinemaebooking.backend.user.domain.enums.UserRole.valueOf(role) : null)
-                .status(status != null ? com.cinemaebooking.backend.user.domain.enums.UserStatus.valueOf(status) : null)
+        return PageResponse.<UserResponse>builder()
+                .content(page.getContent())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .size(page.getSize())
+                .number(page.getNumber())
+                .first(page.isFirst())
+                .last(page.isLast())
+                .empty(page.isEmpty())
                 .build();
-
-        return getUserListUseCase.executeWithFilters(filter, pageable);
     }
 
     @PutMapping("/{id}/activate")
