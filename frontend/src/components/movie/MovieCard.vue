@@ -18,7 +18,7 @@
             </div>
 
             <!-- Hover overlay -->
-            <div
+            <div v-if="!hideOverlay"
                 class="w-full h-full absolute top-1/2 left-1/2 -translate-1/2 rounded-lg bg-overlay-light-70 z-20 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-200 group-hover:opacity-100 ">
                 <BaseButton variant="primary" size="md" rounded="md" @click="$emit('book', movie.id)"
                     class="group-hover:pointer-events-auto cursor-pointer">
@@ -46,9 +46,12 @@ import AgeRatingTag from '@/components/movie/AgeRatingTag.vue'
 import type { MovieResponse } from '@/types/movie'
 import { useCloudinaryImage } from '@/composables/useCloudinaryImage'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
     movie: MovieResponse
-}>()
+    hideOverlay?: boolean
+}>(), {
+    hideOverlay: false
+})
 
 defineEmits<{
     book: [id: number]
