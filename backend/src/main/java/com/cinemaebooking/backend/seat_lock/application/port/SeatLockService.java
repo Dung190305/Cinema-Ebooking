@@ -2,6 +2,7 @@ package com.cinemaebooking.backend.seat_lock.application.port;
 
 import com.cinemaebooking.backend.seat_lock.application.dto.AcquireLockResponse;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -34,6 +35,18 @@ public interface SeatLockService {
      * @throws com.cinemaebooking.backend.common.exception.BaseException nếu ghế đã bị khóa
      */
     AcquireLockResponse acquireLocks(Long userId, Long showtimeId, List<Long> seatIds);
+
+    /**
+     * Extend seat locks cho một booking — dùng khi tạo payment.
+     * Ghế đã lock sẽ được giữ thêm đến thời điểm paymentExpiredAt.
+     * Nếu ghế chưa bị lock bởi user này thì bỏ qua (booking ghế qua seat map trước đó).
+     *
+     * @param bookingId booking đang thanh toán
+     * @param userId user sở hữu booking
+     * @param showtimeId suất chiếu
+     * @param paymentExpiredAt thời điểm hết hạn thanh toán (thường = 15 phút)
+     */
+    void extendLocksForPayment(Long bookingId, Long userId, Long showtimeId, LocalDateTime paymentExpiredAt);
 
     /**
      * Giải phóng tất cả lock của user cho một suất chiếu.

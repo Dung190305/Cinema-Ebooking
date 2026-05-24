@@ -85,4 +85,6 @@ public interface OtpService {
      * @return VerifyOtpResponse chứa kết quả xác minh
      */
     VerifyOtpResponse verifyOtp(String code, Long userId);
+    SendOtpResponse forgotPasswordAndSendOtp(String email);
+    VerifyOtpResponse verifyForgotPasswordOtpAndReset(String email, String code, String newPassword);
 }
