@@ -229,7 +229,7 @@ import type { ColumnDef, RelationOption } from '@/components/common/table/types/
 import { isReadonlyInEdit }
     from '@/components/common/table/utils/column'
 
-import CalendarPicker from '@/components/ui/calendar/CalenderPicker.vue'
+import CalendarPicker from '@/components/ui/calendar/CalendarPicker.vue'
 import { dateToISOString, parseDateSafe, createLocalDate, formatDateTimeVN } from '@/utils/dateFormat'
 
 

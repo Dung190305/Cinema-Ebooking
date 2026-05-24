@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import BaseButton from '@/components/ui/button/BaseButton.vue'
-import CalendarPicker from '@/components/ui/calendar/CalenderPicker.vue'
+import CalendarPicker from '@/components/ui/calendar/CalendarPicker.vue'
 import { useRegisterForm } from '@/composables/useRegisterForm'
 
 const emit = defineEmits<{

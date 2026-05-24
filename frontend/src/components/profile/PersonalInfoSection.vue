@@ -2,7 +2,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import ProfileField from '@/components/profile/ProfileField.vue';
-import CalenderPicker from '@/components/ui/calendar/CalenderPicker.vue';
+import CalendarPicker from '@/components/ui/calendar/CalendarPicker.vue';
 import BaseButton from '@/components/ui/button/BaseButton.vue'
 import { dateToISOString, parseISODate } from '@/utils/dateFormat'
 import { useCloudinaryImage } from '@/composables/useCloudinaryImage'
@@ -138,7 +138,7 @@ const handleAvatarChange = async () => {
             <div>
                 <label class="block text-caption text-text-tertiary mb-1">Ngày sinh</label>
                 <template v-if="editMode">
-                    <CalenderPicker :modelValue="parseISODate(formData.dateOfBirth ?? '')"
+                    <CalendarPicker :modelValue="parseISODate(formData.dateOfBirth ?? '')"
                         @update:modelValue="(val) => emit('update:formData', { ...formData, dateOfBirth: val ? dateToISOString(val) : '' })"
                         :hasError="!!fieldErrors?.dateOfBirth" variant="web" mode="date" :maxDate="new Date()" />
                     <p v-if="fieldErrors?.dateOfBirth" class="mt-1 text-caption text-red-500">{{ fieldErrors.dateOfBirth
