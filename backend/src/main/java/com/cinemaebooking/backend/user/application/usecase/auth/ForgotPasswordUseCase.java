@@ -1,43 +1,55 @@
 package com.cinemaebooking.backend.user.application.usecase.auth;
 
-import com.cinemaebooking.backend.common.exception.domain.UserExceptions;
+import com.cinemaebooking.backend.common.exception.domain.CommonExceptions;
+import com.cinemaebooking.backend.otp.application.dto.SendOtpResponse;
+import com.cinemaebooking.backend.otp.application.port.OtpService;
 import com.cinemaebooking.backend.user.application.port.EmailService;
-import com.cinemaebooking.backend.user.application.port.JwtProvider;
-import com.cinemaebooking.backend.user.application.port.UserRepository;
-import com.cinemaebooking.backend.user.domain.model.User;
-import com.cinemaebooking.backend.user.domain.valueObject.UserId;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ForgotPasswordUseCase {
 
-    private final UserRepository userRepository;
-    private final JwtProvider jwtProvider;
+    private final OtpService otpService;
     private final EmailService emailService;
 
-    public void execute(String email) {
-
+    public SendOtpResponse execute(String email) {
         if (email == null || email.isBlank()) {
-            throw UserExceptions.invalidEmail(email);
+            throw CommonExceptions.invalidInput("Email không được để trống");
         }
 
-        // 1. find user
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(UserExceptions::invalidCredentials);
+        // 1. Tạo OTP khôi phục mật khẩu trong Database transaction
+        // (Trong OtpService sẽ check email tồn tại và đã ACTIVE chưa)
+        SendOtpResponse response = otpService.forgotPasswordAndSendOtp(email);
 
-        // 2. create reset-token (15 minutes)
-        String resetToken = jwtProvider.generateResetToken(new UserId(user.getId().getValue()));
+        // 2. Gửi Email ngoài Transaction để tránh treo/rollback DB nếu mail lỗi
+        try {
+            sendOtpEmail(response.getEmail(), response.getGeneratedOtpCode());
+        } catch (Exception e) {
+            log.error("Không thể gửi email OTP khôi phục mật khẩu đến {}: {}", response.getEmail(), e.getMessage());
+        }
 
-        // 3. generate reset link
-        String link = "http://localhost:3000/reset-password?token=" + resetToken;
+        return response;
+    }
 
-        // 4. send email
-        emailService.send(
-                email,
-                "Reset Your Password",
-                "Click the link to reset password: " + link
-        );
+    private void sendOtpEmail(String to, String otpCode) {
+        String subject = "Mã xác minh khôi phục mật khẩu - Cinema E-Booking";
+        String body = String.format("""
+                Xin chào,
+
+                Chúng tôi nhận được yêu cầu khôi phục mật khẩu từ tài khoản của bạn.
+
+                Mã OTP xác minh của bạn là: %s
+
+                Mã này có hiệu lực trong 5 phút.
+                Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email.
+
+                Trân trọng,
+                Đội ngũ Cinema E-Booking
+                """, otpCode);
+        emailService.send(to, subject, body);
     }
 }

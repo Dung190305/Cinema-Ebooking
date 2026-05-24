@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final RegisterUseCase registerUseCase;
     private final LoginUseCase loginUseCase;
     private final LogoutUseCase logoutUseCase;
     private final ResetPasswordUseCase resetPasswordUseCase;
@@ -69,14 +68,22 @@ public class AuthController {
         logoutUseCase.execute();
     }
 
+    // ================== FORGOT & RESET PASSWORD ==================
+
+    /**
+     * Bước 1: Quên mật khẩu → Tạo và gửi OTP khôi phục về Email
+     */
     @PostMapping("/forgot_password")
-    public void forgotPassword(@RequestParam String email) {
-        forgotPasswordUseCase.execute(email);
+    public SendOtpResponse forgotPassword(@RequestParam String email) {
+        return forgotPasswordUseCase.execute(email);
     }
 
+    /**
+     * Bước 2: Xác nhận OTP + Đặt lại mật khẩu mới
+     */
     @PostMapping("/reset_password")
-    public void resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
-        resetPasswordUseCase.execute(request);
+    public VerifyOtpResponse resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        return resetPasswordUseCase.execute(request);
     }
 
     @PostMapping("/refresh_token")

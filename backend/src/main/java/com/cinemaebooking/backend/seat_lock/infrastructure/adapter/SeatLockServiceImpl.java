@@ -162,6 +162,24 @@ public class SeatLockServiceImpl implements SeatLockService {
         releaseLocks(locks);
     }
 
+    // ================== EXTEND LOCKS FOR PAYMENT ==================
+
+    @Override
+    @Transactional
+    public void extendLocksForPayment(Long bookingId, Long userId, Long showtimeId, LocalDateTime paymentExpiredAt) {
+        LocalDateTime now = LocalDateTime.now();
+        List<SeatLockJpaEntity> locks = seatLockJpaRepository
+                .findActiveLocksByUserIdAndShowtimeId(userId, showtimeId, now);
+
+        for (SeatLockJpaEntity lock : locks) {
+            // Chỉ extend nếu lock đó chưa được gán bookingId, hoặc bookingId trùng với booking hiện tại
+            if (lock.getBooking() == null || lock.getBooking().getId().equals(bookingId)) {
+                lock.setExpiredAt(paymentExpiredAt);
+                seatLockJpaRepository.save(lock);
+            }
+        }
+    }
+
     // ================== RELEASE EXPIRED LOCKS ==================
 
     @Override

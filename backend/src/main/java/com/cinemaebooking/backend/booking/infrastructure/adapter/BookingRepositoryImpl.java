@@ -110,6 +110,27 @@ public class BookingRepositoryImpl implements BookingRepository {
         return jpaPage.map(mapper::toDomain);
     }
 
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Booking> findAllForAdmin(
+            Long movieId,
+            BookingStatus status,
+            LocalDateTime fromDate,
+            LocalDateTime toDate,
+            Pageable pageable
+    ) {
+        return jpaRepository.searchAdminBookings(
+                        movieId,
+                        status,
+                        fromDate,
+                        toDate,
+                        pageable
+                )
+                .map(mapper::toDomain);
+    }
+
     @Override
     @Transactional(readOnly = true)
     public Optional<Booking> findWithDetailsById(Long id) {

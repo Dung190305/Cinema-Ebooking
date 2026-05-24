@@ -8,14 +8,17 @@ import com.cinemaebooking.backend.booking.application.usecase.ConfirmPaymentUseC
 import com.cinemaebooking.backend.booking.application.usecase.CreateBookingUseCase;
 import com.cinemaebooking.backend.booking.application.usecase.GetBookingDetailUseCase;
 import com.cinemaebooking.backend.booking.application.usecase.GetUserBookingsUseCase;
+import com.cinemaebooking.backend.booking.application.usecase.GetAdminBookingsUseCase;
 import com.cinemaebooking.backend.booking.domain.enums.BookingStatus;
+import org.springframework.format.annotation.DateTimeFormat;
+import java.time.LocalDate;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.security.access.prepost.PreAuthorize;
 @RestController
 @RequestMapping("/api/v1/bookings")
 @RequiredArgsConstructor
@@ -26,6 +29,33 @@ public class BookingController {
     private final ConfirmPaymentUseCase confirmPaymentUseCase;
     private final GetBookingDetailUseCase getBookingDetailUseCase;
     private final GetUserBookingsUseCase getUserBookingsUseCase;
+    private final GetAdminBookingsUseCase getAdminBookingsUseCase;
+
+    // ================== LIST (DANH SÁCH TẤT CẢ ĐƠN HÀNG) ==================
+    @GetMapping("/admin/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Page<BookingListItemResponse> listAllBookingsForAdmin(
+            @RequestParam(required = false) Long movieId,
+            @RequestParam(required = false) BookingStatus status,
+
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate fromDate,
+
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate toDate,
+
+            Pageable pageable
+    ) {
+        return getAdminBookingsUseCase.execute(
+                movieId,
+                status,
+                fromDate,
+                toDate,
+                pageable
+        );
+    }
 
     // ================== LIST (DANH SÁCH ĐƠN HÀNG) ==================
     @GetMapping
