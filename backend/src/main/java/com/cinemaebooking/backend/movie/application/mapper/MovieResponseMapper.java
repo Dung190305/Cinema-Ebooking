@@ -27,6 +27,7 @@ public class MovieResponseMapper {
                 movie.getStatus(),
                 movie.getPosterUrl(),
                 movie.getBannerUrl(),
+                movie.getTrailerUrl(),
                 movie.getDirector(),
                 movie.getActors(),
                 movie.getGenres().stream()

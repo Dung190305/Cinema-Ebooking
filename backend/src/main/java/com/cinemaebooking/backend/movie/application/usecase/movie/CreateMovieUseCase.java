@@ -48,6 +48,7 @@ public class CreateMovieUseCase {
                 .showingEndDate(request.getShowingEndDate())
                 .posterUrl(request.getPosterUrl())
                 .bannerUrl(request.getBannerUrl())
+                .trailerUrl(request.getTrailerUrl())
                 .director(request.getDirector())
                 .actors(request.getActors())
                 .genres(genres)

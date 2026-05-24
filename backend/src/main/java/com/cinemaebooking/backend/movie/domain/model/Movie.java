@@ -24,6 +24,7 @@ public class Movie extends BaseEntity<MovieId> {
     private LocalDate showingEndDate;
     private String posterUrl;
     private String bannerUrl;
+    private String trailerUrl;
     private String director;
     private String actors;
     private Set<Genre> genres;
@@ -51,7 +52,7 @@ public class Movie extends BaseEntity<MovieId> {
 
     public void update(String title, String description, Integer duration,
                        AgeRating ageRating, LocalDate releaseDate, LocalDate showingEndDate,
-                       String posterUrl, String bannerUrl, String director, String actors,
+                       String posterUrl, String bannerUrl, String trailerUrl, String director, String actors,
                        Set<Genre> genres) {
         validateTitle(title);
         validateDuration(duration);
@@ -66,6 +67,7 @@ public class Movie extends BaseEntity<MovieId> {
         this.showingEndDate = showingEndDate;
         this.posterUrl = posterUrl;
         this.bannerUrl = bannerUrl;
+        this.trailerUrl = trailerUrl;
         this.director = director;
         this.actors = actors;
         this.genres = genres != null ? new HashSet<>(genres) : new HashSet<>();
