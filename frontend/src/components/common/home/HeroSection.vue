@@ -8,8 +8,8 @@
                 <div v-if="item._skeleton"
                     class="flex h-90 w-full items-center justify-center relative overflow-hidden rounded-lg bg-bg-surface animate-pulse" />
                 <!-- Banner thật -->
-                <div v-else
-                    class="flex h-90 w-full items-center justify-center text-white relative overflow-hidden rounded-lg">
+                <div v-else @click="goToMovie(item.movieId)"
+                    class="flex h-90 w-full items-center justify-center text-white relative overflow-hidden rounded-lg cursor-pointer">
                     <img v-if="item.imageUrl" :src="item.imageUrl" alt=""
                         class="absolute inset-0 w-full h-full object-cover" />
                 </div>
@@ -23,8 +23,11 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
 import AppCarousel from '@/components/common/AppCarousel.vue'
+import { useRouter } from 'vue-router'
 import BookingQuickSelector from '@/components/common/home/subcomponents/BookingQuickSelector.vue'
 import { useHeroBanner } from '@/composables/useHeroBanner'
+
+const router = useRouter()
 
 const { banners, loading } = useHeroBanner()
 
@@ -34,4 +37,9 @@ const carouselItems = computed(() => {
     }
     return banners.value
 })
+
+function goToMovie(movieId: number) {
+    if (!movieId) return
+    router.push({ name: 'movie-detail', params: { id: movieId } })
+}
 </script>

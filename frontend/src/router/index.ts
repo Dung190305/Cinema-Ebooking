@@ -20,6 +20,12 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/pages/MoviesPage.vue')
       },
       {
+        path: 'movies/:id',
+        name: 'movie-detail',
+        component: () => import('@/pages/MovieDetailPage.vue'),
+        meta: { title: 'Chi tiết phim' }
+      },
+      {
         path: 'profile',
         name: 'profile',
         component: () => import('@/pages/ProfilePage.vue'),

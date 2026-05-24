@@ -25,33 +25,37 @@
 
         <!-- Prev Button -->
         <button v-if="(infinite ? items.length > 1 : items.length > slidesPerView)"
-            class="absolute top-1/2 z-10 flex h-16 w-16 items-center justify-center rounded-full transition disabled:pointer-events-none disabled:opacity-40"
+            class="absolute top-1/2 z-10 flex items-center justify-center rounded-full transition disabled:pointer-events-none disabled:opacity-40"
             :class="[
-                edgeButtons
-                    ? 'shadow-lg bg-overlay-light-30 hover:bg-overlay-light-50'
-                    : 'shadow-sm bg-overlay-dark-10 hover:bg-overlay-dark-30',
+                simpleNav
+                    ? 'p-3 bg-transparent shadow-none'    // đơn giản
+                    : edgeButtons
+                        ? 'h-16 w-16 shadow-lg bg-overlay-light-30 hover:bg-overlay-light-50'
+                        : 'h-16 w-16 shadow-sm bg-overlay-dark-10 hover:bg-overlay-dark-30',
                 navButtonClass,
             ]" :style="prevBtnStyle" :disabled="isAnimating || (!infinite && currentIndex <= 0)" @click="prev"
             aria-label="Previous">
             <span :style="edgeButtons ? { transform: 'translateX(30%)', display: 'inline-flex' } : {}"
                 class="text-text-secondary hover:text-text-primary">
-                <BaseIcon :icon="prevIcon || ChevronLeft" :size="32" />
+                <BaseIcon :icon="prevIcon || ChevronLeft" :size="simpleNav ? 28 : 32" />
             </span>
         </button>
 
         <!-- Next Button -->
         <button v-if="(infinite ? items.length > 1 : items.length > slidesPerView)"
-            class="absolute top-1/2 z-10 flex h-16 w-16 items-center justify-center rounded-full transition disabled:pointer-events-none disabled:opacity-40"
+            class="absolute top-1/2 z-10 flex items-center justify-center rounded-full transition disabled:pointer-events-none disabled:opacity-40"
             :class="[
-                edgeButtons
-                    ? 'shadow-lg bg-overlay-light-30 hover:bg-overlay-light-50'
-                    : 'shadow-sm bg-overlay-dark-10 hover:bg-overlay-dark-30',
+                simpleNav
+                    ? 'p-3 bg-transparent shadow-none'
+                    : edgeButtons
+                        ? 'h-16 w-16 shadow-lg bg-overlay-light-30 hover:bg-overlay-light-50'
+                        : 'h-16 w-16 shadow-sm bg-overlay-dark-10 hover:bg-overlay-dark-30',
                 navButtonClass,
-            ]" :style="nextBtnStyle" :disabled="isAnimating || (!infinite && currentIndex >= maxIndex)" @click="next"
+            ]" :style="nextBtnStyle" :disabled="isAnimating || (!infinite && currentIndex <= 0)" @click="next"
             aria-label="Next">
-            <span :style="edgeButtons ? { transform: 'translateX(-30%)', display: 'inline-flex' } : {}"
+            <span :style="edgeButtons ? { transform: 'translateX(30%)', display: 'inline-flex' } : {}"
                 class="text-text-secondary hover:text-text-primary">
-                <BaseIcon :icon="nextIcon || ChevronRight" :size="32" />
+                <BaseIcon :icon="nextIcon || ChevronRight" :size="simpleNav ? 28 : 32" />
             </span>
         </button>
     </div>
@@ -82,6 +86,7 @@ const props = withDefaults(
         paddingRight?: number
         dots?: boolean               // mới: bật/tắt dot indicators
         dotsClass?: string
+        simpleNav?: boolean
     }>(),
     {
         peek: 64,
@@ -98,6 +103,7 @@ const props = withDefaults(
         paddingRight: 0,
         dots: false,
         dotsClass: '',
+        simpleNav: false,
     }
 )
 
@@ -115,7 +121,7 @@ const actualPeek = computed(() => {
     if (props.peekPercent !== undefined) {
         return (containerWidth.value * props.peekPercent) / 100
     }
-    return actualPeek.value
+    return props.peek
 })
 
 // ----- Danh sách slide -----
