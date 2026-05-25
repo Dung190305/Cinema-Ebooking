@@ -273,8 +273,13 @@ function coupleClasses(left: SeatResponse, right: SeatResponse): string {
     } else {
         if (inactive) baseClass = 'bg-white/5 border-white/10 text-white/20 opacity-40'
         else if (booked) baseClass = 'bg-white/20 border-white/20 text-white/30'
+        else if (locked) baseClass = props.config.webLockedClass || 'bg-white/5 border-white/10 text-white/20 opacity-40'
         else if (selected) baseClass = 'bg-amber-500 border-transparent text-white'
         else baseClass = `bg-white/10 border-2 ${cfg.webBorder} text-white/80 hover:bg-white/20`
+    }
+
+    if (props.config.mode === 'admin' && isPending) {
+        baseClass += ' ring-2 ring-blue-400 border-dashed'
     }
 
     return baseClass

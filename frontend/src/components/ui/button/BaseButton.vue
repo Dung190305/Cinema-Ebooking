@@ -88,11 +88,12 @@ const variantClass = computed(() => {
   let cls = variants[v]
 
   if (props.isAdmin) {
-    if (v === 'secondary' || v === 'ghost') {
-      cls = cls.replace('text-text-primary', 'text-text-admin-primary')
+    if (v === 'secondary') {
+      cls = cls.replace('text-text-secondary', 'text-text-admin-secondary')
+      // nếu muốn màu chữ đậm hơn có thể dùng text-text-admin-primary
     }
-
     if (v === 'ghost') {
+      cls = cls.replace('text-text-primary', 'text-text-admin-primary')
       cls = cls.replace('text-text-secondary', 'text-text-admin-secondary')
     }
   }
