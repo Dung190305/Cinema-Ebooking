@@ -128,21 +128,19 @@ public interface DashboardJpaRepository extends SoftDeleteJpaRepository<BookingJ
     );
 
     // ── Hourly Revenue for TODAY ────────────────────────────────────────────────
-    @Query("""
-        SELECT HOUR(b.paidAt) as hourSlot,
-               SUM(b.totalTicketPrice + b.totalComboPrice) as revenue
-        FROM BookingJpaEntity b
+    @Query(value = """
+        SELECT HOUR(DATE_ADD(b.paid_at, INTERVAL 7 HOUR)) as hourSlot,
+               SUM(b.total_ticket_price + b.total_combo_price) as revenue
+        FROM bookings b
+        LEFT JOIN cinemas c ON c.name = b.cinema_name AND c.deleted = false
         WHERE b.deleted = false
           AND b.status = 'CONFIRMED'
-          AND b.paidAt >= :dayStart
-          AND b.paidAt < :dayEnd
-          AND (:cinemaId IS NULL OR b.cinemaName IN (
-              SELECT c.name FROM com.cinemaebooking.backend.cinema.infrastructure.persistence.entity.CinemaJpaEntity c
-              WHERE c.id = :cinemaId AND c.deleted = false
-          ))
-        GROUP BY HOUR(b.paidAt)
+          AND b.paid_at >= :dayStart
+          AND b.paid_at < :dayEnd
+          AND (:cinemaId IS NULL OR c.id = :cinemaId)
+        GROUP BY HOUR(DATE_ADD(b.paid_at, INTERVAL 7 HOUR))
         ORDER BY hourSlot
-        """)
+        """, nativeQuery = true)
     List<Object[]> sumHourlyRevenue(
             @Param("dayStart") LocalDateTime dayStart,
             @Param("dayEnd") LocalDateTime dayEnd,
