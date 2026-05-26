@@ -13,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -90,4 +91,37 @@ public interface BookingJpaRepository extends SoftDeleteJpaRepository<BookingJpa
 
     // Thay thế cả cụm @Query và hàm cũ bằng dòng này:
     Optional<BookingJpaEntity> findFirstByUserIdAndDeletedFalseOrderByCreatedAtDesc(Long userId);
+
+    // Dùng cho notification: fetch booking kèm user info (email, fullName)
+    @Query("""
+            SELECT b FROM BookingJpaEntity b
+            JOIN FETCH b.user u
+            WHERE b.id = :bookingId AND b.deleted = false
+            """)
+    Optional<BookingJpaEntity> findByIdWithUser(@Param("bookingId") Long bookingId);
+
+    // Dùng cho email: fetch booking kèm user, tickets, combos
+    @Query("""
+            SELECT DISTINCT b FROM BookingJpaEntity b
+            JOIN FETCH b.user u
+            LEFT JOIN FETCH b.tickets
+            LEFT JOIN FETCH b.combos
+            WHERE b.id = :bookingId AND b.deleted = false
+            """)
+    Optional<BookingJpaEntity> findByIdWithDetails(@Param("bookingId") Long bookingId);
+
+    // Dùng cho ReminderNotificationJob: tìm booking CONFIRMED sắp chiếu trong khoảng thời gian
+    @Query("""
+            SELECT b FROM BookingJpaEntity b
+            JOIN FETCH b.user u
+            WHERE b.status = :status
+              AND b.deleted = false
+              AND b.showtimeStartTime > :fromTime
+              AND b.showtimeStartTime <= :toTime
+            """)
+    List<BookingJpaEntity> findBookingsNeedingReminder(
+            @Param("status") BookingStatus status,
+            @Param("fromTime") Instant fromTime,
+            @Param("toTime") Instant toTime
+    );
 }

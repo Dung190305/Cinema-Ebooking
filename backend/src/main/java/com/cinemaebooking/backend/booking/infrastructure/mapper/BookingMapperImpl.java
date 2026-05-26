@@ -84,8 +84,8 @@ public class BookingMapperImpl implements BookingMapper {
                 .status(domain.getStatus())
                 .expiredAt(domain.getExpiredAt())
                 .paidAt(domain.getPaidAt())
-                .tickets(new ArrayList<>())
-                .combos(new ArrayList<>())
+                .tickets(new java.util.HashSet<>())
+                .combos(new java.util.HashSet<>())
                 .build();
 
         if (domain.getTickets() != null) {

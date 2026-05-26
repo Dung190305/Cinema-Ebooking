@@ -42,7 +42,7 @@ public class BookingRepositoryImpl implements BookingRepository {
             );
 
             List<Ticket> domainTickets = booking.getTickets();
-            List<TicketJpaEntity> ticketEntities = entity.getTickets();
+            List<TicketJpaEntity> ticketEntities = new java.util.ArrayList<>(entity.getTickets());
 
             for (int i = 0; i < ticketEntities.size(); i++) {
                 Long seatId = domainTickets.get(i).getShowtimeSeatId();

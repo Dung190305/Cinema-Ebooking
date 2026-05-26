@@ -16,6 +16,12 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -108,11 +114,11 @@ public class BookingJpaEntity extends BaseJpaEntity {
 
     @Builder.Default
     @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<TicketJpaEntity> tickets = new ArrayList<>();
+    private Set<TicketJpaEntity> tickets = new HashSet<>();
 
     @Builder.Default
     @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<BookingComboJpaEntity> combos = new ArrayList<>();
+    private Set<BookingComboJpaEntity> combos = new HashSet<>();
 
     @OneToOne(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
     private BookingCouponJpaEntity coupon;
@@ -129,7 +135,6 @@ public class BookingJpaEntity extends BaseJpaEntity {
 
     public void setCoupon(BookingCouponJpaEntity coupon) {
         this.coupon = coupon;
-
         if (coupon != null) {
             coupon.setBooking(this);
         }
