@@ -1,9 +1,12 @@
 package com.cinemaebooking.backend.showtime.infrastructure.adapter;
 
+import com.cinemaebooking.backend.common.exception.domain.CommonExceptions;
 import com.cinemaebooking.backend.common.exception.domain.ShowtimeExceptions;
 import com.cinemaebooking.backend.common.exception.domain.ShowtimeSeatExceptions;
 import com.cinemaebooking.backend.room_layout.application.port.roomLayout.RoomLayoutInternalService;
+import com.cinemaebooking.backend.room_layout.application.port.seatType.SeatTypeRepository;
 import com.cinemaebooking.backend.room_layout.domain.model.roomLayoutSeat.RoomLayoutSeat;
+import com.cinemaebooking.backend.room_layout.domain.model.seatType.SeatType;
 import com.cinemaebooking.backend.showtime.application.dto.showtime.ShowtimeSnapshot;
 import com.cinemaebooking.backend.showtime.application.port.ShowtimeInternalService;
 import com.cinemaebooking.backend.showtime.application.port.ShowtimeRepository;
@@ -29,6 +32,7 @@ public class ShowtimeInternalServiceImpl implements ShowtimeInternalService {
     private final ShowtimeRepository showtimeRepository;
     private final ShowtimeSeatRepository seatRepository;
     private final RoomLayoutInternalService layoutService;
+    private final SeatTypeRepository seatTypeRepository;
 
     @Override
     public ShowtimeSnapshot getSnapshot(Long showtimeId) {
@@ -49,6 +53,7 @@ public class ShowtimeInternalServiceImpl implements ShowtimeInternalService {
 
         // 3. Kiểm tra trạng thái: Ghế phải còn trống (AVAILABLE)
         validateSeatsAvailability(seats);
+        validateCoupleSeatsInPairs(seats);
 
         // 5. Gom ID để truy vấn Bulk (Tránh N+1)
         List<Long> layoutIds = seats.stream()
@@ -80,6 +85,28 @@ public class ShowtimeInternalServiceImpl implements ShowtimeInternalService {
                     .ticketCode(generateTicketCode())
                     .build();
         }).collect(Collectors.toList());
+    }
+
+    private void validateCoupleSeatsInPairs(List<ShowtimeSeat> seats) {
+        // Lấy coupleTypeId một lần từ DB — tránh hardcode magic number
+        SeatType seatType = seatTypeRepository.findByNameIgnoreCase("COUPLE")
+                .orElse(null);
+        if (seatType == null) throw CommonExceptions.resourceNotFound("Seat type not found");
+        Long coupleTypeId = seatType.getId().getValue();
+        if (coupleTypeId == null) return; // Không có loại ghế đôi → skip
+
+        Map<Long, List<ShowtimeSeat>> coupleGroups = seats.stream()
+                .filter(s -> coupleTypeId.equals(s.getSeatTypeId())
+                        && s.getCoupleGroupId() != null)
+                .collect(Collectors.groupingBy(ShowtimeSeat::getCoupleGroupId));
+
+        for (var entry : coupleGroups.entrySet()) {
+            if (entry.getValue().size() != 2) {
+                throw CommonExceptions.invalidInput(
+                        "Ghế đôi phải được đặt theo cặp. Vui lòng chọn cả hai ghế trong cùng một cặp."
+                );
+            }
+        }
     }
 
     private void validateSeatsAvailability(List<ShowtimeSeat> seats) {

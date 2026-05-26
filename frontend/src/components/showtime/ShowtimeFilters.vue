@@ -33,7 +33,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import CalendarPicker from '@/components/ui/calendar/CalenderPicker.vue'
+import CalendarPicker from '@/components/ui/calendar/CalendarPicker.vue'
 import { dateToISOString } from '@/utils/dateFormat'
 import type { CinemaResponse } from '@/types/cinema'
 

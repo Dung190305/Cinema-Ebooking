@@ -20,6 +20,7 @@ public class UpdateMovieRequest {
     private LocalDate showingEndDate;
     private String posterUrl;
     private String bannerUrl;
+    private String trailerUrl;
     private String director;
     private String actors;
     private Set<Long> genreIds;

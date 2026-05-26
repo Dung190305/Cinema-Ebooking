@@ -189,6 +189,10 @@ export function useCinema() {
     }
   }
 
+  function setCinemas(data: CinemaResponse[]) {
+    cinemas.value = data
+  }
+
   return {
     cinemas:      readonly(cinemas),
     isLoading:    readonly(isLoading),
@@ -200,6 +204,7 @@ export function useCinema() {
     pageSize,
 
     fetchList,
+    setCinemas,
     fetchAll,  // ← for dashboard filter dropdown
     goToPage,   // ← dùng cái này cho pagination buttons
     create,

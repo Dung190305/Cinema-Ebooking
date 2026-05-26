@@ -33,6 +33,9 @@ export const showtimeApi = {
     status?: string       
   }) =>
     apiClient.get<NestedPage<ShowtimeResponse>>('/showtimes', { params }),
+  
+  getPublicById: (id: number) =>
+    apiClient.get<ShowtimeResponse>(`/showtimes/${id}`),
 
   getById: (id: number) =>
     apiClient.get<ShowtimeResponse>(`/admin/showtimes/${id}`),

@@ -153,13 +153,22 @@ const baseColumns: ColumnDef<MovieResponse>[] = [
         key: 'posterUrl',
         label: 'Poster URL',
         type: 'text',
-        hideInTable: true
+        hideInTable: true,
+        required: false
     },
     {
         key: 'bannerUrl',
         label: 'Banner URL',
         type: 'text',
-        hideInTable: true
+        hideInTable: true,
+        required: false
+    },
+    {
+        key: 'trailerUrl',
+        label: 'Trailer URL',
+        type: 'text',
+        hideInTable: true,
+        required: false
     },
     {
         key: 'director',
@@ -207,6 +216,7 @@ async function handleCreate(draft: Record<string, unknown>) {
         showingEndDate: (draft.showingEndDate as string) || null,
         posterUrl: draft.posterUrl as string,
         bannerUrl: draft.bannerUrl as string,
+        trailerUrl: draft.trailerUrl as String,
         director: draft.director as string,
         actors: draft.actors as string,
         genreIds: (draft.genres as number[]) || []

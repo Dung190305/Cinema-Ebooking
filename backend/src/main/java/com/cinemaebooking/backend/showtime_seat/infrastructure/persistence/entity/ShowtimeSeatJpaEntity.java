@@ -64,6 +64,9 @@ public class ShowtimeSeatJpaEntity extends BaseJpaEntity {
     @Column(name = "seat_type_id", nullable = false)
     private Long seatTypeId;
 
+    @Column(name = "couple_groud_id", nullable = false)
+    private Long coupleGroudId;
+
     @Column(name = "is_active", nullable = false)
     private boolean active;
 

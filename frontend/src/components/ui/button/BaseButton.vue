@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 
 type Variant = 'primary' | 'secondary' | 'ghost'
-type Size = 'sm' | 'md' | 'lg' | '2xl'
+type Size = 'sm' | 'md' | 'lg' | '2xl' | '4xl'   // thêm '4xl' để khớp với config
 type Rounded = 'none' | 'sm' | 'md' | 'lg' | '2xl' | 'full'
 
 const props = defineProps<{
@@ -15,17 +15,11 @@ const props = defineProps<{
   customClass?: string
 }>()
 
-/* ================= CONFIG ================= */
-
+/* ================= BASE ================= */
 const base =
   'inline-flex items-center justify-center transition focus:outline-none'
 
-const variants: Record<Variant, string> = {
-  primary: 'bg-accent text-text-on-accent hover:brightness-110',
-  secondary: 'border border-accent text-text-secondary hover:bg-accent hover:text-text-on-accent',
-  ghost: 'text-text-secondary hover:text-text-primary'
-}
-
+/* ================= CONFIG CƠ BẢN ================= */
 const sizes: Record<Size, string> = {
   sm: 'px-3 py-1 text-sm',
   md: 'px-4 py-2 text-md',
@@ -43,8 +37,58 @@ const roundeds: Record<Rounded, string> = {
   full: 'rounded-full'
 }
 
-/* ============ COMPOUND VARIANTS ============ */
+/* ================= VARIANT CLASS (ĐÃ NÂNG CẤP) ================= */
+const variantClass = computed(() => {
+  const v = props.variant ?? 'primary'
+  let cls = ''
 
+  // ----- PRIMARY PREMIUM -----
+  if (v === 'primary') {
+    cls = [
+      'bg-accent text-text-on-accent',
+      'shadow-sm hover:shadow-lg hover:shadow-accent/30', // bóng đổ tăng dần, màu accent
+      'hover:scale-105 active:scale-95',                  // phóng to nhẹ khi hover, thu nhỏ khi click
+      'transition-all duration-300 ease-out'              // mượt mà
+    ].join(' ')
+  }
+
+  // ----- SECONDARY (KHÔNG GIỐNG PRIMARY KHI HOVER) -----
+  else if (v === 'secondary') {
+    cls = [
+      'border border-accent text-text-secondary',
+      'hover:text-accent hover:bg-accent/10 hover:border-accent/80', // nền accent rất nhạt, chữ và viền accent
+      'hover:shadow-sm',                                            // bóng nhẹ
+      'transition-all duration-300 ease-out'
+    ].join(' ')
+  }
+
+  // ----- GHOST -----
+  else if (v === 'ghost') {
+    cls = [
+      'text-text-secondary',
+      'hover:text-text-primary hover:bg-gray-100/50',
+      'transition-colors duration-200'
+    ].join(' ')
+  }
+
+  // ----- ĐIỀU CHỈNH CHO ADMIN -----
+  if (props.isAdmin) {
+    if (v === 'secondary') {
+      cls = cls.replace('text-text-secondary', 'text-text-admin-secondary')
+      // hover:text-accent vẫn giữ vì thường admin cũng dùng màu accent
+    }
+    if (v === 'ghost') {
+      cls = cls.replace('text-text-secondary', 'text-text-admin-secondary')
+      cls = cls.replace('hover:text-text-primary', 'hover:text-text-admin-primary')
+      cls = cls.replace('hover:bg-gray-100/50', 'hover:bg-overlay-light-10')
+    }
+    // primary không cần thay đổi màu chữ vì text-on-accent đã tương phản tốt
+  }
+
+  return cls
+})
+
+/* ============ COMPOUND VARIANTS (GIỮ NGUYÊN LOGIC ICON-ONLY) ============ */
 function getCompoundClasses() {
   const classes: string[] = []
 
@@ -60,7 +104,6 @@ function getCompoundClasses() {
     if (props.size === 'lg') classes.push('w-12 h-12')
     if (props.size === '2xl') classes.push('w-16 h-16')
 
-    // ✅ CHỈ thêm bg-transparent khi variant KHÔNG phải ghost
     if (props.variant !== 'ghost') {
       classes.push('bg-transparent')
     }
@@ -81,37 +124,14 @@ function getCompoundClasses() {
   return classes
 }
 
-const variantClass = computed(() => {
-  const v = props.variant ?? 'primary'
-
-  // base class từ config
-  let cls = variants[v]
-
-  if (props.isAdmin) {
-    if (v === 'secondary' || v === 'ghost') {
-      cls = cls.replace('text-text-primary', 'text-text-admin-primary')
-    }
-
-    if (v === 'ghost') {
-      cls = cls.replace('text-text-secondary', 'text-text-admin-secondary')
-    }
-  }
-
-  return cls
-})
 /* ================= FINAL CLASS ================= */
-
 const buttonClass = computed(() => [
   base,
-
   variantClass.value,
   !props.iconOnly && sizes[props.size ?? 'md'],
   roundeds[props.rounded ?? 'md'],
-
   ...getCompoundClasses(),
-
   props.disabled && 'opacity-50 pointer-events-none',
-
   props.customClass,
 ])
 </script>
