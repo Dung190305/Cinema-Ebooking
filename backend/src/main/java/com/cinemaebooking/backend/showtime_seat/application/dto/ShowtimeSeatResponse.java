@@ -19,4 +19,5 @@ public class ShowtimeSeatResponse {
     private boolean isActive;
     private ShowtimeSeatStatus status;
     private BigDecimal price;
+    private Long coupleGroupId;
 }

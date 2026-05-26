@@ -35,6 +35,7 @@
         private boolean active;
         private ShowtimeSeatStatus status;
         private final BigDecimal price;
+        private Long coupleGroupId;
 
 
         public static ShowtimeSeat from(RoomLayoutSeat seat, Long showtimeId, BigDecimal price, int totalCols) {
@@ -46,6 +47,7 @@
                     .rowIndex(seat.getRowIndex())
                     .colIndex(seat.getColIndex())
                     .seatTypeId(seat.getSeatTypeId())
+                    .coupleGroupId(seat.getCoupleGroupId())
                     .active(seat.isActive())
                     .price(price)
                     .status(ShowtimeSeatStatus.AVAILABLE)
