@@ -36,6 +36,12 @@ const routes: RouteRecordRaw[] = [
         name: 'showtimes',
         component: () => import('@/pages/ShowtimesPage.vue'),
         meta: { title: 'Lịch chiếu' }
+      },
+      {
+        path: 'bookings',
+        name: 'bookings',
+        component: () => import('@/pages/BookingPage.vue'),
+        meta: { title: 'Đặt vé' }
       }
     ],
   },

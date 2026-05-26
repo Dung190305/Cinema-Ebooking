@@ -1,4 +1,3 @@
-// src/composables/useShowtimes.ts
 import { ref, computed, watch, onMounted } from 'vue'
 import { showtimeApi } from '@/api/showtime.api'
 import { cinemaApi } from '@/api/cinema.api'
@@ -6,7 +5,7 @@ import { movieApi } from '@/api/movie.api'
 import type { ShowtimeResponse } from '@/types/showtime'
 import type { CinemaResponse } from '@/types/cinema'
 import type { MovieResponse } from '@/types/movie'
-import { getDateKeyVN } from '@/utils/dateFormat'
+import { getDateKeyVN, dateToISOString } from '@/utils/dateFormat'
 export function useShowtimes(movieId?: number, options?: { autoFetch?: boolean }) {
   const autoFetch = options?.autoFetch ?? true
   const showtimes = ref<ShowtimeResponse[]>([])
@@ -63,9 +62,11 @@ export function useShowtimes(movieId?: number, options?: { autoFetch?: boolean }
           params.city = selectedCity.value
         }
 
-        // Nếu có selectedDate → gửi theo định dạng YYYY-MM-DD (backend sẽ xử lý theo VN)
         if (selectedDate.value) {
-          params.date = selectedDate.value
+          const date = selectedDate.value instanceof Date
+            ? selectedDate.value
+            : new Date(selectedDate.value)
+          params.date = dateToISOString(date, false)
         }
 
         const res = await showtimeApi.getPublicShowtimes(params)
@@ -111,5 +112,6 @@ export function useShowtimes(movieId?: number, options?: { autoFetch?: boolean }
     selectedDate,
     getCinemaById,
     getMovieById,
+    fetchShowtimes,
   }
 }

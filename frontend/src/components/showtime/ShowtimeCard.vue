@@ -66,6 +66,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import BaseIcon from '@/components/ui/icon/BaseIcon.vue'
 import MovieCard from '@/components/movie/MovieCard.vue'
 import { MapPin, Clock, Film, Mic, Captions } from 'lucide-vue-next'
@@ -73,7 +74,6 @@ import type { ShowtimeResponse } from '@/types/showtime'
 import type { MovieResponse } from '@/types/movie'
 import type { CinemaResponse } from '@/types/cinema'
 import type { ShowtimeFormatResponse } from '@/types/showtime'
-import { useAuthStore } from '@/stores/auth.store'
 import { formatTimeVN } from '@/utils/dateFormat'
 import { getLanguageLabel } from '@/constants/languages'
 
@@ -84,11 +84,7 @@ const props = defineProps<{
     format: ShowtimeFormatResponse | undefined
 }>()
 
-const emit = defineEmits<{
-    book: [showtimeId: number]
-}>()
-
-const authStore = useAuthStore()
+const router = useRouter()
 
 const formatName = computed(() => props.format?.name || '2D')
 const firstShowtime = computed(() => props.showtimes[0])
@@ -105,10 +101,6 @@ const formatTime = (startTime: string | Date) => {
 }
 
 const handleBook = (showtimeId: number) => {
-    if (!authStore.user) {
-        alert('Vui lòng đăng nhập để đặt vé')
-        return
-    }
-    emit('book', showtimeId)
+    router.push(`/bookings?showtimeId=${showtimeId}`)
 }
 </script>

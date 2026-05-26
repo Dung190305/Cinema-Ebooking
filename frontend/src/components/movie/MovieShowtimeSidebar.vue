@@ -120,7 +120,7 @@
                     <div class="flex flex-wrap gap-2">
                         <ShowtimePill v-for="st in group.showtimes" :key="st.id" :showtime-id="st.id"
                             :format-name="st.formatName" :start-time="st.startTime" :end-time="st.endTime"
-                            @book="(id: number) => $emit('book', id)" />
+                            @book="handleBook" />
                     </div>
                 </div>
             </div>
@@ -134,6 +134,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import BaseDropdown from '@/components/ui/dropdown/BaseDropdown.vue'
 import { useShowtimes } from '@/composables/useShowtimes'
 import { formatTimeVN, getDateKeyVN } from '@/utils/dateFormat'
@@ -150,9 +151,7 @@ const props = defineProps<{
     movieStatus: MovieStatus
 }>()
 
-defineEmits<{
-    book: [showtimeId: number]
-}>()
+const router = useRouter()
 
 const {
     showtimes,
@@ -263,6 +262,10 @@ const groupedShowtimes = computed(() => {
 })
 
 const formatTime = (instant: string) => formatTimeVN(instant)
+
+const handleBook = (showtimeId: number) => {
+    router.push(`/bookings?showtimeId=${showtimeId}`)
+}
 </script>
 
 <style scoped>
