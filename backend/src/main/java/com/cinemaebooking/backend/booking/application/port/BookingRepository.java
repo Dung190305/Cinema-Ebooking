@@ -15,6 +15,11 @@ public interface BookingRepository {
 
     Optional<Booking> findById(Long id);
 
+    /**
+     * Tìm booking với pessimistic lock — dùng trong ConfirmPaymentUseCase để tránh race condition.
+     */
+    Optional<Booking> findByIdForUpdate(Long id);
+
     Optional<Booking> findByBookingCode(String bookingCode);
 
     Page<Booking> findByUserId(Long userId, BookingStatus status, Pageable pageable);

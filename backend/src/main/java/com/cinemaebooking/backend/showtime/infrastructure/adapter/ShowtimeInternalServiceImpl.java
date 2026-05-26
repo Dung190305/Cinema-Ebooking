@@ -2,6 +2,7 @@ package com.cinemaebooking.backend.showtime.infrastructure.adapter;
 
 import com.cinemaebooking.backend.common.exception.domain.ShowtimeExceptions;
 import com.cinemaebooking.backend.common.exception.domain.ShowtimeSeatExceptions;
+import com.cinemaebooking.backend.common.exception.domain.CommonExceptions;
 import com.cinemaebooking.backend.room_layout.application.port.roomLayout.RoomLayoutInternalService;
 import com.cinemaebooking.backend.room_layout.domain.model.roomLayoutSeat.RoomLayoutSeat;
 import com.cinemaebooking.backend.showtime.application.dto.showtime.ShowtimeSnapshot;
@@ -37,17 +38,24 @@ public class ShowtimeInternalServiceImpl implements ShowtimeInternalService {
     }
 
     @Override
-    @Transactional // Quan trọng: Đảm bảo việc giữ ghế và lấy thông tin diễn ra trong 1 đơn vị công việc
+    @Transactional
     public List<Ticket> getTicketsBySeatIds(Long showtimeId, List<Long> seatIds) {
         // 1. Lấy danh sách ShowtimeSeat từ DB
         List<ShowtimeSeat> seats = seatRepository.findAllByIds(seatIds);
 
-        // 2. Kiểm tra xem có tìm đủ số ghế yêu cầu không
+        // 2. Kiểm tra tìm đủ số ghế
         if (seats.size() != seatIds.size()) {
-            throw new RuntimeException("Một số ghế không tồn tại trong hệ thống.");
+            throw CommonExceptions.resourceNotFound("Một số ghế không tồn tại trong hệ thống.");
         }
 
-        // 3. Kiểm tra trạng thái: Ghế phải còn trống (AVAILABLE)
+        // 3. Kiểm tra ghế thuộc đúng showtime
+        for (ShowtimeSeat seat : seats) {
+            if (!seat.getShowtimeId().equals(showtimeId)) {
+                throw ShowtimeSeatExceptions.unavailable(seat.getId());
+            }
+        }
+
+        // 4. Kiểm tra trạng thái: Ghế phải AVAILABLE mới đặt được
         validateSeatsAvailability(seats);
 
         // 5. Gom ID để truy vấn Bulk (Tránh N+1)
@@ -74,12 +82,12 @@ public class ShowtimeInternalServiceImpl implements ShowtimeInternalService {
                     .showtimeSeatId(seat.getId().getValue())
                     .seatType(typeName)
                     .seatName(seat.getSeatNumber())
-                    .price(seat.getPrice()) // Lưu giá tại thời điểm này
+                    .price(seat.getPrice())
                     .status(TicketStatus.PENDING)
                     .createdAt(LocalDateTime.now())
                     .ticketCode(generateTicketCode())
                     .build();
-        }).collect(Collectors.toList());
+            }).collect(Collectors.toList());
     }
 
     private void validateSeatsAvailability(List<ShowtimeSeat> seats) {

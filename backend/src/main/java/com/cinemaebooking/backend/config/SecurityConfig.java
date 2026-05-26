@@ -35,23 +35,20 @@ public class SecurityConfig {
                                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
                 )
                 .authorizeHttpRequests(auth -> auth
-                        // Auth
+                        // Auth - public endpoints
                         .requestMatchers("/api/v1/auth/**").permitAll()
 
+                        // User profile - must be authenticated
                         .requestMatchers("/api/v1/users/me/**").authenticated()
                         .requestMatchers("/api/v1/loyalty/my-account/**").authenticated()
+
+                        // Admin endpoints - must have ADMIN role
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 
-                        // ✅ Tất cả GET còn lại → public
+                        // Public read-only endpoints (GET for all)
                         .requestMatchers(HttpMethod.GET, "/**").permitAll()
 
-                        // User
-                        .requestMatchers("/api/v1/users/me/**").authenticated()
-
-                        // Admin prefix (nếu sau này dùng)
-                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-
-                        // All other requests → require authentication
+                        // All other requests require authentication
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(

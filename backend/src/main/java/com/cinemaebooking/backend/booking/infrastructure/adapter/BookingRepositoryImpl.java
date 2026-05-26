@@ -54,7 +54,7 @@ public class BookingRepositoryImpl implements BookingRepository {
             }
         } else {
             // UPDATE: booking đã tồn tại
-            entity = jpaRepository.findWithDetailsById(booking.getId().getValue())
+            entity = jpaRepository.findByIdAndDeletedFalse(booking.getId().getValue())
                     .orElseThrow(() -> new RuntimeException("Booking not found: " + booking.getId().getValue()));
 
             mapper.updateEntity(booking, entity);
@@ -88,8 +88,14 @@ public class BookingRepositoryImpl implements BookingRepository {
     @Override
     @Transactional(readOnly = true)
     public Optional<Booking> findById(Long id) {
-        return jpaRepository.findWithDetailsById(id)
-                .filter(entity -> !entity.isDeleted())
+        return jpaRepository.findByIdAndDeletedFalse(id)
+                .map(mapper::toDomain);
+    }
+
+    @Override
+    @Transactional
+    public Optional<Booking> findByIdForUpdate(Long id) {
+        return jpaRepository.findByIdForUpdate(id)
                 .map(mapper::toDomain);
     }
 
@@ -134,7 +140,7 @@ public class BookingRepositoryImpl implements BookingRepository {
     @Override
     @Transactional(readOnly = true)
     public Optional<Booking> findWithDetailsById(Long id) {
-        return jpaRepository.findWithDetailsById(id)
+        return jpaRepository.findByIdAndDeletedFalse(id)
                 .map(mapper::toDomain);
     }
 

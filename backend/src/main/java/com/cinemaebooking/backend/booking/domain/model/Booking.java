@@ -5,6 +5,7 @@ import com.cinemaebooking.backend.booking.domain.valueObject.BookingId;
 import com.cinemaebooking.backend.booking_combo.domain.model.BookingCombo;
 import com.cinemaebooking.backend.booking_coupon.domain.model.BookingCoupon;
 import com.cinemaebooking.backend.common.domain.BaseEntity;
+import com.cinemaebooking.backend.common.exception.domain.BookingExceptions;
 import com.cinemaebooking.backend.common.exception.domain.CommonExceptions;
 import com.cinemaebooking.backend.ticket.domain.model.Ticket;
 import lombok.Builder;
@@ -101,7 +102,7 @@ public class Booking extends BaseEntity<BookingId> {
 
     public void markAsPaid() {
         if (this.status != BookingStatus.PENDING) {
-            throw new RuntimeException("Chỉ có thể thanh toán đơn hàng đang chờ.");
+            throw BookingExceptions.invalidStatus(this.status);
         }
         this.status = BookingStatus.CONFIRMED;
         this.paidAt = LocalDateTime.now();
@@ -111,7 +112,7 @@ public class Booking extends BaseEntity<BookingId> {
         if (this.status == BookingStatus.CANCELLED) return;
 
         if (this.status == BookingStatus.CONFIRMED) {
-            throw new RuntimeException("Không thể hủy đơn hàng đã thanh toán.");
+            throw BookingExceptions.processFailed("Không thể hủy đơn hàng đã thanh toán.");
         }
         this.status = BookingStatus.CANCELLED;
     }

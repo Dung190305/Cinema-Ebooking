@@ -77,8 +77,8 @@ public class ConfirmPaymentUseCase {
      * Internal execution — tất cả các overload gọi vào đây.
      */
     private void execute(Long bookingId, LocalDateTime paidAt, Long userId) {
-        // 1. Fetch booking — throw nếu không tìm thấy
-        Booking booking = bookingRepository.findById(bookingId)
+        // 1. Fetch booking với pessimistic lock — ngăn race condition khi nhiều thread cùng confirm
+        Booking booking = bookingRepository.findByIdForUpdate(bookingId)
                 .orElseThrow(() -> BookingExceptions.notFound(BookingId.of(bookingId)));
 
         // 2. Kiểm tra booking chưa expired
