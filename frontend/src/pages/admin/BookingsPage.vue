@@ -10,8 +10,12 @@
 
       <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 class="text-lg font-semibold text-text-admin-primary">Quản lý booking</h1>
-          <p class="text-sm text-text-admin-tertiary">{{ totalItems }} đơn đặt vé trong hệ thống</p>
+          <h1 class="text-lg font-semibold text-text-admin-primary">
+            Quản lý booking
+          </h1>
+          <p class="text-sm text-text-admin-tertiary">
+            {{ totalItems }} đơn đặt vé trong hệ thống
+          </p>
         </div>
       </div>
 
@@ -22,9 +26,15 @@
           v-model="selectedMovieId"
           class="rounded-lg border border-border-admin-default bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-accent focus:ring-2 focus:ring-slate-100"
         >
-          <option value="">Tất cả phim</option>
+          <option value="">
+            Tất cả phim
+          </option>
 
-          <option v-for="movie in movies" :key="movie.id" :value="String(movie.id)">
+          <option
+            v-for="movie in movies"
+            :key="movie.id"
+            :value="String(movie.id)"
+          >
             {{ movie.title }}
           </option>
         </select>
@@ -34,10 +44,18 @@
           v-model="selectedStatus"
           class="rounded-lg border border-border-admin-default bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-accent focus:ring-2 focus:ring-slate-100"
         >
-          <option value="">Tất cả trạng thái</option>
-          <option value="PENDING">Chờ thanh toán</option>
-          <option value="CONFIRMED">Đã xác nhận</option>
-          <option value="CANCELLED">Đã hủy</option>
+          <option value="">
+            Tất cả trạng thái
+          </option>
+          <option value="PENDING">
+            Chờ thanh toán
+          </option>
+          <option value="CONFIRMED">
+            Đã xác nhận
+          </option>
+          <option value="CANCELLED">
+            Đã hủy
+          </option>
         </select>
 
         <!-- From date -->
@@ -81,12 +99,22 @@
     </div>
 
     <!-- Loading -->
-    <div v-if="isLoading" class="space-y-2 pr-6">
-      <div v-for="i in 5" :key="i" class="h-12 animate-pulse rounded-xl bg-slate-100" />
+    <div
+      v-if="isLoading"
+      class="space-y-2 pr-6"
+    >
+      <div
+        v-for="i in 5"
+        :key="i"
+        class="h-12 animate-pulse rounded-xl bg-slate-100"
+      />
     </div>
 
     <!-- Table -->
-    <div v-else class="pr-6">
+    <div
+      v-else
+      class="pr-6"
+    >
       <div class="overflow-hidden rounded-xl border border-slate-100 bg-white">
         <table class="w-full text-sm">
           <thead>
@@ -120,7 +148,10 @@
 
           <tbody class="divide-y divide-slate-50">
             <tr v-if="bookings.length === 0">
-              <td colspan="8" class="py-12 text-center text-sm text-slate-400">
+              <td
+                colspan="8"
+                class="py-12 text-center text-sm text-slate-400"
+              >
                 Chưa có dữ liệu booking
               </td>
             </tr>
@@ -179,15 +210,10 @@
                   </button>
 
                   <button
-                    v-if="booking.status === 'PENDING'"
-                    class="inline-flex items-center justify-center rounded-lg border p-2 transition"
-                    :class="
-                      canCancelBooking(booking)
-                        ? 'border-red-200 text-red-600 hover:bg-red-50'
-                        : 'cursor-not-allowed border-slate-200 text-slate-300'
-                    "
-                    :disabled="!canCancelBooking(booking) || isActionLoading"
-                    :title="cancelButtonTitle(booking)"
+                    v-if="canCancelBooking(booking)"
+                    class="inline-flex items-center justify-center rounded-lg border border-red-200 p-2 text-red-600 transition hover:bg-red-50"
+                    :disabled="isActionLoading"
+                    title="Booking PENDING đã quá hạn nhưng chưa tự hủy, bấm để hủy thủ công"
                     @click="cancelBooking(booking.bookingId)"
                   >
                     <Ban class="size-4" />
@@ -200,7 +226,10 @@
       </div>
 
       <!-- Pagination -->
-      <div v-if="totalPages > 1" class="mt-4 flex justify-center gap-1.5">
+      <div
+        v-if="totalPages > 1"
+        class="mt-4 flex justify-center gap-1.5"
+      >
         <button
           v-for="page in totalPages"
           :key="page"
@@ -219,7 +248,11 @@
 
     <!-- Detail Drawer -->
     <Teleport to="body">
-      <div v-if="selectedBooking" class="fixed inset-0 z-40 bg-black/20" @click="closeDetail" />
+      <div
+        v-if="selectedBooking"
+        class="fixed inset-0 z-40 bg-black/20"
+        @click="closeDetail"
+      />
 
       <div
         v-if="selectedBooking"
@@ -228,7 +261,9 @@
         <!-- Drawer header -->
         <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           <div>
-            <h2 class="text-sm font-semibold text-slate-900">Chi tiết booking</h2>
+            <h2 class="text-sm font-semibold text-slate-900">
+              Chi tiết booking
+            </h2>
             <p class="text-xs text-slate-400">
               {{ selectedBooking.bookingCode }}
             </p>
@@ -249,7 +284,9 @@
             <div class="rounded-xl border border-slate-100 bg-white p-4">
               <div class="flex items-center justify-between gap-4">
                 <div>
-                  <p class="text-xs text-slate-400">Trạng thái booking</p>
+                  <p class="text-xs text-slate-400">
+                    Trạng thái booking
+                  </p>
                   <span
                     class="mt-1 inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium"
                     :class="statusClass(selectedBooking.status)"
@@ -259,7 +296,9 @@
                 </div>
 
                 <div class="text-right">
-                  <p class="text-xs text-slate-400">Tổng thanh toán</p>
+                  <p class="text-xs text-slate-400">
+                    Tổng thanh toán
+                  </p>
                   <p class="mt-1 text-lg font-semibold text-slate-900">
                     {{ formatCurrency(selectedBooking.finalAmount) }}
                   </p>
@@ -269,7 +308,9 @@
 
             <!-- Payment deadline -->
             <div class="rounded-xl border border-slate-100 bg-white p-4">
-              <h3 class="mb-3 text-sm font-semibold text-slate-800">Hạn thanh toán</h3>
+              <h3 class="mb-3 text-sm font-semibold text-slate-800">
+                Hạn thanh toán
+              </h3>
 
               <span
                 class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium"
@@ -278,35 +319,66 @@
                 {{ paymentDeadlineText(selectedBooking) }}
               </span>
 
-              <p v-if="selectedBooking.status === 'PENDING'" class="mt-2 text-xs text-slate-400">
-                Booking PENDING sẽ tự hủy sau 15 phút nếu chưa thanh toán. Nút hủy thủ công chỉ mở
-                khi còn từ 5 phút trở xuống.
+              <p
+                v-if="selectedBooking.status === 'PENDING'"
+                class="mt-2 text-xs text-slate-400"
+              >
+                Booking PENDING sẽ tự hủy sau 10 phút nếu chưa thanh toán.
+                Nếu đã quá hạn nhưng hệ thống chưa tự hủy, admin có thể hủy thủ công.
               </p>
             </div>
 
             <!-- Basic info -->
             <div class="rounded-xl border border-slate-100 bg-white p-4">
-              <h3 class="mb-3 text-sm font-semibold text-slate-800">Thông tin chung</h3>
+              <h3 class="mb-3 text-sm font-semibold text-slate-800">
+                Thông tin chung
+              </h3>
 
               <div class="space-y-2 text-sm">
-                <InfoRow label="Booking ID" :value="String(selectedBooking.bookingId)" />
-                <InfoRow label="User ID" :value="String(selectedBooking.userId)" />
-                <InfoRow label="Phim" :value="selectedBooking.movieTitle || '—'" />
-                <InfoRow label="Rạp" :value="selectedBooking.cinemaName || '—'" />
-                <InfoRow label="Phòng" :value="selectedBooking.roomName || '—'" />
+                <InfoRow
+                  label="Booking ID"
+                  :value="String(selectedBooking.bookingId)"
+                />
+                <InfoRow
+                  label="User ID"
+                  :value="String(selectedBooking.userId)"
+                />
+                <InfoRow
+                  label="Phim"
+                  :value="selectedBooking.movieTitle || '—'"
+                />
+                <InfoRow
+                  label="Rạp"
+                  :value="selectedBooking.cinemaName || '—'"
+                />
+                <InfoRow
+                  label="Phòng"
+                  :value="selectedBooking.roomName || '—'"
+                />
                 <InfoRow
                   label="Suất chiếu"
                   :value="formatDateTime(selectedBooking.showtimeStartTime)"
                 />
-                <InfoRow label="Ngày tạo" :value="formatDateTime(selectedBooking.createdAt)" />
-                <InfoRow label="Hết hạn" :value="formatDateTime(selectedBooking.expiredAt)" />
-                <InfoRow label="Thanh toán lúc" :value="formatDateTime(selectedBooking.paidAt)" />
+                <InfoRow
+                  label="Ngày tạo"
+                  :value="formatDateTime(selectedBooking.createdAt)"
+                />
+                <InfoRow
+                  label="Hết hạn"
+                  :value="formatDateTime(selectedBooking.expiredAt)"
+                />
+                <InfoRow
+                  label="Thanh toán lúc"
+                  :value="formatDateTime(selectedBooking.paidAt)"
+                />
               </div>
             </div>
 
             <!-- Seats -->
             <div class="rounded-xl border border-slate-100 bg-white p-4">
-              <h3 class="mb-3 text-sm font-semibold text-slate-800">Ghế đã đặt</h3>
+              <h3 class="mb-3 text-sm font-semibold text-slate-800">
+                Ghế đã đặt
+              </h3>
 
               <div
                 v-if="!selectedBooking.seats || selectedBooking.seats.length === 0"
@@ -315,7 +387,10 @@
                 Không có thông tin ghế
               </div>
 
-              <div v-else class="flex flex-wrap gap-2">
+              <div
+                v-else
+                class="flex flex-wrap gap-2"
+              >
                 <span
                   v-for="seat in selectedBooking.seats"
                   :key="seat.showtimeSeatId"
@@ -331,7 +406,9 @@
 
             <!-- Combos -->
             <div class="rounded-xl border border-slate-100 bg-white p-4">
-              <h3 class="mb-3 text-sm font-semibold text-slate-800">Combo</h3>
+              <h3 class="mb-3 text-sm font-semibold text-slate-800">
+                Combo
+              </h3>
 
               <div
                 v-if="!selectedBooking.combos || selectedBooking.combos.length === 0"
@@ -340,13 +417,18 @@
                 Không mua combo
               </div>
 
-              <div v-else class="space-y-2">
+              <div
+                v-else
+                class="space-y-2"
+              >
                 <div
                   v-for="combo in selectedBooking.combos"
                   :key="combo.comboId"
                   class="flex justify-between gap-4 text-sm"
                 >
-                  <span class="text-slate-600"> {{ combo.comboName }} x{{ combo.quantity }} </span>
+                  <span class="text-slate-600">
+                    {{ combo.comboName }} x{{ combo.quantity }}
+                  </span>
 
                   <span class="font-medium text-slate-700">
                     {{ formatCurrency(combo.totalPrice) }}
@@ -357,14 +439,25 @@
 
             <!-- Coupon -->
             <div class="rounded-xl border border-slate-100 bg-white p-4">
-              <h3 class="mb-3 text-sm font-semibold text-slate-800">Coupon</h3>
+              <h3 class="mb-3 text-sm font-semibold text-slate-800">
+                Coupon
+              </h3>
 
-              <div v-if="!selectedBooking.coupon" class="text-sm text-slate-400">
+              <div
+                v-if="!selectedBooking.coupon"
+                class="text-sm text-slate-400"
+              >
                 Không dùng coupon
               </div>
 
-              <div v-else class="space-y-2 text-sm">
-                <InfoRow label="Mã coupon" :value="selectedBooking.coupon.code" />
+              <div
+                v-else
+                class="space-y-2 text-sm"
+              >
+                <InfoRow
+                  label="Mã coupon"
+                  :value="selectedBooking.coupon.code"
+                />
                 <InfoRow
                   label="Giá trị giảm"
                   :value="formatCurrency(selectedBooking.coupon.discountValue)"
@@ -374,7 +467,9 @@
 
             <!-- Payment summary -->
             <div class="rounded-xl border border-slate-100 bg-white p-4">
-              <h3 class="mb-3 text-sm font-semibold text-slate-800">Thanh toán</h3>
+              <h3 class="mb-3 text-sm font-semibold text-slate-800">
+                Thanh toán
+              </h3>
 
               <div class="space-y-2 text-sm">
                 <InfoRow
@@ -410,10 +505,15 @@
 
             <!-- Membership -->
             <div class="rounded-xl border border-slate-100 bg-white p-4">
-              <h3 class="mb-3 text-sm font-semibold text-slate-800">Thành viên</h3>
+              <h3 class="mb-3 text-sm font-semibold text-slate-800">
+                Thành viên
+              </h3>
 
               <div class="space-y-2 text-sm">
-                <InfoRow label="Hạng" :value="selectedBooking.membershipTierName || 'Không có'" />
+                <InfoRow
+                  label="Hạng"
+                  :value="selectedBooking.membershipTierName || 'Không có'"
+                />
                 <InfoRow
                   label="Giảm giá hạng"
                   :value="formatPercent(selectedBooking.membershipDiscountPercent)"
@@ -426,26 +526,25 @@
         <!-- Drawer footer -->
         <div class="border-t border-slate-100 px-5 pb-8 pt-4">
           <button
-            v-if="selectedBooking.status === 'PENDING'"
-            class="w-full rounded-lg border py-2.5 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60"
-            :class="
-              canCancelBooking(selectedBooking)
-                ? 'border-red-200 text-red-600 hover:bg-red-50'
-                : 'border-slate-200 text-slate-300'
-            "
-            :disabled="!canCancelBooking(selectedBooking) || isActionLoading"
+            v-if="canCancelBooking(selectedBooking)"
+            class="w-full rounded-lg border border-red-200 py-2.5 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+            :disabled="isActionLoading"
             @click="cancelBooking(selectedBooking.bookingId)"
           >
-            {{
-              isActionLoading
-                ? 'Đang xử lý...'
-                : canCancelBooking(selectedBooking)
-                  ? 'Hủy booking'
-                  : cancelButtonTitle(selectedBooking)
-            }}
+            {{ isActionLoading ? 'Đang xử lý...' : 'Hủy booking quá hạn' }}
           </button>
 
-          <p v-else class="rounded-lg bg-slate-50 p-3 text-center text-xs text-slate-500">
+          <p
+            v-else-if="selectedBooking.status === 'PENDING'"
+            class="rounded-lg bg-yellow-50 p-3 text-center text-xs text-yellow-700"
+          >
+            Booking này vẫn còn thời gian thanh toán. Hệ thống sẽ tự hủy sau 10 phút nếu chưa thanh toán.
+          </p>
+
+          <p
+            v-else
+            class="rounded-lg bg-slate-50 p-3 text-center text-xs text-slate-500"
+          >
             Booking này không ở trạng thái chờ thanh toán nên không thể hủy.
           </p>
         </div>
@@ -485,9 +584,7 @@ const totalPages = ref(0)
 const totalItems = ref(0)
 
 const pageSize = 10
-
-const PAYMENT_EXPIRE_MINUTES = 15
-const CANCEL_ENABLE_REMAINING_MINUTES = 5
+const PAYMENT_EXPIRE_MINUTES = 10
 
 const now = ref(new Date())
 let timerId: ReturnType<typeof globalThis.setInterval> | undefined
@@ -612,7 +709,9 @@ function closeDetail() {
   selectedBooking.value = null
 }
 
-function getBookingCreatedAtTime(booking: { createdAt?: string | null }) {
+function getBookingCreatedAtTime(booking: {
+  createdAt?: string | null
+}) {
   if (!booking.createdAt) return null
 
   const date = new Date(booking.createdAt)
@@ -622,39 +721,31 @@ function getBookingCreatedAtTime(booking: { createdAt?: string | null }) {
   return date.getTime()
 }
 
-function getPaymentExpiredAtTime(booking: { createdAt?: string | null }) {
+function getCreatedMinutes(booking: {
+  createdAt?: string | null
+}) {
   const createdAtTime = getBookingCreatedAtTime(booking)
 
-  if (!createdAtTime) return null
+  if (!createdAtTime) return 0
 
-  return createdAtTime + PAYMENT_EXPIRE_MINUTES * 60_000
+  const diffMs = now.value.getTime() - createdAtTime
+
+  return Math.max(0, Math.floor(diffMs / 60_000))
 }
 
-function getRemainingMsBeforeExpired(booking: { createdAt?: string | null }) {
-  const expiredAtTime = getPaymentExpiredAtTime(booking)
+function isPaymentExpired(booking: {
+  status: BookingStatus
+  createdAt?: string | null
+}) {
+  if (booking.status !== 'PENDING') return false
 
-  if (!expiredAtTime) return 0
-
-  return expiredAtTime - now.value.getTime()
+  return getCreatedMinutes(booking) >= PAYMENT_EXPIRE_MINUTES
 }
 
-function getRemainingMinutesBeforeExpired(booking: { createdAt?: string | null }) {
-  const remainingMs = getRemainingMsBeforeExpired(booking)
-
-  return Math.ceil(remainingMs / 60_000)
-}
-
-function formatRemainingTime(remainingMs: number) {
-  if (remainingMs <= 0) return '00:00'
-
-  const totalSeconds = Math.floor(remainingMs / 1000)
-  const minutes = Math.floor(totalSeconds / 60)
-  const seconds = totalSeconds % 60
-
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
-}
-
-function paymentDeadlineText(booking: { status: BookingStatus; createdAt?: string | null }) {
+function paymentDeadlineText(booking: {
+  status: BookingStatus
+  createdAt?: string | null
+}) {
   if (booking.status === 'CONFIRMED') {
     return 'Đã thanh toán'
   }
@@ -667,16 +758,19 @@ function paymentDeadlineText(booking: { status: BookingStatus; createdAt?: strin
     return 'Không xác định'
   }
 
-  const remainingMs = getRemainingMsBeforeExpired(booking)
+  const createdMinutes = getCreatedMinutes(booking)
 
-  if (remainingMs <= 0) {
-    return 'Đang chờ tự hủy'
+  if (createdMinutes >= PAYMENT_EXPIRE_MINUTES) {
+    return `Quá hạn - đã tạo ${createdMinutes} phút`
   }
 
-  return `Còn ${formatRemainingTime(remainingMs)}`
+  return `Đã tạo ${createdMinutes} phút`
 }
 
-function paymentDeadlineClass(booking: { status: BookingStatus; createdAt?: string | null }) {
+function paymentDeadlineClass(booking: {
+  status: BookingStatus
+  createdAt?: string | null
+}) {
   if (booking.status === 'CONFIRMED') {
     return 'bg-emerald-100 text-emerald-800'
   }
@@ -689,47 +783,22 @@ function paymentDeadlineClass(booking: { status: BookingStatus; createdAt?: stri
     return 'bg-slate-100 text-slate-600'
   }
 
-  const remainingMinutes = getRemainingMinutesBeforeExpired(booking)
-
-  if (remainingMinutes <= 0) {
+  if (isPaymentExpired(booking)) {
     return 'bg-red-100 text-red-700'
-  }
-
-  if (remainingMinutes <= CANCEL_ENABLE_REMAINING_MINUTES) {
-    return 'bg-orange-100 text-orange-700'
   }
 
   return 'bg-yellow-100 text-yellow-800'
 }
 
-function canCancelBooking(booking: { status: BookingStatus; createdAt?: string | null }) {
-  if (booking.status !== 'PENDING') return false
-
-  const remainingMinutes = getRemainingMinutesBeforeExpired(booking)
-
-  return remainingMinutes <= CANCEL_ENABLE_REMAINING_MINUTES
-}
-
-function cancelButtonTitle(booking: { status: BookingStatus; createdAt?: string | null }) {
-  if (booking.status !== 'PENDING') {
-    return 'Booking này không thể hủy'
-  }
-
-  const remainingMinutes = getRemainingMinutesBeforeExpired(booking)
-
-  if (remainingMinutes <= 0) {
-    return 'Booking đã quá hạn, có thể hủy thủ công'
-  }
-
-  if (remainingMinutes <= CANCEL_ENABLE_REMAINING_MINUTES) {
-    return 'Có thể hủy booking'
-  }
-
-  return `Chỉ có thể hủy khi còn dưới ${CANCEL_ENABLE_REMAINING_MINUTES} phút`
+function canCancelBooking(booking: {
+  status: BookingStatus
+  createdAt?: string | null
+}) {
+  return isPaymentExpired(booking)
 }
 
 async function cancelBooking(id: number) {
-  const ok = globalThis.confirm('Bạn có chắc muốn hủy booking này không?')
+  const ok = globalThis.confirm('Bạn có chắc muốn hủy booking quá hạn này không?')
 
   if (!ok) return
 
@@ -800,7 +869,7 @@ onMounted(async () => {
 
   timerId = globalThis.setInterval(() => {
     now.value = new Date()
-  }, 1000)
+  }, 60_000)
 })
 
 onUnmounted(() => {

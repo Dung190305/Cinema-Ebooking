@@ -12,6 +12,10 @@ export const cinemaApi = {
   getList: (page = 0, size = 8) =>
     apiClient.get<NestedPage<CinemaResponse>>(`/cinemas`, { params: { page, size, sort: 'id,desc' } }),
 
+  // GET /api/v1/cinemas?page=0&size=100 (for filter dropdown)
+  getAll: (size = 100) =>
+    apiClient.get<NestedPage<CinemaResponse>>(`/cinemas`, { params: { page: 0, size } }),
+
   // GET /api/v1/cinemas/{id}
   getById: (id: number) =>
     apiClient.get<CinemaResponse>(`/cinemas/${id}`),
