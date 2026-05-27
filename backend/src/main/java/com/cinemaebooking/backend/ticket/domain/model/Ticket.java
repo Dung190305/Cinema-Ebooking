@@ -64,16 +64,6 @@ public class Ticket extends BaseEntity<TicketId> {
         return this.status == TicketStatus.USED;
     }
 
-    public void activate() {
-        if (this.status != TicketStatus.PENDING) {
-            throw CommonExceptions.invalidInput(
-                    "Chỉ có vé ở trạng thái PENDING mới có thể kích hoạt."
-            );
-        }
-
-        this.status = TicketStatus.ACTIVE;
-    }
-
     public static String generateTicketCode() {
         return "TIC" + System.currentTimeMillis() + (int)(Math.random() * 9000 + 1000);
     }

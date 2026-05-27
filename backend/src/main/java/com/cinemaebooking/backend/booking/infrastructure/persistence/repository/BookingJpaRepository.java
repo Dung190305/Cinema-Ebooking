@@ -32,6 +32,8 @@ public interface BookingJpaRepository extends SoftDeleteJpaRepository<BookingJpa
     // 4. Phân trang danh sách theo User (tất cả status)
     Page<BookingJpaEntity> findByUserIdAndDeletedFalse(Long userId, Pageable pageable);
 
+    Optional<BookingJpaEntity> findByUserIdAndShowtimeIdAndStatus(Long userId, Long showtimeId, BookingStatus status);
+
     // 4.1. Admin: phân trang toàn bộ booking
     Page<BookingJpaEntity> findByDeletedFalse(Pageable pageable);
 

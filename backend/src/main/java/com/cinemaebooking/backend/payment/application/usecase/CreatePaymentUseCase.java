@@ -25,6 +25,7 @@ public class CreatePaymentUseCase {
     private final SeatLockService seatLockService;
 
     private static final int PAYMENT_DURATION_MINUTES = 10;
+    private static final String GATEWAY_BASE_URL = "http://localhost:3000";
 
     @Transactional
     public CreatePaymentResponse execute(CreatePaymentRequest request) {
@@ -35,9 +36,10 @@ public class CreatePaymentUseCase {
                 ));
 
         LocalDateTime paymentExpiredAt = LocalDateTime.now().plusMinutes(PAYMENT_DURATION_MINUTES);
+        String paymentCode = "PAY-" + System.currentTimeMillis();
 
         Payment payment = Payment.builder()
-                .paymentCode("PAY-" + System.currentTimeMillis())
+                .paymentCode(paymentCode)
                 .bookingId(booking.getId().getValue())
                 .amount(booking.getFinalAmount())
                 .method(request.getMethod())
@@ -56,9 +58,21 @@ public class CreatePaymentUseCase {
                 paymentExpiredAt
         );
 
+        String paymentUrl = String.format(
+                "%s/payment/%s?paymentCode=%s&amount=%s&bookingId=%d&showtimeId=%d&callbackUrl=%s",
+                GATEWAY_BASE_URL,
+                request.getMethod().name().toLowerCase(),
+                paymentCode,
+                booking.getFinalAmount().toString(),
+                booking.getId().getValue(),
+                booking.getShowtimeId(),
+                request.getCallbackUrl()
+        );
+
         return CreatePaymentResponse.builder()
-                .paymentCode(payment.getPaymentCode())
-                .expiredAt(payment.getExpiredAt())
+                .paymentCode(paymentCode)
+                .paymentUrl(paymentUrl)
+                .expiredAt(paymentExpiredAt)
                 .build();
     }
 }

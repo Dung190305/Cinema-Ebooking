@@ -17,6 +17,11 @@ public final class BookingExceptions {
                 "Không tìm thấy đặt vé: " + id.getValue());
     }
 
+    public static BaseException notFoundForUserAndShowtime(Long userId, Long showtimeId) {
+        return new BaseException(ErrorCode.BOOKING_NOT_FOUND,
+                String.format("Không tìm thấy đơn hàng đang chờ cho người dùng %s và suất chiếu %s", userId, showtimeId));
+    }
+
     // ================== BUSINESS RULE ==================
 
     public static BaseException invalidStatus(BookingStatus currentStatus) {

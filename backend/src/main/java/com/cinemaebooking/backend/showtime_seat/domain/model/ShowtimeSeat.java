@@ -61,7 +61,7 @@
         }
 
         public void book() {
-            if (this.status != ShowtimeSeatStatus.AVAILABLE) {
+            if (this.status != ShowtimeSeatStatus.LOCKED) {
                 throw ShowtimeSeatExceptions.unavailable(this.id);
             }
 

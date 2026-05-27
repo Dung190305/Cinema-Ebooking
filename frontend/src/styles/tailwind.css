@@ -31,8 +31,7 @@
   --color-overlay-light-30: var(--color-overlay-light-30);
   --color-overlay-light-10: var(--color-overlay-light-10);
 
-  /* fonts */
-  --font-body: var(--font-body);
+  --color-error: var(--color-red-600) /* fonts */ --font-body: var(--font-body);
   --font-brand: var(--font-brand);
 
   /* admin colors */

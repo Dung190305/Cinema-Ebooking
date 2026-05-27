@@ -25,6 +25,7 @@ import BaseIcon from '@/components/ui/icon/BaseIcon.vue';
 const router = useRouter()
 
 function goToBookingPage() {
+    sessionStorage.setItem('booking_force_reset', 'true')
     router.push('/bookings')
 }
 </script>

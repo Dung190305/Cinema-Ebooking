@@ -4,6 +4,8 @@ import type {
   BookingDetailResponse,
   BookingListItemResponse,
   BookingStatus,
+  CreateBookingRequest,
+  CreateBookingResponse
 } from '@/types/booking.types'
 
 export const bookingApi = {
@@ -47,6 +49,12 @@ export const bookingApi = {
 
   getById: (id: number) =>
     apiClient.get<BookingDetailResponse>(`/bookings/${id}`) as Promise<BookingDetailResponse>,
+
+  getPendingBooking: (userId: number, showtimeId: number) =>
+    api.get('/api/v1/bookings/pending', { params: { userId, showtimeId } }),
+
+  create: (data: CreateBookingRequest) =>
+    apiClient.post<CreateBookingResponse>('/bookings', data) as Promise<CreateBookingResponse>,
 
   cancel: (id: number) => apiClient.post(`/bookings/${id}/cancel`),
 }

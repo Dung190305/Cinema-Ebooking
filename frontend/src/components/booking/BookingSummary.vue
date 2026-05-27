@@ -5,6 +5,10 @@ import AgeRatingTag from '@/components/movie/AgeRatingTag.vue'
 import { roomApi } from '@/api/room.api'
 import { getLanguageLabel } from '@/constants/languages'
 import BaseButton from '@/components/ui/button/BaseButton.vue'
+import BaseIcon from '@/components/ui/icon/BaseIcon.vue'
+import { Clock } from 'lucide-vue-next'
+
+const seatLock = inject<ReturnType<typeof import('@/composables/useSeatLock').useSeatLock>>('seatLock')!
 
 const props = defineProps<{
     currentStep?: number
@@ -39,11 +43,8 @@ const seats = computed(() => booking.selectedSeats.value)
 const combos = computed(() => booking.selectedCombos.value)
 const coupon = computed(() => booking.appliedCoupon.value)
 
-// ── Totals ────────────────────────────────────────────────────────────────────
-const seatTotal = computed(() => seats.value.reduce((s: number, i: any) => s + i.price, 0))
-const comboTotal = computed(() => combos.value.reduce((s: number, i: any) => s + i.totalPrice, 0))
-const discount = computed(() => coupon.value?.discountValue ?? 0)
-const total = computed(() => Math.max(0, seatTotal.value + comboTotal.value - discount.value))
+const seatTotal = computed(() => booking.seatTotal?.value ?? 0)
+const total = computed(() => booking.grandTotal?.value ?? 0)
 
 defineEmits<{
     (e: 'prev'): void
@@ -118,7 +119,7 @@ const seatGroups = computed(() => {
             unit: group.isCouple ? 'cặp' : 'ghế',
             // Ghế đôi: ghép thành ["A1 & A2", "B3 & B4"]; ghế thường: ["A1", "A2"]
             displayLabels: group.isCouple
-                ? chunkArray(labels, 2).map(pair => pair.join(' & '))
+                ? chunkArray(labels, 2).map(pair => pair.join(' - '))
                 : labels,
         }
     })
@@ -140,13 +141,12 @@ const formatBadge = computed(() => {
     return map[st.formatId] ?? '2D'
 })
 
-// Disable next button based on step
 const isNextDisabled = computed(() => {
     const step = props.currentStep || booking.currentStep?.value || 1
-    if (step === 1) return false // handled separately
     if (step === 2) return !booking.selectedShowtime.value
     if (step === 3) return booking.selectedSeats.value.length === 0
-    // Add more for other steps if needed
+    if (step === 4) return false // combo là optional
+    if (step === 5) return false // payment tự validate khi submit
     return false
 })
 
@@ -159,7 +159,19 @@ function showtimeLabel(iso: string): string {
 </script>
 
 <template>
-    <div class="bg-bg-surface p-6 border border-border-default rounded-2xl overflow-hidden w-full">
+    <!-- Timer -->
+    <div v-if="seatLock?.hasActiveLock && props.currentStep && props.currentStep >= 4"
+        class="bg-bg-surface border border-border-default rounded-xl px-6 py-4 flex items-center justify-between shadow-sm">
+        <div class="flex items-center gap-2 text-text-secondary">
+            <BaseIcon :icon="Clock" :size="20" class="text-accent" />
+            <span class="text-caption font-medium">Thời gian giữ ghế</span>
+        </div>
+        <div class="font-mono text-xl font-bold tabular-nums"
+            :class="seatLock.timeLeft < 60 ? 'text-error' : 'text-accent'">
+            {{ seatLock.formattedTime }}
+        </div>
+    </div>
+    <div class="bg-bg-surface mt-6 p-6 border border-border-default rounded-2xl overflow-hidden w-full">
 
         <div class="space-y-5">
 

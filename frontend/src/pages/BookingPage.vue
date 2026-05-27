@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { provide, watch, onMounted, ref, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { provide, watch, onMounted, onUnmounted, ref, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useBooking } from '@/composables/useBooking'
+import { useSeatLock } from '@/composables/useSeatLock'
+import { useAuthStore } from '@/stores/auth.store'
 import BookingLayout from '@/layouts/BookingLayout.vue'
 import ProgressSteps from '@/components/booking/ProgressSteps.vue'
 import BookingSummary from '@/components/booking/BookingSummary.vue'
@@ -12,24 +14,22 @@ import SeatSelection from '@/components/booking/SeatSelection.vue'
 import ComboSelection from '@/components/booking/ComboSelection.vue'
 import PaymentCoupon from '@/components/booking/PaymentCoupon.vue'
 
-import { showtimeApi } from '@/api/showtime.api'
 import { movieApi } from '@/api/movie.api'
+import { showtimeApi } from '@/api/showtime.api'
 
 const STORAGE_KEY = 'booking_state'
 const route = useRoute()
+const router = useRouter()
+const auth = useAuthStore()
 
 const booking = useBooking()
-if (!booking.currentStep.value) {
-    booking.currentStep.value = 1
-}
 provide('booking', booking)
 
-const debugInfo = computed(() => ({
-    currentStep: booking.currentStep.value,
-    hasCinema: !!booking.selectedCinema.value,
-    hasShowtime: !!booking.selectedShowtime.value,
-    hasSeats: booking.selectedSeats.value.length
-}))
+const seatLock = useSeatLock(() => {
+    // Xoá toàn bộ trạng thái booking và quay về bước 1
+    resetBookingState()
+})
+provide('seatLock', seatLock)
 
 // Refs cho các step component
 const cinemaRef = ref<InstanceType<typeof CinemaSelection> | null>(null)
@@ -38,9 +38,66 @@ const seatRef = ref<InstanceType<typeof SeatSelection> | null>(null)
 const comboRef = ref<InstanceType<typeof ComboSelection> | null>(null)
 const paymentRef = ref<InstanceType<typeof PaymentCoupon> | null>(null)
 
+function resetBookingState() {
+    booking.reset()
+    seatLock.reset()
+    sessionStorage.removeItem(STORAGE_KEY)
+}
+
+/** Khôi phục state từ sessionStorage */
+function restoreBookingState() {
+    try {
+        const saved = sessionStorage.getItem(STORAGE_KEY)
+        if (!saved) return
+        const state = JSON.parse(saved)
+
+        booking.selectedCinema.value = state.selectedCinema ?? null
+        booking.selectedMovie.value = state.selectedMovie ?? null
+        booking.selectedShowtime.value = state.selectedShowtime ?? null
+        booking.selectedSeats.value = state.selectedSeats ?? []
+        booking.selectedCombos.value = state.selectedCombos ?? []
+        booking.appliedCoupon.value = state.appliedCoupon ?? null
+        if (state.currentStep && state.currentStep >= 1 && state.currentStep <= 6) {
+            booking.currentStep.value = state.currentStep
+        }
+    } catch {
+        // Dữ liệu lỗi -> bỏ qua, giữ trạng thái mặc định
+    }
+}
+
+onMounted(() => {
+    const forceReset = sessionStorage.getItem('booking_force_reset') === 'true'
+    const showtimeId = route.query.showtimeId ? Number(route.query.showtimeId) : null
+
+    if (forceReset) {
+        // Reset hoàn toàn khi bấm nút "Đặt vé ngay"
+        resetBookingState()
+        sessionStorage.removeItem('booking_force_reset')
+    } else if (showtimeId && !isNaN(showtimeId)) {
+        // Deep link từ showtime -> khởi tạo mới từ suất chiếu
+        resetBookingState()
+        initializeFromShowtime(showtimeId)
+        window.history.replaceState({}, '', '/bookings')
+    } else {
+        // Reload hoặc quay lại -> khôi phục state cũ (nếu có)
+        restoreBookingState()
+    }
+})
+
+onUnmounted(() => {
+    const userId = auth.user?.id
+    const showtimeId = booking.selectedShowtime.value?.id
+    const currentStep = booking.currentStep.value
+
+    if (userId && showtimeId && currentStep >= 4 && currentStep <= 5) {
+        seatLock.releaseOnBeforeUnload(userId, showtimeId)
+    }
+})
+
 const initializeFromShowtime = async (showtimeId: number) => {
     try {
         booking.reset()
+        seatLock.reset()
 
         const showtimeRaw = await showtimeApi.getPublicById(showtimeId)
         if (!showtimeRaw) {
@@ -48,21 +105,16 @@ const initializeFromShowtime = async (showtimeId: number) => {
             return
         }
 
-        // === FIX: Xử lý cả 2 trường hợp (nested movie hoặc chỉ movieId) ===
         let movieData = null
         let cinemaData = null
 
-        // Trường hợp 1: API trả về nested object
         if (showtimeRaw.movie) {
             movieData = showtimeRaw.movie
-        }
-        // Trường hợp 2: Chỉ có movieId → fetch riêng movie
-        else if (showtimeRaw.movieId) {
+        } else if (showtimeRaw.movieId) {
             try {
                 const movieRes = await movieApi.getById(showtimeRaw.movieId)
-                movieData = movieRes  // hoặc movieRes.data nếu dùng axios response wrapper
+                movieData = movieRes
             } catch (e) {
-                console.warn('Không tải được thông tin phim chi tiết, dùng fallback')
                 movieData = {
                     id: showtimeRaw.movieId,
                     title: `Phim #${showtimeRaw.movieId}`,
@@ -72,30 +124,21 @@ const initializeFromShowtime = async (showtimeId: number) => {
             }
         }
 
-        // Xử lý cinema tương tự
         if (showtimeRaw.cinema) {
             cinemaData = showtimeRaw.cinema
         } else if (showtimeRaw.cinemaId) {
-            // Nếu cần cinema chi tiết thì fetch, hiện tại chỉ cần name nên có thể để sau
             cinemaData = { id: showtimeRaw.cinemaId, name: 'Rạp' }
         }
 
-        // Gán vào booking
         booking.selectedShowtime.value = showtimeRaw
         booking.selectedMovie.value = movieData
         booking.selectedCinema.value = cinemaData
 
-        // Đảm bảo roomId có để load tên phòng
         if (showtimeRaw.roomId) {
             (booking.selectedShowtime.value as any).roomId = showtimeRaw.roomId
         }
 
         booking.currentStep.value = 3
-
-        console.log('✅ Loaded from showtimeId:', {
-            showtime: showtimeRaw,
-            movie: movieData
-        })
 
     } catch (err) {
         console.error('Failed to load showtime:', err)
@@ -103,7 +146,6 @@ const initializeFromShowtime = async (showtimeId: number) => {
     }
 }
 
-// Hàm xử lý nút "Tiếp tục" từ BookingSummary
 function handleNext() {
     const step = booking.currentStep.value
     let currentComponent = null
@@ -119,44 +161,24 @@ function handleNext() {
     }
 }
 
-// Hàm xử lý nút "Quay lại"
-function handlePrev() {
-    if (booking.currentStep.value > 1) {
-        booking.goToStep(booking.currentStep.value - 1)
-    }
-}
+async function handlePrev() {
+    const current = booking.currentStep.value
+    const target = current - 1
 
-onMounted(async () => {
-    // Ưu tiên xử lý từ URL query (từ Sidebar hoặc ShowtimeCard)
-    const showtimeId = route.query.showtimeId ? Number(route.query.showtimeId) : null
-
-    if (showtimeId && !isNaN(showtimeId)) {
-        await initializeFromShowtime(showtimeId)
-
-        // Xóa query param để URL sạch
-        window.history.replaceState({}, '', '/bookings')
-    }
-    // Nếu không có query thì khôi phục từ sessionStorage
-    else {
-        const saved = sessionStorage.getItem(STORAGE_KEY)
-        if (saved) {
-            try {
-                const state = JSON.parse(saved)
-                if (state.currentStep) booking.currentStep.value = state.currentStep
-                if (state.selectedCinema) booking.selectedCinema.value = state.selectedCinema
-                if (state.selectedMovie) booking.selectedMovie.value = state.selectedMovie
-                if (state.selectedShowtime) booking.selectedShowtime.value = state.selectedShowtime
-                if (state.selectedSeats) booking.selectedSeats.value = state.selectedSeats
-                if (state.selectedCombos) booking.selectedCombos.value = state.selectedCombos
-                if (state.appliedCoupon) booking.appliedCoupon.value = state.appliedCoupon
-            } catch (e) {
-                console.error(e)
-                sessionStorage.removeItem(STORAGE_KEY)
-            }
+    // Chỉ release lock khi quay về bước <=3 (rời khỏi vùng cần giữ ghế)
+    if (target <= 3 && current >= 4) {
+        const userId = auth.user?.id
+        const showtimeId = booking.selectedShowtime.value?.id
+        if (userId && showtimeId) {
+            await seatLock.releaseLocks(userId, showtimeId)
         }
     }
-})
 
+    if (current > 1) {
+        booking.goToStep(target)
+    }
+}
+// Watch lưu state vào sessionStorage mỗi khi có thay đổi
 watch(
     () => ({
         currentStep: booking.currentStep.value,
@@ -175,6 +197,7 @@ watch(
     { deep: true }
 )
 
+
 watch(
     () => booking.currentStep.value,
     (step) => {
@@ -183,12 +206,28 @@ watch(
         }
     }
 )
+
+async function handleStepChange(step: number) {
+    if (step > booking.currentStep.value) return
+
+    const current = booking.currentStep.value
+    // Nếu chuyển từ step >=4 xuống step <=3 thì release lock
+    if (current >= 4 && step <= 3) {
+        const userId = auth.user?.id
+        const showtimeId = booking.selectedShowtime.value?.id
+        if (userId && showtimeId) {
+            await seatLock.releaseLocks(userId, showtimeId)
+        }
+    }
+
+    booking.goToStep(step)
+}
 </script>
 
 <template>
     <BookingLayout>
         <template #progress>
-            <ProgressSteps :current-step="booking.currentStep.value" @update:step="booking.goToStep" />
+            <ProgressSteps :current-step="booking.currentStep.value" @update:step="handleStepChange" />
         </template>
 
         <template #main>
