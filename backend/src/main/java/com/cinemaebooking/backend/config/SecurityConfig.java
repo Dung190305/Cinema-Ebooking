@@ -35,12 +35,15 @@ public class SecurityConfig {
                                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
                 )
                 .authorizeHttpRequests(auth -> auth
+                        // CORS preflight - always allow OPTIONS
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
                         // Auth - public endpoints
+                        .requestMatchers(HttpMethod.OPTIONS, "/api/v1/auth/**").permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
 
-                        // User profile - must be authenticated
-                        .requestMatchers("/api/v1/users/me/**").authenticated()
-                        .requestMatchers("/api/v1/loyalty/my-account/**").authenticated()
+                        // Admin scanner page - serve HTML without login (JWT entered inside page)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/admin/scanner").permitAll()
 
                         // Admin endpoints - must have ADMIN role
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")

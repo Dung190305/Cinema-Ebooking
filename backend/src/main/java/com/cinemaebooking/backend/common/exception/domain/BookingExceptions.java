@@ -17,6 +17,11 @@ public final class BookingExceptions {
                 "Không tìm thấy đặt vé: " + id.getValue());
     }
 
+    public static BaseException notFoundByCode(String code) {
+        return new BaseException(ErrorCode.BOOKING_NOT_FOUND,
+                "Không tìm thấy đặt vé với mã: " + code);
+    }
+
     // ================== BUSINESS RULE ==================
 
     public static BaseException invalidStatus(BookingStatus currentStatus) {

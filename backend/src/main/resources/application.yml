@@ -76,3 +76,5 @@ notification:
   reminder:
     hours-before: 2
     check-window-minutes: 20
+
+#lt --port 8080 --subdomain cinema-checkinn

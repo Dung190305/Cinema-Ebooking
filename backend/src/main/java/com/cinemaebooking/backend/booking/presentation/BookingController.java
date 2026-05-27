@@ -73,6 +73,12 @@ public class BookingController {
         return createBookingUseCase.execute(request);
     }
 
+    @GetMapping("/by-code/{bookingCode}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public BookingDetailResponse getBookingByCode(@PathVariable String bookingCode) {
+        return getBookingDetailUseCase.executeByBookingCode(bookingCode);
+    }
+
     // ================== DETAIL (XEM CHI TIẾT) ==================
     @GetMapping("/{id}")
     public BookingDetailResponse getBookingDetail(@PathVariable Long id) {

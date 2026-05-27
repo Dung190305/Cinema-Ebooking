@@ -68,6 +68,14 @@ public class TicketRepositoryImpl implements TicketRepository {
     }
 
     @Override
+    public List<Ticket> findByBookingCode(String bookingCode) {
+        return ticketJpaRepository.findAllByBookingBookingCodeAndDeletedAtIsNull(bookingCode)
+                .stream()
+                .map(ticketMapper::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public boolean existsActiveTicketsForSeats(List<Long> seatIds) {
         List<TicketStatus> activeStatuses = List.of(TicketStatus.PENDING, TicketStatus.ACTIVE);
         return ticketJpaRepository.existsByShowtimeSeatIdInAndStatusIn(seatIds, activeStatuses);

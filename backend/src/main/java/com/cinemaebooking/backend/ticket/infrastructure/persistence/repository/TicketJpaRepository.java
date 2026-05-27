@@ -11,6 +11,7 @@ import java.util.Optional;
 public interface TicketJpaRepository extends SoftDeleteJpaRepository<TicketJpaEntity> {
     Optional<TicketJpaEntity> findByTicketCodeAndDeletedAtIsNull(String ticketCode);
     List<TicketJpaEntity> findAllByBookingIdAndDeletedAtIsNull(Long bookingId);
+    List<TicketJpaEntity> findAllByBookingBookingCodeAndDeletedAtIsNull(String bookingCode);
     boolean existsByShowtimeSeatIdInAndStatusIn(List<Long> seatIds, List<TicketStatus> statuses);
     List<TicketJpaEntity> findAllByIdInAndDeletedAtIsNull(List<Long> ids);
 }
