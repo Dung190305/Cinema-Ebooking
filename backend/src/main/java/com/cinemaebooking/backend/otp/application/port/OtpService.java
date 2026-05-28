@@ -87,4 +87,6 @@ public interface OtpService {
     VerifyOtpResponse verifyOtp(String code, Long userId);
     SendOtpResponse forgotPasswordAndSendOtp(String email);
     VerifyOtpResponse verifyForgotPasswordOtpAndReset(String email, String code, String newPassword);
+
+    VerifyOtpResponse verifyForgotPasswordOtp(String email, String code);
 }
