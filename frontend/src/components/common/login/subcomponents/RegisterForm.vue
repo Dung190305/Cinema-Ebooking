@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import BaseButton from '@/components/ui/button/BaseButton.vue'
 import CalendarPicker from '@/components/ui/calendar/CalenderPicker.vue'
+import OtpForm from '@/components/common/login/subcomponents/OtpForm.vue'
 import { useRegisterForm } from '@/composables/useRegisterForm'
+import { clearOtpData } from '@/composables/useOtpForm'
 
 const emit = defineEmits<{
     switch: []
@@ -14,25 +16,22 @@ const {
     loading, generalError,
     isDisabled,
     handleInput, selectGender, handleDateSelect, submit,
-    success, successMessage,
+    otpData,
 } = useRegisterForm(emit)
+
+const handleOtpSuccess = () => {
+    clearOtpData()
+}
 </script>
 
 <template>
-    <h1 class="text-title text-center my-4 text-text-primary">Đăng Kí Tài Khoản</h1>
-    <!-- SUCCESS STATE -->
-    <div v-if="success" class="flex flex-col gap-4 text-center pt-6">
+    <!-- OTP STEP -->
+    <OtpForm v-if="otpData" :userId="otpData.userId" :email="otpData.email" :expiresAt="otpData.expiresAt"
+        :onSuccess="handleOtpSuccess" @switch="emit('switch')" @close="emit('close')" />
 
-        <div class="text-green-500 text-body font-medium">
-            {{ successMessage }}
-        </div>
-
-        <BaseButton variant="primary" class="w-full" @click="emit('switch')">
-            Quay lại đăng nhập
-        </BaseButton>
-
-    </div>
-    <div v-if="!success">
+    <!-- REGISTER FORM -->
+    <div v-if="!otpData">
+        <h1 class="text-title text-center my-4 text-text-primary">Đăng Kí Tài Khoản</h1>
         <form @submit.prevent="submit" class="flex flex-col gap-2 mb-4">
             <!-- HỌ VÀ TÊN -->
             <div>

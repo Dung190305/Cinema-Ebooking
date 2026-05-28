@@ -54,5 +54,26 @@ export interface ChangePasswordRequest {
   newPassword: string
 }
 
+export interface SendOtpResponse {
+    message: string
+    userId: number
+    email: string
+    generatedOtpCode?: string
+    expiresAt: string  // ISO string
+}
+
+export interface VerifyOtpResponse {
+    success: boolean
+    message: string
+    userId: number
+    isActivated: boolean
+}
+
+export interface ResetPasswordRequest {
+    email: string
+    otp: string
+    newPassword: string
+}
+
 
 

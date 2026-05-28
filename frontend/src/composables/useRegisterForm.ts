@@ -1,5 +1,7 @@
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { authApi } from '@/api/auth.api'
+import type { SendOtpResponse } from '@/types/auth.types'
+import { saveOtpData, loadOtpData, clearOtpData, type StoredOtpData } from '@/composables/useOtpForm'
 
 export function useRegisterForm(emit: (event: string) => void) {
 
@@ -28,8 +30,22 @@ export function useRegisterForm(emit: (event: string) => void) {
     const showConfirmPassword = ref(false)
     const loading = ref(false)
     const generalError = ref('')
-    const success = ref(false)
-    const successMessage = ref('')
+
+    // ─── OTP data: ưu tiên từ localStorage (user tắt modal rồi mở lại) ───
+    const otpData = ref<SendOtpResponse | null>(null)
+
+    onMounted(() => {
+        const stored = loadOtpData()
+        if (stored) {
+            otpData.value = {
+                userId: stored.userId,
+                email: stored.email,
+                expiresAt: stored.expiresAt,
+                message: '',
+                generatedOtpCode: undefined,
+            }
+        }
+    })
 
     type Field = keyof typeof errors.value
 
@@ -102,20 +118,26 @@ export function useRegisterForm(emit: (event: string) => void) {
 
         loading.value = true
         generalError.value = ''
-        success.value = false
+        otpData.value = null
 
         try {
-            await authApi.register({
+            const response = await authApi.register({
                 fullName: form.value.fullName,
                 email: form.value.email,
                 password: form.value.password,
                 phoneNumber: form.value.phoneNumber,
                 dateOfBirth: form.value.dateOfBirth!.toISOString().split('T')[0], // Date → "2005-12-02"
-                gender: form.value.gender.toUpperCase() as 'MALE' | 'FEMALE',  
+                gender: form.value.gender.toUpperCase() as 'MALE' | 'FEMALE',
             })
 
-            success.value = true
-            successMessage.value = 'Đăng ký thành công!\nVui lòng đăng nhập để tiếp tục.'
+            // Lưu vào localStorage để user có thể mở lại OTP form khi tắt modal
+            saveOtpData({
+                userId: response.userId,
+                email: response.email,
+                expiresAt: response.expiresAt,
+            })
+
+            otpData.value = response
 
         } catch (err: any) {
             handleBackendError(err)
@@ -139,12 +161,25 @@ export function useRegisterForm(emit: (event: string) => void) {
         handleRegister()
     }
 
+    // ─── Khi OTP verify thành công → xóa localStorage ────────────
+    const onOtpSuccess = () => {
+        clearOtpData()
+        otpData.value = null
+    }
+
+    // ─── Xóa OTP khi user đóng modal mà chưa verify ────────────
+    const clearOtp = () => {
+        otpData.value = null
+    }
+
     return {
         form, errors,
         showPassword, showConfirmPassword,
         loading, generalError,
         isDisabled,
         handleInput, selectGender, handleDateSelect, submit,
-        success, successMessage,
+        otpData,
+        onOtpSuccess,
+        clearOtp,
     }
 }
