@@ -1,5 +1,58 @@
 <template>
     <div>
+        <Transition name="modal-fade">
+            <div v-if="orphanWarning"
+                class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-md"
+                @click.self="clearOrphan">
+                <div
+                    class="relative bg-linear-to-br from-bg-surface via-bg-surface to-bg-surface/95 rounded-2xl max-w-md w-full shadow-2xl border border-white/10 overflow-hidden">
+                    <!-- Subtle accent top bar -->
+                    <div class="absolute top-0 left-0 right-0 h-1 bg-linear-to-r from-accent to-accent/40"></div>
+
+                    <div class="p-6 sm:p-7">
+                        <!-- Header -->
+                        <div class="flex items-start gap-4">
+                            <div class="shrink-0 w-11 h-11 rounded-full bg-accent/15 flex items-center justify-center">
+                                <AlertTriangle class="w-6 h-6 text-accent" />
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="text-title font-bold text-text-primary mb-1">
+                                    Ghế tạo khoảng trống
+                                </h3>
+                                <p class="text-text-secondary text-sm leading-relaxed">
+                                    {{ orphanWarning.message }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Hint / suggestion -->
+                        <div class="mt-5 pt-4 border-t border-border-default/50">
+                            <p class="text-caption text-text-tertiary flex items-center gap-2">
+                                <Info class="w-3.5 h-3.5" />
+                                Mẹo: Chọn các ghế liền kề hoặc bỏ chọn ghế đang gây lẻ
+                            </p>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="mt-6 flex justify-end gap-3">
+                            <button
+                                class="px-5 py-2 rounded-xl text-sm font-medium transition-all duration-200 border border-border-default text-text-secondary hover:bg-white/5 hover:border-accent/30"
+                                @click="clearOrphan">
+                                Chọn lại ghế
+                            </button>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </Transition>
+
+        <!-- Polling indicator (rõ ràng hơn) -->
+        <div v-if="isPolling"
+            class="fixed bottom-4 right-4 z-40 flex items-center gap-2.5 bg-black/80 backdrop-blur-md px-4 py-2 rounded-full border border-accent-500/40 shadow-lg">
+            <RefreshCw class="w-3.5 h-3.5 text-accent-400 animate-spin" />
+            <span class="text-xs font-medium text-accent-300">Đồng bộ sơ đồ ghế...</span>
+        </div>
         <!-- Login Prompt -->
         <div v-if="showLoginPrompt"
             class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -65,8 +118,20 @@
         </div>
 
         <!-- Seat Grid -->
-        <div v-else-if="adapted" class="relative bg-bg-surface ...">
-            <div v-if="isRefetching" class="absolute inset-0 ...">Đang cập nhật...</div>
+        <div v-else-if="adapted"
+            class="relative bg-bg-surface border border-border-default rounded-xl p-4 lg:p-6 overflow-x-auto">
+            <!-- Loading overlay -->
+            <div v-if="isRefetching"
+                class="absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-10 rounded-xl transition-opacity duration-200">
+                <div class="flex flex-col items-center gap-3 text-center">
+                    <svg class="animate-spin h-9 w-9 text-accent" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    </svg>
+                    <p class="text-text-primary text-body">Đang cập nhật sơ đồ ghế...</p>
+                </div>
+            </div>
 
             <SeatGrid :layout="adapted.grid" :config="webSeatGridConfig" :selected-ids="selectedIds"
                 :booked-ids="adapted.bookedIds" :locked-ids="adapted.lockedIds" :show-booking-legend="true"
@@ -84,8 +149,11 @@ import ShowtimePill from '@/components/showtime/ShowtimePill.vue'
 import { webSeatGridConfig } from '@/components/seat/seatGridConfig'
 
 import { useSeatSelection } from '@/composables/booking/useSeatSelection'
+import { useSeatPolling } from '@/composables/booking/useSeatPolling'
 import { useShowtimeSwitcher } from '@/composables/booking/useShowtimeSwitcher'
 import { useSeatLock } from '@/composables/useSeatLock'
+
+import { AlertTriangle, RefreshCw, Info } from 'lucide-vue-next'
 
 const emit = defineEmits(['next', 'prev'])
 const booking = inject<any>('booking')!
@@ -99,11 +167,14 @@ const showLoginPrompt = ref(false)
 const {
     adapted, loading, isRefetching, error,
     selectedIds,
-    onSeatClick: originalOnSeatClick,     // đổi tên hàm gốc
-    onCoupleClick: originalOnCoupleClick,  // đổi tên hàm gốc
+    onSeatClick: originalOnSeatClick,
+    onCoupleClick: originalOnCoupleClick,
     retry,
-    selectedSeats
+    selectedSeats, rawLayout,
+    orphanWarning, checkOrphan, clearOrphan,
 } = useSeatSelection(booking, seatLock)
+
+const { isPolling } = useSeatPolling(booking, rawLayout)
 
 const {
     allShowtimes, loadingOtherShowtimes,
@@ -119,20 +190,13 @@ const requireLogin = () => {
     return true
 }
 
-// ── Wrappers kiểm tra đăng nhập trước khi chọn ghế ──
 const onSeatClick = (seat: any) => {
-    if (!requireLogin()) {
-        showLoginPrompt = true
-        return
-    }
+    if (!requireLogin()) return
     originalOnSeatClick(seat)
 }
 
 const onCoupleClick = (left: any, right: any) => {
-    if (!requireLogin()) {
-        showLoginPrompt = true
-        return
-    }
+    if (!requireLogin()) return
     originalOnCoupleClick(left, right)
 }
 
@@ -158,8 +222,24 @@ async function validateAndNext() {
             await retry()
             return false
         }
+
+        // Orphan check — chạy tại đây, không phải khi click ghế
+        const orphanResult = checkOrphan(
+            currentLayout.grid,
+            new Set(currentLayout.bookedIds),
+            new Set(currentLayout.lockedIds),
+            new Set(selectedIds.value),
+        )
+        if (orphanResult.hasOrphan) {
+            orphanWarning.value = orphanResult   // hiện modal, chờ user confirm
+            return false
+        }
     }
 
+    return doNext()
+}
+
+async function doNext() {
     const userId = authStore.user?.id
     const showtimeId = booking.selectedShowtime.value?.id
     if (!userId || !showtimeId) return false
