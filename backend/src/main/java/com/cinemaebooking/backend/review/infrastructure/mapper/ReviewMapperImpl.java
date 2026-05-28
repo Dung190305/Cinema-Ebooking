@@ -9,36 +9,42 @@ import org.springframework.stereotype.Component;
 public class ReviewMapperImpl implements ReviewMapper {
 
     @Override
-    public Review toDomain(ReviewJpaEntity entity) {
-        if (entity == null) return null;
+    public Review toDomain(ReviewJpaEntity e) {
+        if (e == null) return null;
 
         return Review.builder()
-                .id(ReviewId.ofNullable(entity.getId()))
-                .userId(entity.getUser() != null ? entity.getUser().getId() : null)
-                .movieId(entity.getMovieId())
-                .bookingId(entity.getBooking() != null ? entity.getBooking().getId() : null)
-                .rating(entity.getRating())
-                .comment(entity.getComment())
-                .sentiment(entity.getSentiment())
-                .status(entity.getStatus())
-                .createdAt(entity.getCreatedAt())
-                .editedAt(entity.getEditedAt())
+                .id(ReviewId.ofNullable(e.getId()))
+                .userId(e.getUser() != null ? e.getUser().getId() : null)
+                .movieId(e.getMovieId())
+                .bookingId(e.getBooking() != null ? e.getBooking().getId() : null)
+                .rating(e.getRating())
+                .comment(e.getComment())
+                .finalText(e.getFinalText())
+                .sentiment(e.getSentiment())
+                .decision(e.getDecision())
+                .status(e.getStatus())
+                .isSpoiler(e.isSpoiler())
+                .spoilerConf(e.getSpoilerConf())
+                .createdAt(e.getCreatedAt())
+                .editedAt(e.getEditedAt())
                 .build();
     }
 
     @Override
-    public ReviewJpaEntity toEntity(Review domain) {
-        if (domain == null) return null;
+    public ReviewJpaEntity toEntity(Review d) {
+        if (d == null) return null;
 
         return ReviewJpaEntity.builder()
-                .id(domain.getId() != null ? domain.getId().getValue() : null)
-                .movieId(domain.getMovieId())
-                .rating(domain.getRating())
-                .comment(domain.getComment())
-                .sentiment(domain.getSentiment())
-                .status(domain.getStatus())
-                .editedAt(domain.getEditedAt())
-                .createdAt(domain.getCreatedAt())
+                .movieId(d.getMovieId())
+                .rating(d.getRating())
+                .comment(d.getComment())
+                .finalText(d.getFinalText())
+                .sentiment(d.getSentiment())
+                .decision(d.getDecision())
+                .status(d.getStatus())
+                .isSpoiler(d.isSpoiler())
+                .spoilerConf(d.getSpoilerConf())
+                .editedAt(d.getEditedAt())
                 .build();
     }
 
@@ -46,8 +52,12 @@ public class ReviewMapperImpl implements ReviewMapper {
     public void updateEntity(Review source, ReviewJpaEntity target) {
         target.setRating(source.getRating());
         target.setComment(source.getComment());
+        target.setFinalText(source.getFinalText());
         target.setSentiment(source.getSentiment());
+        target.setDecision(source.getDecision());
         target.setStatus(source.getStatus());
+        target.setSpoiler(source.isSpoiler());
+        target.setSpoilerConf(source.getSpoilerConf());
         target.setEditedAt(source.getEditedAt());
     }
 }

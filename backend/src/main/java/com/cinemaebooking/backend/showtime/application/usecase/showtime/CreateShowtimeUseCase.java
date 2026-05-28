@@ -1,5 +1,6 @@
 package com.cinemaebooking.backend.showtime.application.usecase.showtime;
 
+import com.cinemaebooking.backend.common.exception.domain.CommonExceptions;
 import com.cinemaebooking.backend.room.application.port.RoomRepository;
 import com.cinemaebooking.backend.room.domain.valueObject.RoomId;
 import com.cinemaebooking.backend.room_layout.application.port.roomLayout.RoomLayoutRepository;
@@ -7,6 +8,7 @@ import com.cinemaebooking.backend.room_layout.application.port.roomLayoutSeat.Ro
 import com.cinemaebooking.backend.room_layout.application.port.seatType.SeatTypeRepository;
 import com.cinemaebooking.backend.room_layout.domain.model.roomLayout.RoomLayout;
 import com.cinemaebooking.backend.room_layout.domain.model.roomLayoutSeat.RoomLayoutSeat;
+import com.cinemaebooking.backend.room_layout.domain.model.seatType.SeatType;
 import com.cinemaebooking.backend.room_layout.domain.valueObject.seatType.SeatTypeId;
 import com.cinemaebooking.backend.showtime.application.dto.showtime.CreateShowtimeRequest;
 import com.cinemaebooking.backend.showtime.application.dto.showtime.ShowtimeResponse;
@@ -25,7 +27,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 @Service
@@ -45,9 +50,11 @@ public class CreateShowtimeUseCase {
     @Transactional
     public ShowtimeResponse execute(CreateShowtimeRequest request) {
         validator.validateCreateRequest(request);
+        Instant startInstant = request.getStartTime();
+        Instant endInstant = request.getEndTime();
 
-        // Lấy layout hiện tại tại thời điểm startTime
-        LocalDate startDate = request.getStartTime().toLocalDate();
+        LocalDate startDate = startInstant.atZone(ZoneId.of("Asia/Ho_Chi_Minh")).toLocalDate();
+
         RoomLayout layout = roomLayoutRepository.findCurrentByRoomIdAndDate(request.getRoomId(), startDate)
                 .orElseThrow(() -> new IllegalStateException("No active layout for room " + request.getRoomId() + " at " + startDate));
         int totalCols = layout.getTotalCols();
@@ -66,17 +73,27 @@ public class CreateShowtimeUseCase {
         showtime.validateForCreate();
 
         Showtime saved = showtimeRepository.create(showtime);
-        if (!layout.isUsed()) roomLayoutRepository.markAsUsedAndSetLastUsedDate(layout, showtime.getStartTime().toLocalDate());
+        if (!layout.isUsed()) roomLayoutRepository.markAsUsedAndSetLastUsedDate(layout, startDate);
         // Lấy tất cả ghế của layout
         List<RoomLayoutSeat> layoutSeats = roomLayoutSeatRepository.findByRoomLayoutId(layout.getId().getValue());
 
         ShowtimeFormat format = showtimeFormatRepository.findById(ShowtimeFormatId.of(showtime.getFormatId())).orElseThrow();
         BigDecimal formatSurcharge = format.getExtraPrice();
+        SeatType seatType = seatTypeRepository.findByNameIgnoreCase("COUPLE")
+                .orElse(null);
+        if (seatType == null) throw CommonExceptions.resourceNotFound("Seat type not found");
+        Long coupleTypeId = seatType.getId().getValue();
         List<ShowtimeSeat> showtimeSeats = layoutSeats.stream()
                 .map(seat -> {
                     Long seatTypeId = seat.getSeatTypeId();
                     BigDecimal basePrice = seatTypeRepository.findBasePriceById(SeatTypeId.of(seatTypeId)).orElseThrow();
                     BigDecimal finalPrice = basePrice.add(formatSurcharge);
+                    if ( seatTypeId.equals(coupleTypeId)
+                            && seat.getCoupleGroupId() != null) {
+                        finalPrice = finalPrice.divide(
+                                BigDecimal.valueOf(2), 0, RoundingMode.HALF_UP
+                        );
+                    }
                     return ShowtimeSeat.from(seat, saved.getId().getValue(), finalPrice, totalCols);
                 })
                 .toList();

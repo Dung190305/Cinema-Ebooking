@@ -25,7 +25,6 @@ public class ShowtimeAdminController {
     private final CreateShowtimeUseCase createShowtimeUseCase;
     private final UpdateShowtimeUsecase updateShowtimeUseCase;
     private final DeleteShowtimeUsecase deleteShowtimeUseCase;
-    private final GetShowtimeUseCase getShowtimeUsecase;
     private final GetShowtimeDetailUsecase getShowtimeDetailUseCase;
     private final CancelShowtimeUseCase cancelShowtimeUseCase;
 
@@ -35,19 +34,6 @@ public class ShowtimeAdminController {
     @ResponseStatus(HttpStatus.CREATED)
     public ShowtimeResponse createShowtime(@Valid @RequestBody CreateShowtimeRequest request) {
         return createShowtimeUseCase.execute(request);
-    }
-
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping
-    public Page<ShowtimeResponse> getShowtimes(
-            @RequestParam(required = false) Long cinemaId,
-            @RequestParam(required = false) Long movieId,
-            @RequestParam(required = false) Long roomId,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            Pageable pageable
-    ) {
-        return getShowtimeUsecase.execute(cinemaId, movieId, roomId, status, date, pageable);
     }
 
     // ================== DETAIL ==================

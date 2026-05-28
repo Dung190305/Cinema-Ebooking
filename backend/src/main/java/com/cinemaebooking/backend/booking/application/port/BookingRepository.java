@@ -20,6 +20,20 @@ public interface BookingRepository {
     Page<Booking> findByUserId(Long userId, BookingStatus status, Pageable pageable);
 
     /**
+     * laays booking của tất cả các user
+     */
+
+    Page<Booking> findAllForAdmin(
+            Long movieId,
+            BookingStatus status,
+            LocalDateTime fromDate,
+            LocalDateTime toDate,
+            Pageable pageable
+    );
+
+    Optional<Booking> findByUserIdAndShowtimeIdAndStatus(Long userId, Long showtimeId, BookingStatus status);
+
+    /**
      * Tìm Booking kèm theo tất cả các Ticket, Combo, Coupon.
      */
     Optional<Booking> findWithDetailsById(Long id);

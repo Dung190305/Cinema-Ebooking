@@ -68,12 +68,6 @@ public class TicketRepositoryImpl implements TicketRepository {
     }
 
     @Override
-    public boolean existsActiveTicketsForSeats(List<Long> seatIds) {
-        List<TicketStatus> activeStatuses = List.of(TicketStatus.PENDING, TicketStatus.ACTIVE);
-        return ticketJpaRepository.existsByShowtimeSeatIdInAndStatusIn(seatIds, activeStatuses);
-    }
-
-    @Override
     public List<Ticket> findAllByIds(List<Long> ids) {
         return ticketJpaRepository.findAllByIdInAndDeletedAtIsNull(ids)
                 .stream()

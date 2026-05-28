@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Getter
 @Builder
@@ -18,8 +18,8 @@ public class CreateShowtimeRequest {
     private Long roomId;
     private Long formatId;
 
-    private LocalDateTime startTime;
-    private LocalDateTime endTime;
+    private Instant startTime;
+    private Instant endTime;
 
     private Language audioLanguage;
     private Language subtitleLanguage;

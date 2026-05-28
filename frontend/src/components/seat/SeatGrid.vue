@@ -45,7 +45,6 @@
                                     {{ config.showColNumber ? colNumber(item.seat!.colIndex) : item.seat!.label }}
                                 </span>
                             </div>
-
                         </template>
                     </div>
 
@@ -58,22 +57,24 @@
         <!-- Screen BOTTOM -->
         <ScreenBar v-if="config.screenPosition === 'bottom'" />
 
-        <!-- Legend -->
         <div class="w-full flex flex-wrap items-center justify-end gap-x-5 gap-y-2 pt-1">
-
-            <!-- Web: chọn + đã bán -->
+            <!-- ===== WEB MODE: trạng thái ghế ===== -->
             <template v-if="config.mode === 'web'">
                 <LegendItem>
                     <span :class="[config.legendSize, 'rounded-md bg-amber-500']" />
                     <span>Ghế đã chọn</span>
                 </LegendItem>
                 <LegendItem>
-                    <span :class="[config.legendSize, 'rounded-md bg-white/20']" />
+                    <span :class="[config.legendSize, 'rounded-md', config.webBookedClass]" />
                     <span>Ghế đã bán</span>
+                </LegendItem>
+                <LegendItem>
+                    <span :class="[config.legendSize, 'rounded-md', config.webLockedClass]" />
+                    <span>Ghế đang giữ</span>
                 </LegendItem>
             </template>
 
-            <!-- Seat types -->
+            <!-- ===== Loại ghế (cả admin & web) ===== -->
             <LegendItem v-for="(cfg, typeId) in SEAT_TYPE_CONFIGS" :key="typeId">
                 <span v-if="config.mode === 'admin'"
                     :class="[config.legendSize, 'rounded-md border', cfg.adminBg, cfg.adminBorder]" />
@@ -81,7 +82,7 @@
                 <span>{{ cfg.label }}</span>
             </LegendItem>
 
-            <!-- Admin: inactive -->
+            <!-- ===== ADMIN MODE: inactive ===== -->
             <template v-if="config.mode === 'admin'">
                 <LegendItem>
                     <span :class="[config.legendSize, 'rounded-md border border-gray-300 bg-gray-200 opacity-70']" />
@@ -89,6 +90,7 @@
                 </LegendItem>
             </template>
 
+            <!-- ===== ADMIN MODE: đã đặt / đã khóa (tuỳ chọn) ===== -->
             <template v-if="config.mode === 'admin' && showBookingLegend">
                 <LegendItem>
                     <span
@@ -101,9 +103,7 @@
                     <span>Đã khóa</span>
                 </LegendItem>
             </template>
-
         </div>
-
     </div>
 </template>
 
@@ -173,7 +173,8 @@ const props = withDefaults(
         selectedIds: () => [],
         bookedIds: () => [],
         lockedIds: () => [],
-        disabled: () => false,
+        heldSeatIds: () => [],
+        disabled: false,
         pendingSeatIds: () => [],
         showBookingLegend: false,
     },
@@ -201,6 +202,7 @@ function typeConfig(typeId: number) {
 const selectedSet = computed(() => new Set(props.selectedIds))
 const bookedSet = computed(() => new Set(props.bookedIds))
 const lockedSet = computed(() => new Set(props.lockedIds))
+
 function isInteractive(seat: SeatResponse): boolean {
     if (props.config.mode === 'admin') return true
     if (seat.status === 'INACTIVE') return false
@@ -243,7 +245,7 @@ function seatClasses(seat: SeatResponse): string {
         // web mode
         if (inactive) baseClass = props.config.webInactiveClass!
         else if (booked) baseClass = props.config.webBookedClass!
-        else if (locked) baseClass = props.config.webLockedClass! || props.config.webInactiveClass! // fallback
+        else if (locked) baseClass = props.config.webLockedClass!
         else if (selected) baseClass = `${cfg.webSelectedBg} border-transparent ${cfg.webSelectedText}`
         else baseClass = `bg-white/10 border-2 ${cfg.webBorder} text-white/80 hover:bg-white/20`
     }
@@ -273,12 +275,16 @@ function coupleClasses(left: SeatResponse, right: SeatResponse): string {
     } else {
         if (inactive) baseClass = 'bg-white/5 border-white/10 text-white/20 opacity-40'
         else if (booked) baseClass = 'bg-white/20 border-white/20 text-white/30'
+        else if (locked) baseClass = props.config.webLockedClass || 'bg-white/5 border-white/10 text-white/20 opacity-40'
         else if (selected) baseClass = 'bg-amber-500 border-transparent text-white'
         else baseClass = `bg-white/10 border-2 ${cfg.webBorder} text-white/80 hover:bg-white/20`
     }
 
-    return baseClass
+    if (props.config.mode === 'admin' && isPending) {
+        baseClass += ' ring-2 ring-blue-400 border-dashed'
+    }
 
+    return baseClass
 }
 
 // ── Row item builder ──────────────────────────────────────────────────────────
@@ -289,15 +295,17 @@ function getRowItems(row: SeatResponse[], rowIdx: number): RowItem[] {
     for (let c = 0; c < row.length; c++) {
         const seat = row[c]
 
-        if (seat === null) {                                         // ✅ guard null
+        if (seat === null) {
             items.push({ type: 'empty', key: `empty-${rowIdx}-${c}` })
             continue
         }
         const next = row[c + 1]
         const isCouplePair =
             seat.seatTypeId === 3 &&
-            seat.colIndex % 2 === 1
-            && next?.seatTypeId === 3
+            seat.colIndex % 2 === 1 &&
+            next?.seatTypeId === 3 &&
+            next.colIndex === seat.colIndex + 1
+
         if (isCouplePair) {
             items.push({ type: 'couple', key: `couple-${rowIdx}-${seat.colIndex}`, leftSeat: seat, rightSeat: next })
             c++ // bỏ qua ghế phải
@@ -308,6 +316,4 @@ function getRowItems(row: SeatResponse[], rowIdx: number): RowItem[] {
 
     return items
 }
-
-
 </script>

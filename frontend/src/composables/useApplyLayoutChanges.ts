@@ -5,7 +5,7 @@ import { layoutApi } from '@/api/layout.api'
 import type { SeatResponse, RoomLayoutResponse, SeatStatus } from '@/types/seat'
 import { usePendingChanges } from '@/composables/usePendingChanges'
 import { validateEffectiveDate } from '@/utils/layoutValidation'
-import type { MaybeRef } from '@vueuse/core'
+import type { RoomLayoutSummaryResponse } from '@/types/seat'
 
 interface MappedError {
   type?: string
@@ -23,78 +23,114 @@ export function useApplyLayoutChanges(
   fetchLayoutHistory: (roomId: number) => Promise<void>,
   syncSelectedVersion: () => void,
   selectedRoomType?: Ref<string>,
-  allVersions?: Ref<RoomLayoutSummaryResponse[]> 
+  allVersions?: Ref<RoomLayoutSummaryResponse[]>
 ) {
   const { changes, addChange, removeChange, clearAll, hasChanges: hasSeatChanges, changeList } = usePendingChanges()
-
   const applyError = ref<MappedError | null>(null)
-    
+
   function findSeatById(seatId: number): SeatResponse | undefined {
     if (!layout.value) return undefined
     for (const row of layout.value.rows) {
-        const seat = row.find(s => s.id === seatId)
-        if (seat) return seat
+      const seat = row.find(s => s.id === seatId)
+      if (seat) return seat
     }
     return undefined
+  }
+
+  function findCouplePartner(seat: SeatResponse, layoutData: RoomLayoutResponse): SeatResponse | undefined {
+    const row = layoutData.rows.find(r => r.some(s => s.id === seat.id))
+    if (!row) return undefined
+    const idx = row.findIndex(s => s.id === seat.id)
+    if (idx === -1) return undefined
+    const col = seat.colIndex
+    // Ghế lẻ (col lẻ) ghép với ghế bên phải
+    if (col % 2 === 1 && idx + 1 < row.length) {
+      const right = row[idx + 1]
+      if (right.colIndex === col + 1) return right
     }
-    
+    // Ghế chẵn (col chẵn) ghép với ghế bên trái
+    if (col % 2 === 0 && idx - 1 >= 0) {
+      const left = row[idx - 1]
+      if (left.colIndex === col - 1) return left
+    }
+    return undefined
+  }
+
   const hasChanges = computed(() => {
     if (hasSeatChanges.value) return true
-    if (layout.value && selectedRoomType.value !== layout.value.roomType) return true
+    if (layout.value && selectedRoomType?.value !== layout.value.roomType) return true
     return false
   })
-    
 
+  // Hàm addChange thông minh: nếu đổi loại ghế thành 3 thì tự động thêm partner
   function addChangeSmart(seatId: number, newStatus?: SeatStatus | null, newSeatTypeId?: number | null) {
     const seat = findSeatById(seatId)
-    const effectiveNewStatus = newStatus ?? undefined
-    const effectiveNewSeatTypeId = newSeatTypeId ?? undefined
     if (!seat) {
-        // fallback: không có layout để so sánh -> dùng addChange cũ
-        addChange(seatId, newStatus, newSeatTypeId)
-        return
+      addChange(seatId, newStatus, newSeatTypeId)
+      return
     }
 
-    const existing = changes.value.get(seatId) // từ usePendingChanges (ref Map)
+    // Xử lý trường hợp đổi thành ghế đôi (type 3)
+    if (newSeatTypeId === 3 && layout.value) {
+      const partner = findCouplePartner(seat, layout.value)
+      if (partner && partner.id !== seat.id) {
+        // Thêm partner với cùng loại ghế đôi, giữ nguyên newStatus nếu có
+        addChange(partner.id, newStatus, 3)
+      }
+    }
 
-    // Giá trị sau khi merge với pending hiện tại (nếu có)
+    // Thêm chính ghế hiện tại (sử dụng logic gốc để merge)
+    const existing = changes.value.get(seatId)
+    const effectiveNewStatus = newStatus ?? undefined
+    const effectiveNewSeatTypeId = newSeatTypeId ?? undefined
+
     const mergedStatus = effectiveNewStatus !== undefined ? effectiveNewStatus : (existing?.newStatus !== undefined ? existing.newStatus : seat.status)
     const mergedTypeId = effectiveNewSeatTypeId !== undefined ? effectiveNewSeatTypeId : (existing?.newSeatTypeId !== undefined ? existing.newSeatTypeId : seat.seatTypeId)
-      
+
     const statusChanged = mergedStatus !== seat.status
     const typeChanged = mergedTypeId !== seat.seatTypeId
 
     if (!statusChanged && !typeChanged) {
-        // Không có gì thay đổi → xóa pending nếu có
-        if (existing) changes.value.delete(seatId)
-        return
+      if (existing) changes.value.delete(seatId)
+      return
     }
 
-    // Có thay đổi thực sự → tạo/cập nhật entry
     if (!existing) {
-        const entry: SeatUpdateRequest = { seatId }
-        if (statusChanged) entry.newStatus = mergedStatus as SeatStatus
-        if (typeChanged) entry.newSeatTypeId = mergedTypeId
-        changes.value.set(seatId, entry)
+      const entry: any = { seatId }
+      if (statusChanged) entry.newStatus = mergedStatus as SeatStatus
+      if (typeChanged) entry.newSeatTypeId = mergedTypeId
+      changes.value.set(seatId, entry)
     } else {
-        if (statusChanged) {
+      if (statusChanged) {
         existing.newStatus = mergedStatus as SeatStatus
-        } else {
+      } else {
         delete existing.newStatus
-        }
-        if (typeChanged) {
+      }
+      if (typeChanged) {
         existing.newSeatTypeId = mergedTypeId
-        } else {
+      } else {
         delete existing.newSeatTypeId
-        }
-        // Nếu xóa hết field thì loại bỏ entry (trường hợp này đã bị loại ở trên nhưng vẫn an toàn)
-        if (existing.newStatus === undefined && existing.newSeatTypeId === undefined) {
+      }
+      if (existing.newStatus === undefined && existing.newSeatTypeId === undefined) {
         changes.value.delete(seatId)
-        }
+      }
     }
   }
 
-  // Map coupleGroupId -> seatId
+  // Ghi đè removeChange để xóa cả partner khi cần
+  const originalRemoveChange = removeChange
+  const newRemoveChange = (seatId: number) => {
+    const seat = findSeatById(seatId)
+    if (seat && layout.value) {
+      const partner = findCouplePartner(seat, layout.value)
+      if (partner) {
+        originalRemoveChange(partner.id)
+      }
+    }
+    originalRemoveChange(seatId)
+  }
+
+  // Map coupleGroupId -> seatId (dùng để gom nhóm hiển thị)
   const seatCoupleMap = computed(() => {
     const map = new Map<number, number | null>()
     if (!layout.value) return map
@@ -106,7 +142,22 @@ export function useApplyLayoutChanges(
     return map
   })
 
-  // Hàm lấy label ghế (A1, B2...)
+  // Đảm bảo cặp ghế đôi được đồng bộ trong preview
+  function enforceCouplePairs(layoutData: RoomLayoutResponse): void {
+    for (const row of layoutData.rows) {
+      for (let i = 0; i < row.length - 1; i++) {
+        const left = row[i]
+        const right = row[i + 1]
+        if (left.colIndex % 2 === 1 && right.colIndex % 2 === 0) {
+          if (left.seatTypeId === 3 || right.seatTypeId === 3) {
+            left.seatTypeId = 3
+            right.seatTypeId = 3
+          }
+        }
+      }
+    }
+  }
+
   function getSeatLabel(seatId: number): string {
     if (!layout.value) return `#${seatId}`
     for (const row of layout.value.rows) {
@@ -120,7 +171,6 @@ export function useApplyLayoutChanges(
     return `#${seatId}`
   }
 
-  // Gom nhóm couple (tận dụng changeList & seatCoupleMap)
   const groupedChangeList = computed(() => {
     const groups: Array<{
       seatIds: number[]
@@ -131,9 +181,9 @@ export function useApplyLayoutChanges(
     const processed = new Set<number>()
 
     for (const change of changeList.value) {
-        if (processed.has(change.seatId)) continue
-        
-        if (change.newStatus === undefined && change.newSeatTypeId === undefined) continue
+      if (processed.has(change.seatId)) continue
+      if (change.newStatus === undefined && change.newSeatTypeId === undefined) continue
+
       const coupleId = seatCoupleMap.value.get(change.seatId)
       if (coupleId != null) {
         const other = changeList.value.find(
@@ -158,11 +208,11 @@ export function useApplyLayoutChanges(
         newSeatTypeId: change.newSeatTypeId,
       })
       processed.add(change.seatId)
-      }
+    }
     return groups
   })
 
-    const pendingSeatIds = computed(() => changeList.value.map(c => c.seatId))
+  const pendingSeatIds = computed(() => changeList.value.map(c => c.seatId))
 
   const previewLayout = computed(() => {
     if (!layout.value || changeList.value.length === 0) return layout.value
@@ -179,6 +229,7 @@ export function useApplyLayoutChanges(
         }
       }
     }
+    enforceCouplePairs(newLayout)
     return newLayout
   })
 
@@ -208,11 +259,11 @@ export function useApplyLayoutChanges(
       newStatus: change.newStatus,
       newSeatTypeId: change.newSeatTypeId,
     }))
-      try {
-      console.log('Applying changes:', selectedRoomType.value, updates)
+    try {
+      console.log('Applying changes:', selectedRoomType?.value, updates)
       await layoutApi.updateLayoutSeats(roomId, {
         effectiveDate: effectiveDate.value,
-        roomType: selectedRoomType.value,
+        roomType: selectedRoomType?.value,
         updates,
       })
       clearAll()
@@ -228,18 +279,15 @@ export function useApplyLayoutChanges(
   }
 
   return {
-    // state & computed
     applyError,
     groupedChangeList,
     pendingSeatIds,
     previewLayout,
-    // từ usePendingChanges
     addChange: addChangeSmart,
-    removeChange,
+    removeChange: newRemoveChange,
     clearAll,
     hasChanges,
     changeList,
-    // action
     applyAllChanges,
   }
 }

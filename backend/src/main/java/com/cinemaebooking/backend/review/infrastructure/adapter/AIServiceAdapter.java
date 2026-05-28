@@ -3,6 +3,7 @@ package com.cinemaebooking.backend.review.infrastructure.adapter;
 import com.cinemaebooking.backend.review.application.dto.ApiResponseDto;
 import com.cinemaebooking.backend.review.application.port.AIServicePort;
 import com.cinemaebooking.backend.review.application.port.AiAnalysisResult;
+import com.cinemaebooking.backend.review.domain.enums.ReviewDecision;
 import com.cinemaebooking.backend.review.domain.enums.ReviewSentiment;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +13,21 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.List;
+
+/**
+ * AIServiceAdapter - Gọi FastAPI AI service để phân tích comment.
+ *
+ * <p>FastAPI trả về đầy đủ thông tin từ pipeline 3 tầng:
+ * <ol>
+ *   <li>Tầng 1: Hard Filter (toxic/teensex) → cleanedText, censoredWords</li>
+ *   <li>Tầng 2: Sentiment Analysis → sentiment, sentimentScore</li>
+ *   <li>Tầng 3: Spoiler Detection → isSpoiler, spoilerConf</li>
+ * </ol>
+ *
+ * @author Hieu Nguyen
+ * @since 2026
+ */
 @Slf4j
 @Component
 public class AIServiceAdapter implements AIServicePort {
@@ -33,8 +49,19 @@ public class AIServiceAdapter implements AIServicePort {
     @Override
     public AiAnalysisResult analyze(String comment) {
         if (!aiEnabled) {
-            log.info("AI service disabled, using default result");
-            return new AiAnalysisResult(true, ReviewSentiment.NEUTRAL, null);
+            log.info("AI service disabled, using NEUTRAL + APPROVED fallback");
+            return AiAnalysisResult.builder()
+                    .isValid(true)
+                    .sentiment(ReviewSentiment.NEUTRAL)
+                    .decision(ReviewDecision.APPROVED)
+                    .finalText(comment)
+                    .isSpoiler(false)
+                    .spoilerConf(0.0)
+                    .censoredWords(List.of())
+                    .profanityCount(0)
+                    .profanityRatio(0.0)
+                    .processTimeMs(0.0)
+                    .build();
         }
 
         try {
@@ -52,10 +79,7 @@ public class AIServiceAdapter implements AIServicePort {
             );
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                ApiResponseDto body = response.getBody();
-                ReviewSentiment sentiment = parseSentiment(body.getSentiment());
-                log.info("AI Analysis - Decision: {}, Sentiment: {}", body.getFinalDecision(), sentiment);
-                return new AiAnalysisResult(body.isValid(), sentiment, body.getFinalDecision());
+                return toAiResult(response.getBody());
             }
 
             log.warn("AI service returned non-2xx or empty body, using fallback");
@@ -63,7 +87,40 @@ public class AIServiceAdapter implements AIServicePort {
             log.error("AI service connection failed: {}. Using fallback result.", e.getMessage());
         }
 
-        return new AiAnalysisResult(true, ReviewSentiment.NEUTRAL, null);
+        // Fallback: coi comment là hợp lệ
+        return AiAnalysisResult.builder()
+                .isValid(true)
+                .sentiment(ReviewSentiment.NEUTRAL)
+                .decision(ReviewDecision.APPROVED)
+                .finalText(comment)
+                .isSpoiler(false)
+                .spoilerConf(0.0)
+                .censoredWords(List.of())
+                .profanityCount(0)
+                .profanityRatio(0.0)
+                .processTimeMs(0.0)
+                .build();
+    }
+
+    private AiAnalysisResult toAiResult(ApiResponseDto dto) {
+        ReviewSentiment sentiment = parseSentiment(dto.getSentiment());
+        ReviewDecision decision = parseDecision(dto.getFinalDecision());
+
+        log.info("AI Analysis - Decision: {}, Sentiment: {}, Spoiler: {}, isValid: {}",
+                decision, sentiment, dto.isSpoiler(), dto.isValid());
+
+        return AiAnalysisResult.builder()
+                .isValid(dto.isValid())
+                .sentiment(sentiment)
+                .decision(decision)
+                .finalText(dto.getFinalOutput() != null ? dto.getFinalOutput() : dto.getCleanedText())
+                .isSpoiler(dto.isSpoiler())
+                .spoilerConf(dto.getSpoilerConf())
+                .censoredWords(dto.getCensoredWords() != null ? dto.getCensoredWords() : List.of())
+                .profanityCount(dto.getProfanityCount())
+                .profanityRatio(dto.getProfanityRatio())
+                .processTimeMs(dto.getProcessTime())
+                .build();
     }
 
     private ReviewSentiment parseSentiment(String value) {
@@ -75,11 +132,17 @@ public class AIServiceAdapter implements AIServicePort {
         };
     }
 
+    private ReviewDecision parseDecision(String value) {
+        if (value == null) return ReviewDecision.APPROVED;
+        return switch (value.toUpperCase()) {
+            case "REJECTED" -> ReviewDecision.REJECTED;
+            case "SPOILER_WARNING" -> ReviewDecision.SPOILER_WARNING;
+            default -> ReviewDecision.APPROVED;
+        };
+    }
     @Getter
     private static class AiRequest {
         private final String text;
-        public AiRequest(String text) {
-            this.text = text;
-        }
+        public AiRequest(String text) { this.text = text; }
     }
 }

@@ -9,6 +9,7 @@ import com.cinemaebooking.backend.booking.infrastructure.persistence.repository.
 import com.cinemaebooking.backend.showtime_seat.infrastructure.persistence.repository.ShowtimeSeatJpaRepository;
 import com.cinemaebooking.backend.ticket.domain.enums.TicketStatus;
 import com.cinemaebooking.backend.ticket.domain.model.Ticket;
+import com.cinemaebooking.backend.ticket.infrastructure.mapper.TicketMapper;
 import com.cinemaebooking.backend.ticket.infrastructure.persistence.entity.TicketJpaEntity;
 import com.cinemaebooking.backend.user.infrastructure.persistence.repository.UserJpaRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ public class BookingRepositoryImpl implements BookingRepository {
     private final BookingMapper mapper;
     private final UserJpaRepository userJpaRepository;
     private final ShowtimeSeatJpaRepository showtimeSeatJpaRepository;
+    private final TicketMapper  ticketMapper;
 
     @Override
     public Booking save(Booking booking) {
@@ -63,15 +65,33 @@ public class BookingRepositoryImpl implements BookingRepository {
                     userJpaRepository.getReferenceById(booking.getUserId())
             );
 
-            for (Ticket t : booking.getTickets()) {
-                TicketJpaEntity ticketEntity = entity.getTickets().stream()
-                        .filter(x -> x.getId().equals(t.getId().getValue()))
-                        .findFirst()
-                        .orElseThrow();
-                ticketEntity.setStatus(t.getStatus());
+            if (booking.getTickets() != null && !booking.getTickets().isEmpty()) {
+                if (entity.getTickets().isEmpty()) {
+                    // Tickets được tạo lần đầu khi ConfirmPayment — INSERT
+                    for (Ticket t : booking.getTickets()) {
+                        TicketJpaEntity ticketEntity = ticketMapper.toEntity(t);
+                        if (t.getShowtimeSeatId() != null) {
+                            ticketEntity.setShowtimeSeat(
+                                    showtimeSeatJpaRepository.getReferenceById(t.getShowtimeSeatId())
+                            );
+                        }
+                        entity.addTicket(ticketEntity);  // addTicket set bidirectional
+                    }
+                } else {
+                    // Tickets đã tồn tại — UPDATE (checkIn, cancel...)
+                    for (Ticket t : booking.getTickets()) {
+                        TicketJpaEntity ticketEntity = entity.getTickets().stream()
+                                .filter(x -> x.getId().equals(t.getId().getValue()))
+                                .findFirst()
+                                .orElseThrow(() -> new RuntimeException(
+                                        "Ticket not found in booking: " + t.getId().getValue()));
+                        ticketEntity.setStatus(t.getStatus());
 
-                if (t.getStatus() == TicketStatus.CANCELLED && ticketEntity.getDeletedAt() == null) {
-                    ticketEntity.softDelete();
+                        if (t.getStatus() == TicketStatus.CANCELLED
+                                && ticketEntity.getDeletedAt() == null) {
+                            ticketEntity.softDelete();
+                        }
+                    }
                 }
             }
         }
@@ -110,11 +130,37 @@ public class BookingRepositoryImpl implements BookingRepository {
         return jpaPage.map(mapper::toDomain);
     }
 
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Booking> findAllForAdmin(
+            Long movieId,
+            BookingStatus status,
+            LocalDateTime fromDate,
+            LocalDateTime toDate,
+            Pageable pageable
+    ) {
+        return jpaRepository.searchAdminBookings(
+                        movieId,
+                        status,
+                        fromDate,
+                        toDate,
+                        pageable
+                )
+                .map(mapper::toDomain);
+    }
+
     @Override
     @Transactional(readOnly = true)
     public Optional<Booking> findWithDetailsById(Long id) {
         return jpaRepository.findWithDetailsById(id)
                 .map(mapper::toDomain);
+    }
+
+    @Override
+    public Optional<Booking> findByUserIdAndShowtimeIdAndStatus(Long userId, Long showtimeId, BookingStatus status){
+        return jpaRepository.findByUserIdAndShowtimeIdAndStatus(userId,showtimeId,status).map(mapper::toDomain);
     }
 
     @Override

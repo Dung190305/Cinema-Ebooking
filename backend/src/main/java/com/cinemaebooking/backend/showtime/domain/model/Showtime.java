@@ -8,7 +8,7 @@ import com.cinemaebooking.backend.showtime.domain.valueobject.ShowtimeId;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Getter
 @SuperBuilder(toBuilder = true)
@@ -19,8 +19,8 @@ public class Showtime extends BaseEntity<ShowtimeId> {
     private Long roomLayoutId;
     private Long formatId;
 
-    private LocalDateTime startTime;
-    private LocalDateTime endTime;
+    private Instant startTime;
+    private Instant endTime;
 
     private Language audioLanguage;
     private Language subtitleLanguage;
@@ -31,8 +31,8 @@ public class Showtime extends BaseEntity<ShowtimeId> {
     // BUSINESS METHODS
     // =====================================================
 
-    public void update(LocalDateTime start,
-                       LocalDateTime end) {
+    public void update(Instant start,
+                       Instant end) {
 
         validateStartEnd(start, end);
 
@@ -94,7 +94,7 @@ public class Showtime extends BaseEntity<ShowtimeId> {
         }
     }
 
-    private void validateStartEnd(LocalDateTime start, LocalDateTime end) {
+    private void validateStartEnd(Instant start, Instant end) {
         if (start == null) {
             throw CommonExceptions.invalidInput("startTime cannot be null");
         }

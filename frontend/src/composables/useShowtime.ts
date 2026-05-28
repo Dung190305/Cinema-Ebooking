@@ -58,7 +58,7 @@ export function useShowtime(cinemaIdInput: Ref<number | null> | number | null) {
       return
     }
     try {
-      const res = await showtimeApi.getList({
+      const res = await showtimeApi.getPublicShowtimes({
         page,
         size: pageSize,
         sort: 'startTime,desc',
@@ -78,17 +78,14 @@ export function useShowtime(cinemaIdInput: Ref<number | null> | number | null) {
     isLoading.value = true
     clearErrors()
     try {
-      const params: any = {
+      const res = await showtimeApi.getPublicShowtimes({
         page,
         size: pageSize,
         sort: 'startTime,desc',
+        cinemaId: cid ?? undefined,
         roomId: filterRoomId.value,
         status: filterStatus.value,
-      }
-      if (cid != null && !isNaN(cid)) {
-        params.cinemaId = cid
-      }
-      const res = await showtimeApi.getList(params)
+      })
       showtimes.value = res.content
       currentPage.value = res.page.number
       totalPages.value = res.page.totalPages

@@ -2,6 +2,7 @@ package com.cinemaebooking.backend.user.presentation;
 
 import com.cinemaebooking.backend.common.security.CustomUserPrincipal;
 import com.cinemaebooking.backend.user.application.dto.ChangeDTO.ChangePasswordRequest;
+import com.cinemaebooking.backend.user.application.dto.UserDTO.UpdateAvatarRequest;
 import com.cinemaebooking.backend.user.application.dto.UserDTO.UpdateUserRequest;
 import com.cinemaebooking.backend.user.application.dto.Response.UserResponse;
 import com.cinemaebooking.backend.user.application.usecase.user.*;
@@ -18,6 +19,7 @@ public class UserController {
 
     private final GetCurrentUserProfileUseCase getCurrentUserProfileUseCase;
     private final UpdateCurrentUserProfileUseCase updateCurrentUserProfileUseCase;
+    private final UpdateAvatarUseCase updateAvatarUseCase;
     private final ChangePasswordUseCase changePasswordUseCase;
 
     @GetMapping("/me")
@@ -31,6 +33,14 @@ public class UserController {
             @Valid @RequestBody UpdateUserRequest request
     ) {
         return updateCurrentUserProfileUseCase.execute(principal.getUserId(), request);
+    }
+
+    @PatchMapping("/me/avatar")
+    public UserResponse updateAvatar(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
+            @Valid @RequestBody UpdateAvatarRequest request
+    ) {
+        return updateAvatarUseCase.execute(principal.getUserId(), request);
     }
 
     @PutMapping("/me/change-password")

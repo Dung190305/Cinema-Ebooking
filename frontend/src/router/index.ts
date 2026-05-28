@@ -6,6 +6,12 @@ import AdminLayout from '@/layouts/AdminLayout.vue'
 
 const routes: RouteRecordRaw[] = [
   {
+    path: '/payment/result',
+    name: 'payment-result',
+    component: () => import('@/pages/PaymentResult.vue'),
+    meta: { title: 'Kết quả thanh toán' }
+  },
+  {
     path: '/',
     component: MainLayout,
     children: [
@@ -15,10 +21,34 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/pages/HomePage.vue')
       },
       {
-        path: 'movies',               // ← Thêm dòng này
+        path: 'movies',               
         name: 'movies',
         component: () => import('@/pages/MoviesPage.vue')
       },
+      {
+        path: 'movies/:id',
+        name: 'movie-detail',
+        component: () => import('@/pages/MovieDetailPage.vue'),
+        meta: { title: 'Chi tiết phim' }
+      },
+      {
+        path: 'profile',
+        name: 'profile',
+        component: () => import('@/pages/ProfilePage.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
+        path: 'showtimes',
+        name: 'showtimes',
+        component: () => import('@/pages/ShowtimesPage.vue'),
+        meta: { title: 'Lịch chiếu' }
+      },
+      {
+        path: 'bookings',
+        name: 'bookings',
+        component: () => import('@/pages/BookingPage.vue'),
+        meta: { title: 'Đặt vé' }
+      }
     ],
   },
 
@@ -164,11 +194,21 @@ const routes: RouteRecordRaw[] = [
       // ── Users ──────────────────────────────────────────────────────────────
       {
         path: 'users',
-        name: 'admin-users',
-        component: () => import('@/pages/admin/UsersPage.vue'),
-        meta: {
-          sidebar: { label: 'Users', icon: User },
-        },
+        meta: { sidebar: { label: 'Users', icon: User } },
+        children: [
+          {
+            path: '',
+            name: 'admin-users',
+            component: () => import('@/pages/admin/UsersPage.vue'),
+            meta: { sidebar: { label: 'All Users' } },
+          },
+          {
+            path: ':id',
+            name: 'admin-user-detail',
+            component: () => import('@/pages/admin/UserDetailPage.vue'),
+            meta: { hidden: true },
+          },
+        ],
       },
     ],
   },
@@ -184,6 +224,15 @@ const router = createRouter({
       return { top: 0, left: 0 };
     }
   },
+})
+
+router.beforeEach((to, from, next) => {
+  const token = localStorage.getItem('accessToken')
+  if (to.meta.requiresAuth && !token) {
+    next('/') // hoặc mở modal đăng nhập
+  } else {
+    next()
+  }
 })
 
 export default router

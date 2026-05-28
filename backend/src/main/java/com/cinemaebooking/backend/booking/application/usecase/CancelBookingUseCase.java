@@ -5,6 +5,7 @@ import com.cinemaebooking.backend.booking.domain.model.Booking;
 import com.cinemaebooking.backend.booking.domain.valueObject.BookingId;
 import com.cinemaebooking.backend.booking_coupon.application.usecase.ReleaseBookingCouponUseCase;
 import com.cinemaebooking.backend.common.exception.domain.BookingExceptions;
+import com.cinemaebooking.backend.seat_lock.application.port.SeatLockService;
 import com.cinemaebooking.backend.ticket.application.usecase.ReleaseSeatsUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,7 +17,7 @@ public class CancelBookingUseCase {
 
     private final BookingRepository bookingRepository;
     private final ReleaseBookingCouponUseCase releaseCouponUseCase;
-    private final ReleaseSeatsUseCase releaseSeatsUseCase;
+    private final SeatLockService seatLockService; // ← thay ReleaseSeatsUseCase
 
     @Transactional
     public void execute(Long bookingId) {
@@ -25,7 +26,8 @@ public class CancelBookingUseCase {
 
         booking.cancel();
 
-        releaseSeatsUseCase.execute(booking.getShowtimeId(), booking.getTickets());
+        // PENDING booking: ghế đang LOCKED, không phải BOOKED → dùng SeatLockService
+        seatLockService.releaseUserLocks(booking.getUserId(), booking.getShowtimeId());
         releaseCouponUseCase.execute(bookingId);
 
         bookingRepository.save(booking);

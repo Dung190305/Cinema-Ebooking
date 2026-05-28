@@ -27,6 +27,7 @@ public class GetShowtimeUseCase {
             Long roomId,
             String statusStr,
             LocalDate date,
+            String city,
             Pageable pageable
     ) {
         ShowtimeStatus status = null;
@@ -40,6 +41,7 @@ public class GetShowtimeUseCase {
                 roomId,
                 status,
                 date,
+                city,
                 pageable
         );
 

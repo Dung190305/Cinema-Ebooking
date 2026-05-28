@@ -13,4 +13,5 @@ import java.math.BigDecimal;
 public class CreatePaymentRequest {
     private Long bookingId;
     private PaymentMethod method;
+    private String callbackUrl;
 }

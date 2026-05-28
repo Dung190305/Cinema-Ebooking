@@ -31,6 +31,7 @@ public class MovieMapperImpl implements MovieMapper {
                 .showingEndDate(domain.getShowingEndDate())
                 .posterUrl(domain.getPosterUrl())
                 .bannerUrl(domain.getBannerUrl())
+                .trailerUrl(domain.getTrailerUrl())
                 .director(domain.getDirector())
                 .actors(domain.getActors())
                 .genres(
@@ -59,6 +60,7 @@ public class MovieMapperImpl implements MovieMapper {
                 .showingEndDate(entity.getShowingEndDate())
                 .posterUrl(entity.getPosterUrl())
                 .bannerUrl(entity.getBannerUrl())
+                .trailerUrl(entity.getTrailerUrl())
                 .director(entity.getDirector())
                 .actors(entity.getActors())
                 .genres(entity.getGenres() == null
@@ -83,6 +85,7 @@ public class MovieMapperImpl implements MovieMapper {
         entity.setShowingEndDate(domain.getShowingEndDate());
         entity.setPosterUrl(domain.getPosterUrl());
         entity.setBannerUrl(domain.getBannerUrl());
+        entity.setTrailerUrl(domain.getTrailerUrl());
         entity.setDirector(domain.getDirector());
         entity.setActors(domain.getActors());
         entity.getGenres().clear();

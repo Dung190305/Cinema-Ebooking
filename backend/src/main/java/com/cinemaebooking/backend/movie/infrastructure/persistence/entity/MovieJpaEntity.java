@@ -74,6 +74,9 @@ public class MovieJpaEntity extends BaseJpaEntity {
     @Column(name = "banner_url", length = 500)
     private String bannerUrl;
 
+    @Column(name = "trailer_url", length = 500)
+    private String trailerUrl;
+
     @Column(length = 255)
     private String director;
 

@@ -10,5 +10,6 @@ public enum ErrorCategory {
     NOT_FOUND,
     CONFLICT,
     EXPIRED,
-    FORBIDDEN
+    FORBIDDEN,
+    TIME_CONSTRAINT
 }

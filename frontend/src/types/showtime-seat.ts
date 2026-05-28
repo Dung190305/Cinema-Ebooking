@@ -10,6 +10,7 @@ export interface ShowtimeSeatResponse {
     isActive: boolean,
     status: showtimeSeatStatus,
     price: number,
+    coupleGroupId: number | null,
 }
 
 export interface ShowtimeSeatLayoutResponse {

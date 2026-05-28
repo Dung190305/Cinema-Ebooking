@@ -193,6 +193,7 @@ export function useMovie() {
       showingEndDate: item.showingEndDate ?? null,
       posterUrl: item.posterUrl,
       bannerUrl: item.bannerUrl,
+      trailerUrl: item.trailerUrl,
       director: item.director,
       actors: item.actors,
       genreIds: genreIds

@@ -91,6 +91,15 @@ public enum ErrorCode {
     USER_INVALID_EMAIL          (2005, "Định dạng email không hợp lệ",                     HttpStatus.BAD_REQUEST,           ErrorType.BUSINESS),
     USER_INVALID_PASSWORD       (2006, "Mật khẩu không đáp ứng yêu cầu",                  HttpStatus.BAD_REQUEST,           ErrorType.BUSINESS),
     USER_NOT_VERIFIED           (2007, "Tài khoản người dùng chưa được xác minh",          HttpStatus.FORBIDDEN,             ErrorType.BUSINESS),
+    USER_EMAIL_ALREADY_EXISTS   (2008, "Email đã được sử dụng",                            HttpStatus.CONFLICT,              ErrorType.BUSINESS),
+
+    // OTP: 2080–2089
+    OTP_NOT_FOUND                  (2080, "Không tìm thấy mã OTP",                         HttpStatus.NOT_FOUND,             ErrorType.BUSINESS),
+    OTP_EXPIRED                    (2081, "Mã OTP đã hết hạn",                           HttpStatus.BAD_REQUEST,           ErrorType.BUSINESS),
+    OTP_INCORRECT                  (2082, "Mã OTP không đúng",                             HttpStatus.BAD_REQUEST,           ErrorType.BUSINESS),
+    OTP_MAX_ATTEMPTS_REACHED       (2083, "Đã nhập sai quá nhiều lần",                    HttpStatus.BAD_REQUEST,           ErrorType.BUSINESS),
+    OTP_USER_ALREADY_VERIFIED       (2084, "Tài khoản đã được xác minh trước đó",          HttpStatus.CONFLICT,             ErrorType.BUSINESS),
+    OTP_RESEND_TOO_SOON            (2085, "Vui lòng đợi trước khi gửi lại mã OTP",       HttpStatus.TOO_MANY_REQUESTS,     ErrorType.BUSINESS),
 
     // loyalty: 2009–2019
     LOYALTY_ACCOUNT_NOT_FOUND      (2009, "Không tìm thấy tài khoản tích điểm",            HttpStatus.NOT_FOUND,             ErrorType.BUSINESS),

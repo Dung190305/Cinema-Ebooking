@@ -1,27 +1,25 @@
 <template>
-    <nav class="flex gap-6 items-center">
+    <nav class="flex gap-3 sm:gap-6 items-center whitespace-nowrap ">
         <!-- Dropdown Phim -->
         <NavDropdownItem label="Phim" :items="movieMenuItems" />
 
-        <!-- Các mục khác (chưa có dropdown) -->
-        <a class="flex items-center gap-2 hover:underline hover:text-accent text-text-primary text-body">
-            Lịch chiếu
-            <BaseIcon :icon="ChevronDown" :size="14" :scale="1.2" :stroke-width="1.5" />
-        </a>
-        <a class="flex items-center gap-2 hover:underline hover:text-accent text-text-primary text-body">
-            Khuyến mãi
-            <BaseIcon :icon="ChevronDown" :size="14" :scale="1.2" :stroke-width="1.5" />
-        </a>
-        <a class="hover:underline hover:text-accent text-text-primary text-body">Vé của tôi</a>
+        <!-- Dropdown Lịch chiếu -->
+        <NavDropdownItem label="Lịch chiếu" :items="showtimeMenuItems" />
+
+        <!-- Dropdown Khuyến mãi -->
+        <NavDropdownItem label="Khuyến mãi" :items="promotionMenuItems" />
+
+        <!-- Link vé của tôi -->
+        <router-link to=""
+            class="hover:underline hover:text-accent text-text-primary text-body-sm sm:text-body whitespace-nowrap">
+            Vé của tôi
+        </router-link>
     </nav>
 </template>
-
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import { ChevronDown } from 'lucide-vue-next';
-import BaseIcon from '@/components/ui/icon/BaseIcon.vue';
 import NavDropdownItem, { type NavDropdownItemData } from '@/components/common/header/subcomponents/NavDropdownItem.vue';
-
+import { getDateKeyVN } from '@/utils/dateFormat'
 const router = useRouter()
 // Danh sách item cho dropdown "Phim"
 const movieMenuItems: NavDropdownItemData[] = [
@@ -38,5 +36,36 @@ const movieMenuItems: NavDropdownItemData[] = [
         // API hiện chưa hỗ trợ RECOMMENDED, có thể dẫn về trang mặc định
         onClick: () => router.push({ path: '/movies', query: { status: 'NOW_SHOWING' } }),
     },
+]
+
+const showtimeMenuItems: NavDropdownItemData[] = [
+    {
+        label: 'Suất chiếu hôm nay',
+        onClick: () => {
+            // Lấy ngày hôm nay theo giờ VN
+            const todayVN = new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' })
+            const todayDate = new Date(todayVN)
+            const todayStr = getDateKeyVN(todayDate.toISOString())   // hoặc tự format
+            // Hoặc dùng trực tiếp:
+            // const todayStr = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' })
+            router.push({ path: '/showtimes', query: { date: todayStr } })
+        }
+    },
+    {
+        label: 'Tất cả suất chiếu',
+        onClick: () => router.push('/showtimes')
+    }
+]
+
+// Danh sách item cho dropdown "Khuyến mãi" (giữ nguyên hoặc tạo mới)
+const promotionMenuItems: NavDropdownItemData[] = [
+    {
+        label: 'Ưu đãi thành viên',
+        onClick: () => router.push('/promotions')
+    },
+    {
+        label: 'Coupon',
+        onClick: () => router.push('/coupons')
+    }
 ]
 </script>

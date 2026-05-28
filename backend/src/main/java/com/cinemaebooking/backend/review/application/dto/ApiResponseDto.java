@@ -1,17 +1,16 @@
 package com.cinemaebooking.backend.review.application.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-import lombok.ToString;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
+import java.util.List;
 @Getter
-@Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString
 public class ApiResponseDto {
 
     private boolean valid;
@@ -33,6 +32,17 @@ public class ApiResponseDto {
 
     @JsonProperty("spoiler_conf")
     private double spoilerConf;
+
+    private List<String> censoredWords;
+
+    @JsonProperty("profanity_count")
+    private int profanityCount;
+
+    @JsonProperty("profanity_ratio")
+    private double profanityRatio;
+
+    @JsonProperty("final_output")
+    private String finalOutput;
 
     @JsonProperty("process_time")
     private double processTime;

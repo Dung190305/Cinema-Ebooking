@@ -1,7 +1,8 @@
 import { ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth.store'
 import { useRouter } from 'vue-router'
-import { authApi, loyaltyApi } from '@/api/auth.api'
+import { authApi } from '@/api/auth.api'
+import { loyaltyApi } from '@/api/loyalty.api'
 import { userApi } from '@/api/user.api'
 
 export function useLoginForm(emit: (event: string) => void) {
@@ -79,11 +80,10 @@ export function useLoginForm(emit: (event: string) => void) {
                 auth.setLoyaltyAccount(null);
             }
 
-            router.push(
-                loginData.role === 'ADMIN'
-                    ? '/admin/analystics/dashboard'
-                    : '/'
-            )
+            if (loginData.role === 'ADMIN') {
+                router.push('/admin/analystics/dashboard')
+            }
+            
             emit('close')
         } catch (err: any) {
             handleBackendError(err)

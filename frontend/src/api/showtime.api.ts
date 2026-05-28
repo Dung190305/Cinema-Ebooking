@@ -20,6 +20,22 @@ export const showtimeApi = {
     status?: string
   }) =>
     apiClient.get<NestedPage<ShowtimeResponse>>('/admin/showtimes', { params }),
+  
+  getPublicShowtimes: (params: {
+    cinemaId?: number
+    movieId?: number
+    roomId?: number
+    date?: string
+    city?: string
+    page?: number
+    size?: number
+    sort?: string         
+    status?: string       
+  }) =>
+    apiClient.get<NestedPage<ShowtimeResponse>>('/showtimes', { params }),
+  
+  getPublicById: (id: number) =>
+    apiClient.get<ShowtimeResponse>(`/showtimes/${id}`),
 
   getById: (id: number) =>
     apiClient.get<ShowtimeResponse>(`/admin/showtimes/${id}`),

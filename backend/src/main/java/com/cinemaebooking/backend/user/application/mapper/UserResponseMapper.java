@@ -20,7 +20,8 @@ public class UserResponseMapper {
                 user.getGender(),
                 user.getAvatarUrl(),
                 user.getRole(),
-                user.getStatus()
+                user.getStatus(),
+                user.getCreatedAt()
         );
     }
 }

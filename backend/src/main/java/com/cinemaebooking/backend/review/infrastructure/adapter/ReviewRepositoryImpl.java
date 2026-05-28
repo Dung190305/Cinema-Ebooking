@@ -30,11 +30,13 @@ public class ReviewRepositoryImpl implements ReviewRepository {
         ReviewJpaEntity entity;
 
         if (review.getId() == null) {
+            // INSERT — cần lấy user reference từ booking
             entity = mapper.toEntity(review);
             var bookingRef = bookingJpaRepository.getReferenceById(review.getBookingId());
             entity.setUser(bookingRef.getUser());
             entity.setBooking(bookingRef);
         } else {
+            // UPDATE — merge vào entity đã có
             entity = jpaRepository.findById(review.getId().getValue())
                     .orElseThrow(() -> ReviewExceptions.notFound(review.getId()));
             mapper.updateEntity(review, entity);

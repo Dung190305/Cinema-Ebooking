@@ -6,7 +6,7 @@ import com.cinemaebooking.backend.common.validation.builder.ValidationBuilder;
 import com.cinemaebooking.backend.common.validation.engine.ValidationRule;
 import com.cinemaebooking.backend.showtime.domain.enums.Language;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -81,16 +81,14 @@ public class ShowtimeValidationProfile {
 
     // ================== START TIME ==================
 
-    public List<ValidationRule<LocalDateTime>> startTimeRules() {
-        return ValidationBuilder.<LocalDateTime>create()
+    public List<ValidationRule<Instant>> startTimeRules() {
+        return ValidationBuilder.<Instant>create()
                 .notNull()
                 .build();
     }
 
-    // ================== END TIME ==================
-
-    public List<ValidationRule<LocalDateTime>> endTimeRules() {
-        return ValidationBuilder.<LocalDateTime>create()
+    public List<ValidationRule<Instant>> endTimeRules() {
+        return ValidationBuilder.<Instant>create()
                 .notNull()
                 .build();
     }

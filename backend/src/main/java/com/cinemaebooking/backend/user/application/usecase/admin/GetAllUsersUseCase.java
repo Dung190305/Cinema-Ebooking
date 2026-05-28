@@ -1,7 +1,7 @@
 package com.cinemaebooking.backend.user.application.usecase.admin;
 
-import com.cinemaebooking.backend.common.exception.domain.CommonExceptions;
 import com.cinemaebooking.backend.user.application.dto.Response.UserResponse;
+import com.cinemaebooking.backend.user.application.dto.UserDTO.UserFilterRequest;
 import com.cinemaebooking.backend.user.application.mapper.UserResponseMapper;
 import com.cinemaebooking.backend.user.application.port.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,12 +17,17 @@ public class GetAllUsersUseCase {
     private final UserResponseMapper mapper;
 
     public Page<UserResponse> execute(Pageable pageable) {
-
-        if (pageable == null) {
-            throw CommonExceptions.invalidInput("Pageable must not be null");
-        }
-
         return userRepository.findAll(pageable)
                 .map(mapper::toUserResponse);
+    }
+
+    public Page<UserResponse> executeWithFilters(UserFilterRequest filter, Pageable pageable) {
+        return userRepository.findByFilters(
+                filter.getFullName(),
+                filter.getEmail(),
+                filter.getRole(),
+                filter.getStatus(),
+                pageable
+        ).map(mapper::toUserResponse);
     }
 }

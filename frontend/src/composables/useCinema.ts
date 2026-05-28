@@ -179,6 +179,20 @@ export function useCinema() {
     }
   }
 
+  // ── Fetch All (for filter dropdown) ─────────────────────────────────────────
+  async function fetchAll(): Promise<CinemaResponse[]> {
+    try {
+      const res = await cinemaApi.getAll(100)
+      return res.content
+    } catch {
+      return []
+    }
+  }
+
+  function setCinemas(data: CinemaResponse[]) {
+    cinemas.value = data
+  }
+
   return {
     cinemas:      readonly(cinemas),
     isLoading:    readonly(isLoading),
@@ -190,6 +204,8 @@ export function useCinema() {
     pageSize,
 
     fetchList,
+    setCinemas,
+    fetchAll,  // ← for dashboard filter dropdown
     goToPage,   // ← dùng cái này cho pagination buttons
     create,
     save,
