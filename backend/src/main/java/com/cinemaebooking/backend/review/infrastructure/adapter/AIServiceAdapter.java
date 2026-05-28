@@ -103,7 +103,7 @@ public class AIServiceAdapter implements AIServicePort {
     }
 
     private AiAnalysisResult toAiResult(ApiResponseDto dto) {
-        ReviewSentiment sentiment = parseSentiment(dto.getSentiment());
+        ReviewSentiment sentiment = parseSentiment(dto.getLabel());
         ReviewDecision decision = parseDecision(dto.getFinalDecision());
 
         log.info("AI Analysis - Decision: {}, Sentiment: {}, Spoiler: {}, isValid: {}",
@@ -123,12 +123,12 @@ public class AIServiceAdapter implements AIServicePort {
                 .build();
     }
 
-    private ReviewSentiment parseSentiment(String value) {
-        if (value == null) return ReviewSentiment.NEUTRAL;
-        return switch (value.toUpperCase()) {
+    private ReviewSentiment parseSentiment(String label) {
+        if (label == null) return ReviewSentiment.NEUTRAL;
+        return switch (label.toUpperCase()) {
             case "POSITIVE" -> ReviewSentiment.POSITIVE;
             case "NEGATIVE" -> ReviewSentiment.NEGATIVE;
-            default -> ReviewSentiment.NEUTRAL;
+            default -> ReviewSentiment.NEUTRAL;  // Spoiler → coi là neutral cho sentiment
         };
     }
 

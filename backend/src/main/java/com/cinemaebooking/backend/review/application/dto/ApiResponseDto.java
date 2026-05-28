@@ -14,7 +14,13 @@ import java.util.List;
 public class ApiResponseDto {
 
     private boolean valid;
-    private String sentiment;
+
+    /**
+     * Sentiment label từ PhoBERT: "POSITIVE" / "NEGATIVE" / "Spoiler"
+     * FastAPI gửi field "label", không phải "sentiment".
+     */
+    @JsonProperty("label")
+    private String label;
 
     @JsonProperty("final_decision")
     private String finalDecision;
