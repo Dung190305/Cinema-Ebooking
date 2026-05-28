@@ -25,7 +25,7 @@ import java.util.List;
  *   <li>Tầng 3: Spoiler Detection → isSpoiler, spoilerConf</li>
  * </ol>
  *
- * @author Hieu Nguyen
+ * @author ducthinhn
  * @since 2026
  */
 @Slf4j
