@@ -4,7 +4,7 @@ import com.cinemaebooking.backend.booking.infrastructure.persistence.entity.Book
 import com.cinemaebooking.backend.report.application.dto.ReportDateRange;
 import com.cinemaebooking.backend.report.application.dto.RoomPerformanceResponse;
 import com.cinemaebooking.backend.report.application.port.ReportQueryPort;
-import com.cinemaebooking.backend.report.application.validator.*;
+import com.cinemaebooking.backend.report.application.validator.ReportDateRangeValidator;
 import com.cinemaebooking.backend.showtime.infrastructure.persistence.entity.ShowtimeJpaEntity;
 import com.cinemaebooking.backend.ticket.infrastructure.persistence.entity.TicketJpaEntity;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,9 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
@@ -39,13 +41,6 @@ public class GetRoomPerformanceUseCase {
     ) {
         ReportDateRange dateRange = reportDateRangeValidator.validateAndBuild(fromDate, toDate);
 
-        List<BookingJpaEntity> bookings = reportQueryPort.findConfirmedBookingsByPaidAt(
-                dateRange.getFromDateTime(),
-                dateRange.getToDateTime(),
-                cinemaId,
-                movieId
-        );
-
         Instant showtimeFrom = dateRange.getFromDateTime()
                 .atZone(ZoneId.systemDefault())
                 .toInstant();
@@ -53,6 +48,13 @@ public class GetRoomPerformanceUseCase {
         Instant showtimeTo = dateRange.getToDateTime()
                 .atZone(ZoneId.systemDefault())
                 .toInstant();
+
+        List<BookingJpaEntity> bookings = reportQueryPort.findConfirmedBookingsByShowtimeStartTime(
+                showtimeFrom,
+                showtimeTo,
+                cinemaId,
+                movieId
+        );
 
         List<ShowtimeJpaEntity> showtimes = reportQueryPort.findShowtimesByStartTime(
                 showtimeFrom,
@@ -79,7 +81,12 @@ public class GetRoomPerformanceUseCase {
                     long ticketSold = tickets.size();
 
                     Set<Long> showtimeIds = tickets.stream()
-                            .map(ticket -> ticket.getShowtimeSeat().getShowtime().getId())
+                            .map(ticket -> ticket.getShowtimeSeat())
+                            .filter(Objects::nonNull)
+                            .map(showtimeSeat -> showtimeSeat.getShowtime())
+                            .filter(Objects::nonNull)
+                            .map(showtime -> showtime.getId())
+                            .filter(Objects::nonNull)
                             .collect(Collectors.toSet());
 
                     Long roomId = resolveRoomId(tickets);
@@ -88,6 +95,7 @@ public class GetRoomPerformanceUseCase {
                             firstBooking.getCinemaName(),
                             firstBooking.getRoomName(),
                             ticketSold,
+                            tickets,
                             showtimes
                     );
 
@@ -108,7 +116,13 @@ public class GetRoomPerformanceUseCase {
 
     private Long resolveRoomId(List<TicketJpaEntity> tickets) {
         return tickets.stream()
-                .map(ticket -> ticket.getShowtimeSeat().getShowtime().getRoom().getId())
+                .map(ticket -> ticket.getShowtimeSeat())
+                .filter(Objects::nonNull)
+                .map(showtimeSeat -> showtimeSeat.getShowtime())
+                .filter(Objects::nonNull)
+                .map(showtime -> showtime.getRoom())
+                .filter(Objects::nonNull)
+                .map(room -> room.getId())
                 .filter(Objects::nonNull)
                 .findFirst()
                 .orElse(null);
@@ -118,6 +132,7 @@ public class GetRoomPerformanceUseCase {
             String cinemaName,
             String roomName,
             long ticketSold,
+            List<TicketJpaEntity> tickets,
             List<ShowtimeJpaEntity> showtimes
     ) {
         int totalCapacity = showtimes.stream()
@@ -131,12 +146,40 @@ public class GetRoomPerformanceUseCase {
                 .sum();
 
         if (totalCapacity == 0) {
-            return BigDecimal.ZERO;
+            totalCapacity = calculateCapacityFromSoldTicketShowtimes(tickets);
+        }
+
+        if (totalCapacity == 0) {
+            return ticketSold > 0 ? BigDecimal.valueOf(100) : BigDecimal.ZERO;
         }
 
         return BigDecimal.valueOf(ticketSold)
                 .multiply(BigDecimal.valueOf(100))
                 .divide(BigDecimal.valueOf(totalCapacity), 2, RoundingMode.HALF_UP);
+    }
+
+    private int calculateCapacityFromSoldTicketShowtimes(List<TicketJpaEntity> tickets) {
+        Map<Long, Integer> capacityByShowtime = new LinkedHashMap<>();
+
+        for (TicketJpaEntity ticket : tickets) {
+            if (ticket.getShowtimeSeat() == null
+                    || ticket.getShowtimeSeat().getShowtime() == null
+                    || ticket.getShowtimeSeat().getShowtime().getRoom() == null) {
+                continue;
+            }
+
+            Long showtimeId = ticket.getShowtimeSeat().getShowtime().getId();
+            Integer totalSeats = ticket.getShowtimeSeat().getShowtime().getRoom().getTotalSeats();
+
+            if (showtimeId != null && totalSeats != null && totalSeats > 0) {
+                capacityByShowtime.putIfAbsent(showtimeId, totalSeats);
+            }
+        }
+
+        return capacityByShowtime.values()
+                .stream()
+                .mapToInt(Integer::intValue)
+                .sum();
     }
 
     private BigDecimal sum(

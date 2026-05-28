@@ -2,10 +2,12 @@ package com.cinemaebooking.backend.report.application.usecase;
 
 import com.cinemaebooking.backend.booking.domain.enums.BookingStatus;
 import com.cinemaebooking.backend.booking.infrastructure.persistence.entity.BookingJpaEntity;
+import com.cinemaebooking.backend.refund.domain.enums.RefundStatus;
+import com.cinemaebooking.backend.refund.infrastructure.persistence.entity.RefundJpaEntity;
 import com.cinemaebooking.backend.report.application.dto.ReportDateRange;
 import com.cinemaebooking.backend.report.application.dto.RevenueOverviewResponse;
 import com.cinemaebooking.backend.report.application.port.ReportQueryPort;
-import com.cinemaebooking.backend.report.application.validator.*;
+import com.cinemaebooking.backend.report.application.validator.ReportDateRangeValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,21 +49,51 @@ public class GetRevenueOverviewUseCase {
                 movieId
         );
 
-        BigDecimal totalRevenue = sum(confirmedBookings, BookingJpaEntity::getFinalAmount);
+        List<RefundJpaEntity> processedRefunds = reportQueryPort.findRefundsByProcessedAt(
+                dateRange.getFromDateTime(),
+                dateRange.getToDateTime(),
+                cinemaId,
+                movieId
+        );
+
+        BigDecimal confirmedRevenue = sum(confirmedBookings, BookingJpaEntity::getFinalAmount);
         BigDecimal totalTicketRevenue = sum(confirmedBookings, BookingJpaEntity::getTotalTicketPrice);
         BigDecimal totalComboRevenue = sum(confirmedBookings, BookingJpaEntity::getTotalComboPrice);
 
-        long confirmedCount = allBookings.stream()
+        List<RefundJpaEntity> completedRefunds = processedRefunds.stream()
+                .filter(refund -> refund.getStatus() == RefundStatus.COMPLETED)
+                .toList();
+
+        BigDecimal refundedOriginalAmount = completedRefunds.stream()
+                .map(RefundJpaEntity::getOriginalAmount)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalRefundAmount = completedRefunds.stream()
+                .map(RefundJpaEntity::getRefundAmount)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal grossRevenue = confirmedRevenue.add(refundedOriginalAmount);
+        BigDecimal netRevenue = grossRevenue.subtract(totalRefundAmount);
+
+        long confirmedBookingsCount = allBookings.stream()
                 .filter(booking -> booking.getStatus() == BookingStatus.CONFIRMED)
                 .count();
 
-        long pendingCount = allBookings.stream()
+        long pendingBookings = allBookings.stream()
                 .filter(booking -> booking.getStatus() == BookingStatus.PENDING)
                 .count();
 
-        long cancelledCount = allBookings.stream()
+        long cancelledBookings = allBookings.stream()
                 .filter(booking -> booking.getStatus() == BookingStatus.CANCELLED)
                 .count();
+
+        long requestedRefunds = countRefunds(processedRefunds, RefundStatus.REQUESTED);
+        long approvedRefunds = countRefunds(processedRefunds, RefundStatus.APPROVED);
+        long completedRefundsCount = countRefunds(processedRefunds, RefundStatus.COMPLETED);
+        long rejectedRefunds = countRefunds(processedRefunds, RefundStatus.REJECTED);
+        long cancelledRefunds = countRefunds(processedRefunds, RefundStatus.CANCELLED);
 
         long totalTicketsSold = confirmedBookings.stream()
                 .mapToLong(booking -> booking.getTickets() == null ? 0 : booking.getTickets().size())
@@ -69,23 +101,38 @@ public class GetRevenueOverviewUseCase {
 
         BigDecimal averageRevenuePerBooking = confirmedBookings.isEmpty()
                 ? BigDecimal.ZERO
-                : totalRevenue.divide(
+                : netRevenue.divide(
                 BigDecimal.valueOf(confirmedBookings.size()),
                 2,
                 RoundingMode.HALF_UP
         );
 
         return RevenueOverviewResponse.builder()
-                .totalRevenue(totalRevenue)
+                .totalRevenue(netRevenue)
+                .grossRevenue(grossRevenue)
                 .totalTicketRevenue(totalTicketRevenue)
                 .totalComboRevenue(totalComboRevenue)
+                .totalRefundAmount(totalRefundAmount)
+                .netRevenue(netRevenue)
                 .totalBookings(allBookings.size())
-                .confirmedBookings(confirmedCount)
-                .pendingBookings(pendingCount)
-                .cancelledBookings(cancelledCount)
+                .confirmedBookings(confirmedBookingsCount)
+                .pendingBookings(pendingBookings)
+                .cancelledBookings(cancelledBookings)
+                .totalRefunds(processedRefunds.size())
+                .requestedRefunds(requestedRefunds)
+                .approvedRefunds(approvedRefunds)
+                .completedRefunds(completedRefundsCount)
+                .rejectedRefunds(rejectedRefunds)
+                .cancelledRefunds(cancelledRefunds)
                 .totalTicketsSold(totalTicketsSold)
                 .averageRevenuePerBooking(averageRevenuePerBooking)
                 .build();
+    }
+
+    private long countRefunds(List<RefundJpaEntity> refunds, RefundStatus status) {
+        return refunds.stream()
+                .filter(refund -> refund.getStatus() == status)
+                .count();
     }
 
     private BigDecimal sum(
