@@ -6,6 +6,7 @@ import type {
   MoviePerformanceResponse,
   PaymentMethodReportResponse,
   PromotionEffectivenessResponse,
+  RefundReportResponse,
   ReportFilterParams,
   ReportGroupBy,
   RetentionReportResponse,
@@ -82,4 +83,9 @@ export const reportApi = {
     apiClient.get<PromotionEffectivenessResponse[]>('/admin/reports/promotion-effectiveness', {
       params: cleanParams(params),
     }) as unknown as Promise<PromotionEffectivenessResponse[]>,
+
+  getRefundReport: (params?: ReportFilterParams) =>
+    apiClient.get<RefundReportResponse>('/admin/reports/refunds', {
+      params: cleanParams(params),
+    }) as unknown as Promise<RefundReportResponse>,
 }
