@@ -11,5 +11,6 @@ import java.time.LocalDateTime;
 @Builder
 public class CreatePaymentResponse {
     private String paymentCode;
+    private String paymentUrl;
     private LocalDateTime expiredAt;
 }

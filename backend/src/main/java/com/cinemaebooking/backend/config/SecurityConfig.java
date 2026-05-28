@@ -45,6 +45,9 @@ public class SecurityConfig {
                         // ✅ Tất cả GET còn lại → public
                         .requestMatchers(HttpMethod.GET, "/**").permitAll()
 
+                        .requestMatchers(HttpMethod.POST, "/api/v1/payments/*/complete").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/payments/*/cancel").permitAll()
+
                         // User
                         .requestMatchers("/api/v1/users/me/**").authenticated()
 

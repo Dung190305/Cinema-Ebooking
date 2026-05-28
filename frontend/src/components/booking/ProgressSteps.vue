@@ -9,6 +9,7 @@ const steps = [
     { num: 4, label: 'Bắp nước' },
     { num: 5, label: 'Thanh toán' }
 ]
+
 </script>
 
 <template>

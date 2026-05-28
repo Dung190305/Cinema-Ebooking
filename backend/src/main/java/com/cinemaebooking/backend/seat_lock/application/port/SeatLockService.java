@@ -79,4 +79,13 @@ public interface SeatLockService {
      * @return true nếu ghế bị lock bởi user khác
      */
     boolean isLockedByOther(Long seatId, Long currentUserId);
+
+    /**
+     * Kiểm tra một ghế có đang được lock bởi user cụ thể hay không (lock còn hiệu lực).
+     *
+     * @param seatId showtimeSeatId
+     * @param userId user cần kiểm tra
+     * @return true nếu ghế đang được lock bởi user này và chưa hết hạn
+     */
+    boolean isLockedByUser(Long seatId, Long userId);
 }

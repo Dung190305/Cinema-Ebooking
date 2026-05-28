@@ -80,11 +80,10 @@ export function useLoginForm(emit: (event: string) => void) {
                 auth.setLoyaltyAccount(null);
             }
 
-            router.push(
-                loginData.role === 'ADMIN'
-                    ? '/admin/analystics/dashboard'
-                    : '/'
-            )
+            if (loginData.role === 'ADMIN') {
+                router.push('/admin/analystics/dashboard')
+            }
+            
             emit('close')
         } catch (err: any) {
             handleBackendError(err)

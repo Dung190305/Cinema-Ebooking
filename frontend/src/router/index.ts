@@ -6,6 +6,12 @@ import AdminLayout from '@/layouts/AdminLayout.vue'
 
 const routes: RouteRecordRaw[] = [
   {
+    path: '/payment/result',
+    name: 'payment-result',
+    component: () => import('@/pages/PaymentResult.vue'),
+    meta: { title: 'Kết quả thanh toán' }
+  },
+  {
     path: '/',
     component: MainLayout,
     children: [

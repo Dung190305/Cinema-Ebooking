@@ -8,8 +8,8 @@ defineProps<{
     lifetimePoints: number;
     totalSpending: number;
     nextTierName?: string;
-    nextTierPointsRequired: number;
-    pointsToNext: number;
+    nextTierSpendingRequired: number;
+    spendingNeeded: number;
     progressPercent: number;
     isHighestTier: boolean;
     loading?: boolean;
@@ -48,19 +48,18 @@ defineProps<{
             </div>
         </div>
 
-        <!-- Thanh tiến trình lên hạng -->
+        <!-- Thanh tiến trình lên hạng dựa trên tổng chi tiêu -->
         <div v-if="!isHighestTier && nextTierName">
             <div class="flex justify-between text-caption text-text-secondary mb-1">
                 <span>Tiến trình lên {{ nextTierName }}</span>
-                <span>{{ lifetimePoints }} / {{ nextTierPointsRequired }} điểm</span>
+                <span>{{ totalSpending.toLocaleString() }}₫ / {{ nextTierSpendingRequired.toLocaleString() }}₫</span>
             </div>
             <div class="w-full h-2 bg-disabled rounded-full overflow-hidden">
                 <div class="h-full bg-accent rounded-full transition-all duration-500"
                     :style="{ width: progressPercent + '%' }" />
             </div>
             <p class="text-caption text-text-tertiary mt-2">
-                Cần thêm <strong class="text-text-secondary">{{ pointsToNext }} điểm</strong> để lên hạng {{
-                    nextTierName }}
+                Cần thêm <strong>{{ spendingNeeded.toLocaleString() }}₫</strong> để lên hạng {{ nextTierName }}
             </p>
         </div>
         <p v-else class="text-body text-accent">

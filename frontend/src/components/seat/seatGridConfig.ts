@@ -110,9 +110,9 @@ export const adminSeatGridConfig: SeatGridConfig = {
   legendSizeWide: 'h-5 w-9',
 
   adminSelectedClass: 'bg-blue-500 border-blue-600 text-white shadow-md ring-2 ring-blue-300',
+  adminInactiveClass: 'bg-slate-50 border-slate-200 text-slate-300 opacity-50',
   adminBookedClass: 'bg-gray-300 border-gray-400 text-gray-600 line-through opacity-80',
   adminLockedClass: 'bg-red-100 border-red-400 text-red-700 opacity-80',
-  adminInactiveClass: 'bg-slate-50 border-slate-200 text-slate-300 opacity-50',
   legendBookedClass: 'bg-gray-300 border border-gray-400 rounded-md',
   legendLockedClass: 'bg-red-100 border border-red-400 rounded-md',
 }
@@ -133,9 +133,9 @@ export const webSeatGridConfig: SeatGridConfig = {
   legendSize: 'h-5 w-5',
   legendSizeWide: 'h-5 w-9',
 
-  webBookedClass: 'bg-white/20 border-white/20 text-white/30',
-  webLockedClass: 'bg-white/5 border-white/10 text-white/20 opacity-40',
-  webInactiveClass: 'bg-white/5 border-white/10 text-white/20 opacity-40',
+  webBookedClass: 'bg-gray-600/40 border-gray-500 text-gray-300 line-through pointer-events-none',   
+  webLockedClass: 'bg-amber-500/20 border-amber-500/50 text-amber-300 pointer-events-none',            
+  webInactiveClass: 'bg-white/5 border-white/10 text-white/20 opacity-40 pointer-events-none',
 }
 
 // ── Preview config (dùng trong form tạo/sửa suất chiếu) ───────────────────────

@@ -229,4 +229,12 @@ public class SeatLockServiceImpl implements SeatLockService {
                 .map(lock -> !lock.getUser().getId().equals(currentUserId))
                 .orElse(false);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isLockedByUser(Long seatId, Long userId) {
+        LocalDateTime now = LocalDateTime.now();
+        return seatLockJpaRepository.findActiveLockByShowtimeSeatIdAndUserId(seatId, userId, now)
+                .isPresent();
+    }
 }
