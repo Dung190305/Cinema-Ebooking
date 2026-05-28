@@ -116,6 +116,18 @@ public class Booking extends BaseEntity<BookingId> {
         this.status = BookingStatus.CANCELLED;
     }
 
+    public void cancelAfterRefund() {
+        if (this.status == BookingStatus.CANCELLED) {
+            return;
+        }
+
+        if (this.status != BookingStatus.CONFIRMED) {
+            throw new RuntimeException("Chỉ booking đã thanh toán mới có thể hoàn tiền.");
+        }
+
+        this.status = BookingStatus.CANCELLED;
+    }
+
     public boolean isExpired() {
         return status == BookingStatus.PENDING &&
                 expiredAt != null &&
