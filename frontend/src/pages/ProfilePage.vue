@@ -31,8 +31,8 @@ const {
     currentPoints,
     totalSpending,
     nextTierName,
-    nextTierPointsRequired,
-    pointsToNext,
+    nextTierSpendingRequired,
+    spendingNeeded,
     progressPercent,
     isHighestTier,
 } = useLoyaltyTiers()
@@ -92,11 +92,11 @@ const tabs = [
 
             <div v-if="activeTab === 'loyalty'">
                 <Skeleton v-if="loyaltyLoading" :blocks="loyaltySkeletonBlocks" />
-                <LoyaltySection v-else :error="loyaltyError" :currentTierName="currentTierName"
-                    :discountPercent="discountPercent" :currentPoints="currentPoints" :lifetimePoints="lifetimePoints"
-                    :totalSpending="totalSpending" :nextTierName="nextTierName"
-                    :nextTierPointsRequired="nextTierPointsRequired" :pointsToNext="pointsToNext"
-                    :progressPercent="progressPercent" :isHighestTier="isHighestTier" :loading="loyaltyLoading" />
+                <LoyaltySection :error="error" :current-tier-name="currentTierName" :discount-percent="discountPercent"
+                    :current-points="currentPoints" :lifetime-points="lifetimePoints" :total-spending="totalSpending"
+                    :next-tier-name="nextTierName" :next-tier-spending-required="nextTierSpendingRequired"
+                    :spending-needed="spendingNeeded" :progress-percent="progressPercent"
+                    :is-highest-tier="isHighestTier" :loading="loading" />
             </div>
 
 

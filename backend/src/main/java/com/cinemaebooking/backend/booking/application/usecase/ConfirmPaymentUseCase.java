@@ -63,7 +63,7 @@ public class ConfirmPaymentUseCase {
     /** Thanh toán tại quầy — paidAt = now(). */
     @Transactional
     public void execute(Long bookingId) {
-        doExecute(bookingId, LocalDateTime.now(), null);
+        doExecute(bookingId, LocalDateTime.now(), null,null);
     }
 
     /** Thanh toán online qua CompletePaymentUseCase. */
@@ -72,14 +72,14 @@ public class ConfirmPaymentUseCase {
         LocalDateTime paidAt = (payment != null && payment.getPaidAt() != null)
                 ? payment.getPaidAt()
                 : LocalDateTime.now();
-        doExecute(bookingId, paidAt, null);
+        doExecute(bookingId, paidAt, null,payment.getId().getValue());
     }
 
     // -------------------------------------------------------------------------
     // Internal
     // -------------------------------------------------------------------------
 
-    private void doExecute(Long bookingId, LocalDateTime paidAt, Long overrideUserId) {
+    private void doExecute(Long bookingId, LocalDateTime paidAt, Long overrideUserId, Long paymentId) {
 
         // 1. Fetch booking
         Booking booking = bookingRepository.findById(bookingId)
@@ -125,17 +125,13 @@ public class ConfirmPaymentUseCase {
             addPointsAfterBookingUseCase.execute(
                     booking.getUserId(),
                     booking.getTotalTicketPrice(),
-                    booking.getTotalComboPrice());
+                    booking.getTotalComboPrice(),
+                    booking.getId().getValue(),
+                    paymentId);
         } catch (Exception e) {
             log.warn("Failed to add loyalty points for booking {}: {}", bookingId, e.getMessage());
         }
 
-        // 11. Tích điểm loyalty
-        addPointsAfterBookingUseCase.execute(
-                booking.getUserId(),
-                booking.getTotalTicketPrice(),
-                booking.getTotalComboPrice()
-        );
     }
 
     /**
