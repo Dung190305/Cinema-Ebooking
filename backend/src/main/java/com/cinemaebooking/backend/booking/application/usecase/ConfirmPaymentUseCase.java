@@ -6,117 +6,170 @@ import com.cinemaebooking.backend.booking.domain.valueObject.BookingId;
 import com.cinemaebooking.backend.common.exception.domain.BookingExceptions;
 import com.cinemaebooking.backend.loyalty.application.usecase.transactional.AddPointsAfterBookingUseCase;
 import com.cinemaebooking.backend.payment.domain.model.Payment;
+import com.cinemaebooking.backend.room_layout.application.port.roomLayout.RoomLayoutInternalService;
+import com.cinemaebooking.backend.room_layout.domain.model.roomLayoutSeat.RoomLayoutSeat;
 import com.cinemaebooking.backend.seat_lock.application.port.SeatLockService;
 import com.cinemaebooking.backend.showtime_seat.application.port.ShowtimeSeatRepository;
 import com.cinemaebooking.backend.showtime_seat.domain.model.ShowtimeSeat;
+import com.cinemaebooking.backend.ticket.domain.enums.TicketStatus;
 import com.cinemaebooking.backend.ticket.domain.model.Ticket;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 
 /**
- * ConfirmPaymentUseCase - Single Source of Truth để finalizing một Booking.
+ * ConfirmPaymentUseCase — Single Source of Truth để finalize một Booking.
  *
- * <p>Dùng cho cả thanh toán online (qua webhook) lẫn thanh toán tại quầy.
- * Tất cả domain operations được gói trong MỘT transaction để đảm bảo
- * tính atomic: booking + tickets + seats + loyalty cùng thành công hoặc cùng rollback.
+ * <p>Đây là nơi DUY NHẤT tạo {@link Ticket}. Ticket chỉ tồn tại khi thanh toán
+ * đã thành công — không có Ticket nào ở trạng thái PENDING lưu trước đó.
  *
- * <p>Trách nhiệm duy nhất của UseCase này: chuyển trạng thái từ PENDING → CONFIRMED.
- * KHÔNG chứa logic payment (xử lý gateway, transactionId) — đó là việc của CompletePaymentUseCase.
- *
- * <p>Luồng:
+ * <p>Trách nhiệm:
  * <ol>
- *   <li>Fetch Booking → throw NotFound / Expired</li>
- *   <li>Booking.confirm() → status = CONFIRMED</li>
- *   <li>Set paidAt (từ Payment hoặc direct)</li>
- *   <li>Tickets.activate() → PENDING → ACTIVE</li>
- *   <li>ShowtimeSeats.book() → AVAILABLE → BOOKED</li>
- *   <li>seatLockService.releaseUserLocks() → xóa temp locks (theo userId + showtimeId)</li>
- *   <li>addPointsAfterBookingUseCase.execute() → tích điểm loyalty</li>
+ * <li>Fetch Booking → validate chưa expired</li>
+ * <li>Tạo {@link Ticket} từ {@code booking.showtimeSeatIds} (snapshot giá, tên ghế tại đây)</li>
+ * <li>Booking.confirm() → PENDING → CONFIRMED</li>
+ * <li>Set paidAt</li>
+ * <li>ShowtimeSeats → BOOKED</li>
+ * <li>Giải phóng seat locks</li>
+ * <li>Tích điểm loyalty</li>
  * </ol>
  *
- * @author ducthinhn
- * @since 2026
+ * <p>Dùng cho cả thanh toán online (qua {@code CompletePaymentUseCase})
+ * lẫn thanh toán tại quầy.
  */
 @Service
 @RequiredArgsConstructor
 public class ConfirmPaymentUseCase {
 
+    private static final Logger log =
+            LoggerFactory.getLogger(ConfirmPaymentUseCase.class);
+
     private final BookingRepository bookingRepository;
     private final ShowtimeSeatRepository showtimeSeatRepository;
+    private final RoomLayoutInternalService layoutService;
     private final SeatLockService seatLockService;
     private final AddPointsAfterBookingUseCase addPointsAfterBookingUseCase;
 
-    /**
-     * Overload cho thanh toán tại quầy (không qua payment gateway).
-     * paidAt = thời điểm cashier xác nhận.
-     */
+    /** Thanh toán tại quầy — paidAt = now(). */
     @Transactional
     public void execute(Long bookingId) {
-        execute(bookingId, LocalDateTime.now(), null);
+        doExecute(bookingId, LocalDateTime.now(), null, null);
     }
 
-    /**
-     * Full version — cho thanh toán online qua CompletePaymentUseCase.
-     *
-     * @param bookingId ID của booking cần xác nhận
-     * @param payment  Payment domain đã mark success (chứa paidAt). Có thể null.
-     */
+    /** Thanh toán online qua CompletePaymentUseCase. */
     @Transactional
     public void execute(Long bookingId, Payment payment) {
         LocalDateTime paidAt = (payment != null && payment.getPaidAt() != null)
                 ? payment.getPaidAt()
                 : LocalDateTime.now();
-        execute(bookingId, paidAt, null);
+        doExecute(bookingId, paidAt, null, payment.getId().getValue());
     }
 
-    /**
-     * Internal execution — tất cả các overload gọi vào đây.
-     */
-    private void execute(Long bookingId, LocalDateTime paidAt, Long userId) {
+    // -------------------------------------------------------------------------
+    // Internal Execution
+    // -------------------------------------------------------------------------
+
+    private void doExecute(Long bookingId, LocalDateTime paidAt, Long overrideUserId, Long paymentId) {
+
         // 1. Fetch booking với pessimistic lock — ngăn race condition khi nhiều thread cùng confirm
         Booking booking = bookingRepository.findByIdForUpdate(bookingId)
                 .orElseThrow(() -> BookingExceptions.notFound(BookingId.of(bookingId)));
 
-        // 2. Kiểm tra booking chưa expired
+        // 2. Không confirm booking đã hết hạn
         if (booking.isExpired()) {
             throw BookingExceptions.expired(BookingId.of(bookingId));
         }
 
-        // 3. Booking domain: PENDING → CONFIRMED
+        // 3. Load ShowtimeSeats từ seatIds đã lưu trong booking
+        List<Long> seatIds = booking.getShowtimeSeatIds();
+        List<ShowtimeSeat> seats = showtimeSeatRepository.findAllByIds(seatIds);
+
+        // 4. Tạo Tickets — đây là lần đầu tiên và duy nhất Ticket được tạo
+        List<Ticket> tickets = buildTickets(seats);
+
+        // 5. Gắn tickets vào booking
+        booking.setTickets(tickets);
+
+        // 6. Booking domain: PENDING → CONFIRMED
         booking.confirm();
 
-        // 4. Set paidAt
+        // 7. Set paidAt
         booking.setPaidAt(paidAt);
 
-        // 5. Tickets domain: PENDING → ACTIVE
-        booking.getTickets().forEach(Ticket::activate);
-
-        // 6. ShowtimeSeats domain: AVAILABLE → BOOKED
-        List<Long> seatIds = booking.getTickets().stream()
-                .map(Ticket::getShowtimeSeatId)
-                .toList();
-
-        List<ShowtimeSeat> seats = showtimeSeatRepository.findAllByIds(seatIds);
+        // 8. ShowtimeSeats: LOCKED/AVAILABLE → BOOKED
         seats.forEach(ShowtimeSeat::book);
 
-        // 7. Persist all domain changes qua repository (trong cùng transaction)
+        // 9. Persist tất cả trong cùng một transaction
         bookingRepository.save(booking);
         seats.forEach(showtimeSeatRepository::save);
 
-        // 8. Giải phóng seat locks (theo userId + showtimeId, KHÔNG dùng bookingId)
-        // bookingId trong seat_locks có thể null (lock tạo trước khi booking tồn tại)
-        Long effectiveUserId = (userId != null) ? userId : booking.getUserId();
-        seatLockService.releaseUserLocks(effectiveUserId, booking.getShowtimeId());
+        // 10. Giải phóng seat locks
+        Long effectiveUserId = (overrideUserId != null) ? overrideUserId : booking.getUserId();
+        try {
+            seatLockService.releaseUserLocks(effectiveUserId, booking.getShowtimeId());
+        } catch (Exception e) {
+            log.warn("Failed to release seat locks for booking {}: {}", bookingId, e.getMessage());
+        }
 
-        // 9. Loyalty: tích điểm cho user
-        addPointsAfterBookingUseCase.execute(
-                booking.getUserId(),
-                booking.getTotalTicketPrice(),
-                booking.getTotalComboPrice()
-        );
+        try {
+            addPointsAfterBookingUseCase.execute(
+                    booking.getUserId(),
+                    booking.getTotalTicketPrice(),
+                    booking.getTotalComboPrice(),
+                    booking.getId().getValue(),
+                    paymentId);
+        } catch (Exception e) {
+            log.warn("Failed to add loyalty points for booking {}: {}", bookingId, e.getMessage());
+        }
+
+    }
+
+    /**
+     * Tạo danh sách Ticket từ ShowtimeSeat — snapshot giá và tên ghế tại thời điểm confirm.
+     * Không gọi validate vì ghế đã được validate + lock từ CreateBookingUseCase.
+     */
+    private List<Ticket> buildTickets(List<ShowtimeSeat> seats) {
+        List<Long> layoutSeatIds = seats.stream()
+                .map(ShowtimeSeat::getRoomLayoutSeatId)
+                .distinct()
+                .toList();
+
+        Map<Long, RoomLayoutSeat> layoutSeatMap = layoutService.getMapByIds(layoutSeatIds);
+
+        List<Long> seatTypeIds = layoutSeatMap.values().stream()
+                .map(RoomLayoutSeat::getSeatTypeId)
+                .distinct()
+                .toList();
+        Map<Long, String> seatTypeNameMap = layoutService.getSeatTypeNameMap(seatTypeIds);
+
+        return seats.stream().map(seat -> {
+            String typeName = Optional.ofNullable(layoutSeatMap.get(seat.getRoomLayoutSeatId()))
+                    .map(rls -> seatTypeNameMap.getOrDefault(rls.getSeatTypeId(), "STANDARD"))
+                    .orElse("STANDARD");
+
+            return Ticket.builder()
+                    .showtimeSeatId(seat.getId().getValue())
+                    .seatType(typeName)
+                    .seatName(seat.getSeatNumber())
+                    .price(seat.getPrice())           // snapshot giá tại thời điểm confirm
+                    .status(TicketStatus.ACTIVE)      // tạo ra là ACTIVE luôn, không qua PENDING
+                    .createdAt(LocalDateTime.now())
+                    .ticketCode(generateTicketCode())
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
+    private String generateTicketCode() {
+        return "TIC-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 }

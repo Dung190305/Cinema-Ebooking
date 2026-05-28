@@ -11,6 +11,5 @@ public interface TicketRepository {
     Optional<Ticket> findByTicketCode(String ticketCode);
     List<Ticket> findByBookingId(Long bookingId);
     List<Ticket> findByBookingCode(String bookingCode);
-    boolean existsActiveTicketsForSeats(List<Long> seatIds);
     List<Ticket> findAllByIds(List<Long> ids);
 }

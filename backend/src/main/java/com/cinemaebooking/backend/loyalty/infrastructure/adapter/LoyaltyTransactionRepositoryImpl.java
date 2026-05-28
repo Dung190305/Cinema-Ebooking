@@ -8,6 +8,8 @@ import com.cinemaebooking.backend.loyalty.infrastructure.persistence.entity.Loya
 import com.cinemaebooking.backend.loyalty.infrastructure.persistence.entity.LoyaltyTransactionJpaEntity;
 import com.cinemaebooking.backend.loyalty.infrastructure.persistence.repository.LoyaltyAccountJpaRepository;
 import com.cinemaebooking.backend.loyalty.infrastructure.persistence.repository.LoyaltyTransactionJpaRepository;
+import com.cinemaebooking.backend.payment.domain.model.Payment;
+import com.cinemaebooking.backend.payment.infrastructure.persistence.repository.PaymentJpaRepository;
 import com.cinemaebooking.backend.user_coupon.infrastructure.persistence.repository.UserCouponJpaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -22,6 +24,7 @@ public class LoyaltyTransactionRepositoryImpl implements LoyaltyTransactionRepos
     private final LoyaltyTransactionJpaRepository jpaRepository;
     private final LoyaltyAccountJpaRepository accountJpaRepository;
     private final BookingJpaRepository bookingJpaRepository;
+    private final PaymentJpaRepository paymentJpaRepository;
     private final UserCouponJpaRepository userCouponJpaRepository;
     private final LoyaltyTransactionMapper mapper;
 
@@ -39,6 +42,9 @@ public class LoyaltyTransactionRepositoryImpl implements LoyaltyTransactionRepos
 
         if (transaction.getBookingId() != null) {
             builder.booking(bookingJpaRepository.getReferenceById(transaction.getBookingId()));
+        }
+        if (transaction.getPaymentId() != null) {
+            builder.payment(paymentJpaRepository.getReferenceById(transaction.getPaymentId()));
         }
         if (transaction.getUserCouponId() != null) {
             builder.userCoupon(userCouponJpaRepository.getReferenceById(transaction.getUserCouponId()));

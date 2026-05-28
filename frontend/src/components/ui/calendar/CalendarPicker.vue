@@ -105,6 +105,14 @@ const MONTH_NAMES = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5',
     'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12']
 const DAY_NAMES = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7']
 
+watch(() => showCalendar.value, (isOpen) => {
+    if (isOpen && normalizedModelValue.value) {
+        const date = normalizedModelValue.value
+        calendarYear.value = date.getFullYear()
+        calendarMonth.value = date.getMonth()
+    }
+})
+
 const initToToday = () => {
     const vnNow = new Date(
         new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' })
@@ -332,57 +340,82 @@ const selectDay = (day: number | null) => {
     emit('update:modelValue', new Date(finalDate.getTime()))
 }
 
-// ─── Time Handlers ─────────────────────────────────────────────────────
-const emitWithCurrentTime = () => {
-    if (!normalizedModelValue.value) return
+// ─── Time Handlers (sửa lại) ─────────────────────────────────────────
 
-    const finalDate = createLocalDate(
-        calendarYear.value,
-        calendarMonth.value,
-        normalizedModelValue.value.getDate(),
-        timeHour.value,
-        timeMinute.value
+const updateTimeOnly = (newHour: number, newMinute: number) => {
+    // Nếu đã có ngày trong modelValue, giữ nguyên ngày
+    if (normalizedModelValue.value) {
+        const current = normalizedModelValue.value
+        const newDate = createLocalDate(
+            current.getFullYear(),
+            current.getMonth(),
+            current.getDate(),
+            newHour,
+            newMinute
+        )
+        emit('update:modelValue', newDate)
+        return
+    }
+
+    // Chưa có ngày → tạo ngày hôm nay (VN) với giờ/phút mới
+    const now = new Date()
+    // Lấy giờ VN tránh lệch múi
+    const vnNow = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }))
+    const newDate = createLocalDate(
+        vnNow.getFullYear(),
+        vnNow.getMonth(),
+        vnNow.getDate(),
+        newHour,
+        newMinute
     )
-    emit('update:modelValue', finalDate)
+    emit('update:modelValue', newDate)
 }
 
 const onHourChange = (e: Event) => {
     let val = parseInt((e.target as HTMLInputElement).value) || 0
-    if (isTimeDisabled.value) {
+    if (isTimeDisabled.value && normalizedModelValue.value) {
         const minHour = effectiveMinDate.value!.getHours()
         val = Math.max(minHour, val)
     }
-    timeHour.value = Math.max(0, Math.min(23, val))
-    emitWithCurrentTime()
+    val = Math.max(0, Math.min(23, val))
+    updateTimeOnly(val, timeMinute.value)
 }
 
 const onMinuteChange = (e: Event) => {
     let val = parseInt((e.target as HTMLInputElement).value) || 0
-    if (isTimeDisabled.value) {
+    if (isTimeDisabled.value && normalizedModelValue.value) {
         const minHour = effectiveMinDate.value!.getHours()
         const minMinute = effectiveMinDate.value!.getMinutes()
         if (timeHour.value === minHour) {
             val = Math.max(minMinute, val)
         }
     }
-    timeMinute.value = Math.max(0, Math.min(59, val))
-    emitWithCurrentTime()
+    val = Math.max(0, Math.min(59, val))
+    updateTimeOnly(timeHour.value, val)
 }
 
 const adjustHour = (delta: number) => {
-    timeHour.value = (timeHour.value + delta + 24) % 24
-    emitWithCurrentTime()
+    let newHour = (timeHour.value + delta + 24) % 24
+    if (isTimeDisabled.value && normalizedModelValue.value) {
+        const minHour = effectiveMinDate.value!.getHours()
+        if (newHour < minHour) newHour = minHour
+    }
+    updateTimeOnly(newHour, timeMinute.value)
 }
 
 const adjustMinute = (delta: number) => {
-    timeMinute.value = (timeMinute.value + delta + 60) % 60
-    emitWithCurrentTime()
+    let newMinute = (timeMinute.value + delta + 60) % 60
+    if (isTimeDisabled.value && normalizedModelValue.value) {
+        const minHour = effectiveMinDate.value!.getHours()
+        const minMinute = effectiveMinDate.value!.getMinutes()
+        if (timeHour.value === minHour && newMinute < minMinute) {
+            newMinute = minMinute
+        }
+    }
+    updateTimeOnly(timeHour.value, newMinute)
 }
 
 const confirmSelection = () => {
-    if (props.mode === 'datetime' && normalizedModelValue.value) {
-        emitWithCurrentTime()
-    }
     showCalendar.value = false
 }
 
@@ -498,7 +531,8 @@ const onFocusOut = (e: FocusEvent) => {
                                 <input type="number" :value="String(timeHour).padStart(2, '0')"
                                     :class="['w-14 text-center text-base font-mono font-semibold border rounded px-1 py-2', th.timeInput, th.timeValue]"
                                     @change="onHourChange"
-                                    @wheel="e => { e.preventDefault(); adjustHour(e.deltaY < 0 ? 1 : -1) }" />
+                                    @wheel="e => { e.preventDefault(); adjustHour(e.deltaY < 0 ? 1 : -1) }" min="0"
+                                    max="23" />
                                 <button @click.stop="adjustHour(-1)"
                                     :class="['w-8 h-6 flex items-center justify-center rounded text-xs', th.timeBtn]">▼</button>
                             </div>
@@ -509,7 +543,8 @@ const onFocusOut = (e: FocusEvent) => {
                                 <input type="number" :value="String(timeMinute).padStart(2, '0')"
                                     :class="['w-14 text-center text-base font-mono font-semibold border rounded px-1 py-2', th.timeInput, th.timeValue]"
                                     @change="onMinuteChange"
-                                    @wheel="e => { e.preventDefault(); adjustMinute(e.deltaY < 0 ? 5 : -5) }" />
+                                    @wheel="e => { e.preventDefault(); adjustMinute(e.deltaY < 0 ? 5 : -5) }" min="0"
+                                    max="59" />
                                 <button @click.stop="adjustMinute(-5)"
                                     :class="['w-8 h-6 flex items-center justify-center rounded text-xs', th.timeBtn]">▼</button>
                             </div>

@@ -1,5 +1,6 @@
 package com.cinemaebooking.backend.payment.presentation;
 
+import com.cinemaebooking.backend.payment.application.dto.CompletePaymentResponse;
 import com.cinemaebooking.backend.payment.application.dto.CreatePaymentRequest;
 import com.cinemaebooking.backend.payment.application.dto.CreatePaymentResponse;
 import com.cinemaebooking.backend.payment.application.usecase.CancelPaymentUseCase;
@@ -23,8 +24,8 @@ public class PaymentController {
     }
 
     @PostMapping("/{code}/complete")
-    public void complete(@PathVariable String code) {
-        completePaymentUseCase.execute(code);
+    public CompletePaymentResponse complete(@PathVariable String code) {
+        return completePaymentUseCase.executeAndGetResponse(code);
     }
 
     @PostMapping("/{code}/cancel")

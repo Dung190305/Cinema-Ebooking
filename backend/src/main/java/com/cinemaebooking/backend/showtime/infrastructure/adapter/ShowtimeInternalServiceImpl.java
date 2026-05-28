@@ -1,10 +1,12 @@
 package com.cinemaebooking.backend.showtime.infrastructure.adapter;
 
+import com.cinemaebooking.backend.common.exception.domain.CommonExceptions;
 import com.cinemaebooking.backend.common.exception.domain.ShowtimeExceptions;
 import com.cinemaebooking.backend.common.exception.domain.ShowtimeSeatExceptions;
-import com.cinemaebooking.backend.common.exception.domain.CommonExceptions;
 import com.cinemaebooking.backend.room_layout.application.port.roomLayout.RoomLayoutInternalService;
-import com.cinemaebooking.backend.room_layout.domain.model.roomLayoutSeat.RoomLayoutSeat;
+import com.cinemaebooking.backend.room_layout.application.port.seatType.SeatTypeRepository;
+import com.cinemaebooking.backend.room_layout.domain.model.seatType.SeatType;
+import com.cinemaebooking.backend.seat_lock.application.port.SeatLockService;
 import com.cinemaebooking.backend.showtime.application.dto.showtime.ShowtimeSnapshot;
 import com.cinemaebooking.backend.showtime.application.port.ShowtimeInternalService;
 import com.cinemaebooking.backend.showtime.application.port.ShowtimeRepository;
@@ -12,24 +14,21 @@ import com.cinemaebooking.backend.showtime.domain.valueobject.ShowtimeId;
 import com.cinemaebooking.backend.showtime_seat.application.port.ShowtimeSeatRepository;
 import com.cinemaebooking.backend.showtime_seat.domain.enums.ShowtimeSeatStatus;
 import com.cinemaebooking.backend.showtime_seat.domain.model.ShowtimeSeat;
-import com.cinemaebooking.backend.ticket.domain.enums.TicketStatus;
-import com.cinemaebooking.backend.ticket.domain.model.Ticket;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
-
 @Service
 @RequiredArgsConstructor
 public class ShowtimeInternalServiceImpl implements ShowtimeInternalService {
     private final ShowtimeRepository showtimeRepository;
     private final ShowtimeSeatRepository seatRepository;
     private final RoomLayoutInternalService layoutService;
+    private final SeatTypeRepository seatTypeRepository;
+    private final SeatLockService seatLockService;
 
     @Override
     public ShowtimeSnapshot getSnapshot(Long showtimeId) {
@@ -39,7 +38,7 @@ public class ShowtimeInternalServiceImpl implements ShowtimeInternalService {
 
     @Override
     @Transactional
-    public List<Ticket> getTicketsBySeatIds(Long showtimeId, List<Long> seatIds) {
+    public List<ShowtimeSeat> validateAndLockSeats(Long showtimeId, List<Long> seatIds, Long userId) {
         // 1. Lấy danh sách ShowtimeSeat từ DB
         List<ShowtimeSeat> seats = seatRepository.findAllByIds(seatIds);
 
@@ -48,57 +47,60 @@ public class ShowtimeInternalServiceImpl implements ShowtimeInternalService {
             throw CommonExceptions.resourceNotFound("Một số ghế không tồn tại trong hệ thống.");
         }
 
-        // 3. Kiểm tra ghế thuộc đúng showtime
+        // 3. Kiểm tra ghế thuộc đúng showtime (Giữ logic kiểm tra an toàn từ HEAD)
         for (ShowtimeSeat seat : seats) {
             if (!seat.getShowtimeId().equals(showtimeId)) {
                 throw ShowtimeSeatExceptions.unavailable(seat.getId());
             }
         }
 
-        // 4. Kiểm tra trạng thái: Ghế phải AVAILABLE mới đặt được
-        validateSeatsAvailability(seats);
+        // 4. Validate trạng thái trống/lock và ghế đôi (Theo logic mới của develop)
+        validateSeatsAvailability(seats, userId);
+        validateCoupleSeatsInPairs(seats);
 
-        // 5. Gom ID để truy vấn Bulk (Tránh N+1)
-        List<Long> layoutIds = seats.stream()
-                .map(ShowtimeSeat::getRoomLayoutSeatId)
-                .distinct()
-                .toList();
-
-        Map<Long, RoomLayoutSeat> layoutMap = layoutService.getMapByIds(layoutIds);
-
-        List<Long> seatTypeIds = layoutMap.values().stream()
-                .map(RoomLayoutSeat::getSeatTypeId)
-                .distinct()
-                .toList();
-        Map<Long, String> seatTypeNameMap = layoutService.getSeatTypeNameMap(seatTypeIds);
-
-        // 6. Mapping sang Ticket Entity (Snapshot thông tin tại thời điểm mua)
-        return seats.stream().map(seat -> {
-            RoomLayoutSeat layout = layoutMap.get(seat.getRoomLayoutSeatId());
-
-            String typeName = seatTypeNameMap.getOrDefault(layout.getSeatTypeId(), "STANDARD");
-
-            return Ticket.builder()
-                    .showtimeSeatId(seat.getId().getValue())
-                    .seatType(typeName)
-                    .seatName(seat.getSeatNumber())
-                    .price(seat.getPrice())
-                    .status(TicketStatus.PENDING)
-                    .createdAt(LocalDateTime.now())
-                    .ticketCode(generateTicketCode())
-                    .build();
-            }).collect(Collectors.toList());
+        // Chỉ validate + lock, không tạo Ticket tại đây
+        return seats;
     }
 
-    private void validateSeatsAvailability(List<ShowtimeSeat> seats) {
-        for (ShowtimeSeat seat : seats) {
-            if (seat.getStatus() != ShowtimeSeatStatus.AVAILABLE) {
-                throw ShowtimeSeatExceptions.unavailable(seat.getId());
+    private void validateCoupleSeatsInPairs(List<ShowtimeSeat> seats) {
+        // Lấy coupleTypeId một lần từ DB — tránh hardcode magic number
+        SeatType seatType = seatTypeRepository.findByNameIgnoreCase("COUPLE")
+                .orElse(null);
+        if (seatType == null) throw CommonExceptions.resourceNotFound("Seat type not found");
+        Long coupleTypeId = seatType.getId().getValue();
+        if (coupleTypeId == null) return; // Không có loại ghế đôi → skip
+
+        Map<Long, List<ShowtimeSeat>> coupleGroups = seats.stream()
+                .filter(s -> coupleTypeId.equals(s.getSeatTypeId())
+                        && s.getCoupleGroupId() != null)
+                .collect(Collectors.groupingBy(ShowtimeSeat::getCoupleGroupId));
+
+        for (var entry : coupleGroups.entrySet()) {
+            if (entry.getValue().size() != 2) {
+                throw CommonExceptions.invalidInput(
+                        "Ghế đôi phải được đặt theo cặp. Vui lòng chọn cả hai ghế trong cùng một cặp."
+                );
             }
         }
     }
 
-    private String generateTicketCode() {
-        return "TIC-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    private void validateSeatsAvailability(List<ShowtimeSeat> seats, Long currentUserId) {
+        for (ShowtimeSeat seat : seats) {
+            ShowtimeSeatStatus status = seat.getStatus();
+            if (status == ShowtimeSeatStatus.AVAILABLE) {
+                continue;
+            }
+
+            // Trường hợp 2: ghế đang LOCKED
+            if (status == ShowtimeSeatStatus.LOCKED) {
+                // Kiểm tra xem có đúng user này lock không
+                if (seatLockService.isLockedByUser(seat.getId().getValue(), currentUserId)) {
+                    continue; // cho phép
+                } else {
+                    throw ShowtimeSeatExceptions.unavailable(seat.getId());
+                }
+            }
+            throw ShowtimeSeatExceptions.unavailable(seat.getId());
+        }
     }
 }

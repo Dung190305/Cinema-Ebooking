@@ -5,7 +5,7 @@ import type { ApiResponse, ApiError } from '@/types/common.types'
 import { mapFieldErrors } from '@/utils/errorMapper'
 
 
-const BASE_URL = 'http://localhost:8080/api/v1'
+export const BASE_URL = 'http://localhost:8080/api/v1'
 
 export const apiClient = axios.create({
     baseURL: BASE_URL,

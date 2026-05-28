@@ -3,12 +3,7 @@ package com.cinemaebooking.backend.booking.presentation;
 import com.cinemaebooking.backend.booking.application.dto.BookingDetailResponse;
 import com.cinemaebooking.backend.booking.application.dto.BookingListItemResponse;
 import com.cinemaebooking.backend.booking.application.dto.CreateBookingRequest;
-import com.cinemaebooking.backend.booking.application.usecase.CancelBookingUseCase;
-import com.cinemaebooking.backend.booking.application.usecase.ConfirmPaymentUseCase;
-import com.cinemaebooking.backend.booking.application.usecase.CreateBookingUseCase;
-import com.cinemaebooking.backend.booking.application.usecase.GetBookingDetailUseCase;
-import com.cinemaebooking.backend.booking.application.usecase.GetUserBookingsUseCase;
-import com.cinemaebooking.backend.booking.application.usecase.GetAdminBookingsUseCase;
+import com.cinemaebooking.backend.booking.application.usecase.*;
 import com.cinemaebooking.backend.booking.domain.enums.BookingStatus;
 import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDate;
@@ -30,6 +25,7 @@ public class BookingController {
     private final GetBookingDetailUseCase getBookingDetailUseCase;
     private final GetUserBookingsUseCase getUserBookingsUseCase;
     private final GetAdminBookingsUseCase getAdminBookingsUseCase;
+    private final GetPendingBookingUseCase getPendingBookingUseCase;
 
     // ================== LIST (DANH SÁCH TẤT CẢ ĐƠN HÀNG) ==================
     @GetMapping("/admin/all")
@@ -83,6 +79,13 @@ public class BookingController {
     @GetMapping("/{id}")
     public BookingDetailResponse getBookingDetail(@PathVariable Long id) {
         return getBookingDetailUseCase.execute(id);
+    }
+
+    @GetMapping("/pending")
+    public BookingDetailResponse getPendingBooking(
+            @RequestParam Long userId,
+            @RequestParam Long showtimeId) {
+        return getPendingBookingUseCase.execute(userId, showtimeId);
     }
 
     // ================== CANCEL (HỦY ĐẶT VÉ) ==================

@@ -6,6 +6,12 @@ import AdminLayout from '@/layouts/AdminLayout.vue'
 
 const routes: RouteRecordRaw[] = [
   {
+    path: '/payment/result',
+    name: 'payment-result',
+    component: () => import('@/pages/PaymentResult.vue'),
+    meta: { title: 'Kết quả thanh toán' }
+  },
+  {
     path: '/',
     component: MainLayout,
     children: [
@@ -20,6 +26,12 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/pages/MoviesPage.vue')
       },
       {
+        path: 'movies/:id',
+        name: 'movie-detail',
+        component: () => import('@/pages/MovieDetailPage.vue'),
+        meta: { title: 'Chi tiết phim' }
+      },
+      {
         path: 'profile',
         name: 'profile',
         component: () => import('@/pages/ProfilePage.vue'),
@@ -30,6 +42,12 @@ const routes: RouteRecordRaw[] = [
         name: 'showtimes',
         component: () => import('@/pages/ShowtimesPage.vue'),
         meta: { title: 'Lịch chiếu' }
+      },
+      {
+        path: 'bookings',
+        name: 'bookings',
+        component: () => import('@/pages/BookingPage.vue'),
+        meta: { title: 'Đặt vé' }
       }
     ],
   },

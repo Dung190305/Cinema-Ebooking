@@ -22,6 +22,7 @@ public class MovieResponse {
     private MovieStatus status;
     private String posterUrl;
     private String bannerUrl;
+    private String trailerUrl;
     private String director;
     private String actors;
     private Set<GenreResponse> genres;

@@ -1,7 +1,6 @@
 package com.cinemaebooking.backend.ticket.infrastructure.persistence.repository;
 
 import com.cinemaebooking.backend.infrastructure.persistence.repository.SoftDeleteJpaRepository;
-import com.cinemaebooking.backend.ticket.domain.enums.TicketStatus;
 import com.cinemaebooking.backend.ticket.infrastructure.persistence.entity.TicketJpaEntity;
 import org.springframework.stereotype.Repository;
 import java.util.List;
@@ -12,6 +11,5 @@ public interface TicketJpaRepository extends SoftDeleteJpaRepository<TicketJpaEn
     Optional<TicketJpaEntity> findByTicketCodeAndDeletedAtIsNull(String ticketCode);
     List<TicketJpaEntity> findAllByBookingIdAndDeletedAtIsNull(Long bookingId);
     List<TicketJpaEntity> findAllByBookingBookingCodeAndDeletedAtIsNull(String bookingCode);
-    boolean existsByShowtimeSeatIdInAndStatusIn(List<Long> seatIds, List<TicketStatus> statuses);
     List<TicketJpaEntity> findAllByIdInAndDeletedAtIsNull(List<Long> ids);
 }

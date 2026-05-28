@@ -23,21 +23,26 @@ export function useLoyaltyTiers() {
     const lifetimePoints = computed(() => loyalty.value?.lifetimePoints ?? 0)
     const currentTierName = computed(() => currentTier.value?.name ?? '...')
     const discountPercent = computed(() => currentTier.value?.discountPercent)
-    const isHighestTier = computed(() => nextTier.value === null)
 
-    const nextTierPointsRequired = computed(() =>
-        nextTier.value ? Math.ceil(nextTier.value.minSpendingRequired / 1000) : Infinity
+    // Số chi tiêu tối thiểu cần đạt để lên hạng kế tiếp
+    const nextTierSpendingRequired = computed(() =>
+        nextTier.value ? nextTier.value.minSpendingRequired : Infinity
     )
 
-    const pointsToNext = computed(() =>
-        nextTier.value ? Math.max(0, nextTierPointsRequired.value - lifetimePoints.value) : 0
+    // Số tiền còn thiếu để lên hạng
+    const spendingNeeded = computed(() =>
+        nextTier.value ? Math.max(0, nextTierSpendingRequired.value - totalSpending.value) : 0
     )
 
+    // Phần trăm tiến độ dựa trên chi tiêu
     const progressPercent = computed(() =>
-        nextTier.value ? Math.min(100, (lifetimePoints.value / nextTierPointsRequired.value) * 100) : 100
+        nextTier.value
+            ? Math.min(100, (totalSpending.value / nextTierSpendingRequired.value) * 100)
+            : 100
     )
 
-    const nextTierName = computed(() => nextTier.value?.name);
+    const isHighestTier = computed(() => nextTier.value === null)
+    const nextTierName = computed(() => nextTier.value?.name)
 
     const fetchLoyaltyData = async () => {
         loading.value = true
@@ -53,7 +58,6 @@ export function useLoyaltyTiers() {
             const sorted = allTiers.content.sort((a, b) => a.minSpendingRequired - b.minSpendingRequired)
             const idx = sorted.findIndex(t => t.id === loyaltyRes.tierId)
             nextTier.value = sorted[idx + 1] ?? null
-
         } catch (err: unknown) {
             const e = err as RejectedError
             if (e.globalErrors?.length) {
@@ -64,7 +68,7 @@ export function useLoyaltyTiers() {
                 error.value = 'Không thể tải thông tin thẻ thành viên.'
             }
         } finally {
-        loading.value = false
+            loading.value = false
         }
     }
 
@@ -80,8 +84,8 @@ export function useLoyaltyTiers() {
         currentTierName,
         discountPercent,
         isHighestTier,
-        nextTierPointsRequired,
-        pointsToNext,
+        nextTierSpendingRequired, 
+        spendingNeeded,            
         progressPercent,
         nextTierName,
         currentPoints,

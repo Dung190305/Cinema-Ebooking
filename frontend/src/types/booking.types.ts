@@ -67,3 +67,30 @@ export interface BookingDetailResponse {
   combos: BookingComboInfo[]
   coupon?: BookingCouponInfo | null
 }
+
+export interface CreateBookingRequest {
+  userId: number;
+  showtimeId: number;
+  showTimeSeatIds: number[];
+  couponCode?: string;
+  combos?: Array<{
+    comboId: number;
+    quantity: number;
+  }>;
+}
+
+export interface CreateBookingResponse {
+  bookingId: number;
+  bookingCode: string;
+  totalTicketPrice: number;
+  totalComboPrice: number;
+  tierDiscountAmount: number;
+  couponDiscountAmount: number;
+  discountAmount: number;
+  finalAmount: number;
+  membershipTierName?: string | null;
+  membershipDiscountPercent?: number | string | null;
+  status: BookingStatus;
+  expiredAt: string; // LocalDateTime
+  showTimeSeatIds: number[];
+}

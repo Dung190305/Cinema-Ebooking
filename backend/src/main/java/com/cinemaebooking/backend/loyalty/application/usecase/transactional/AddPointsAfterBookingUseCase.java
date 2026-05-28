@@ -35,7 +35,7 @@ public class AddPointsAfterBookingUseCase {
     private static final BigDecimal ONE_HUNDRED = new BigDecimal("100");
 
     @Transactional
-    public void execute(Long userId, BigDecimal totalTicketPrice, BigDecimal totalComboPrice) {
+    public void execute(Long userId, BigDecimal totalTicketPrice, BigDecimal totalComboPrice,Long bookingId, Long paymentId) {
         log.info("=== AddPointsAfterBooking === userId={}, totalTicketPrice={}, totalComboPrice={}", userId, totalTicketPrice, totalComboPrice);
 
         if (userId == null) {
@@ -100,6 +100,8 @@ public class AddPointsAfterBookingUseCase {
                     .changePoint(pointsEarned)
                     .balanceAfter(saved.getCurrentPoints())
                     .changeDate(LocalDateTime.now())
+                    .bookingId(bookingId)
+                    .paymentId(paymentId)
                     .build();
             transactionRepository.save(transaction);
         }

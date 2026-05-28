@@ -1,4 +1,3 @@
-// src/composables/useShowtimes.ts
 import { ref, computed, watch, onMounted } from 'vue'
 import { showtimeApi } from '@/api/showtime.api'
 import { cinemaApi } from '@/api/cinema.api'
@@ -6,12 +5,14 @@ import { movieApi } from '@/api/movie.api'
 import type { ShowtimeResponse } from '@/types/showtime'
 import type { CinemaResponse } from '@/types/cinema'
 import type { MovieResponse } from '@/types/movie'
-
-export function useShowtimes() {
+import { getDateKeyVN, dateToISOString } from '@/utils/dateFormat'
+export function useShowtimes(movieId?: number, options?: { autoFetch?: boolean }) {
+  const autoFetch = options?.autoFetch ?? true
   const showtimes = ref<ShowtimeResponse[]>([])
   const cinemas = ref<CinemaResponse[]>([])
   const movies = ref<MovieResponse[]>([])
   const loading = ref(false)
+  const error = ref<string | null>(null)
 
   // Filters
   const selectedCity = ref<string>('')
@@ -43,32 +44,40 @@ export function useShowtimes() {
 
   const fetchShowtimes = async () => {
     loading.value = true
+    error.value = null
     try {
         const params: any = {
-        page: 0,
-        size: 200,
-        sort: 'startTime,asc'
+          page: 0,
+          size: 200,
+          sort: 'startTime,asc'
+        }
+      
+        if (movieId != null) {
+          params.movieId = movieId
         }
 
         if (selectedCinemaId.value != null) {
-        params.cinemaId = selectedCinemaId.value
+          params.cinemaId = selectedCinemaId.value
         } else if (selectedCity.value) {
-        params.city = selectedCity.value
+          params.city = selectedCity.value
         }
 
-        // Nếu có selectedDate → gửi theo định dạng YYYY-MM-DD (backend sẽ xử lý theo VN)
         if (selectedDate.value) {
-        params.date = selectedDate.value
+          const date = selectedDate.value instanceof Date
+            ? selectedDate.value
+            : new Date(selectedDate.value)
+          params.date = dateToISOString(date, false)
         }
 
         const res = await showtimeApi.getPublicShowtimes(params)
         showtimes.value = res.content
-    } catch (error) {
-        console.error('Failed to fetch showtimes', error)
-        showtimes.value = []
-    } finally {
-        loading.value = false
-    }
+      } catch (e) {
+          console.error('Failed to fetch showtimes', e)
+          showtimes.value = []
+          error.value = 'Không thể tải suất chiếu. Vui lòng thử lại.'
+      } finally {
+          loading.value = false
+        }
     }
 
   // Reset cinema khi đổi thành phố
@@ -87,12 +96,15 @@ export function useShowtimes() {
 
   onMounted(async () => {
     await fetchMasterData()
-    await fetchShowtimes()
+    if (autoFetch && !selectedDate.value) {
+      await fetchShowtimes()
+    }
   })
 
   return {
     showtimes,
     loading,
+    error,
     cities,
     filteredCinemas,
     selectedCity,
@@ -100,5 +112,6 @@ export function useShowtimes() {
     selectedDate,
     getCinemaById,
     getMovieById,
+    fetchShowtimes,
   }
 }

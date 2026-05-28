@@ -46,13 +46,6 @@ public class BookingCommandValidator {
         // Nếu có lỗi định dạng (ví dụ: > 8 ghế), dừng lại và quăng lỗi ngay
         engine.throwIfInvalid();
 
-        // ================== PHASE 2: BUSINESS VALIDATION ==================
 
-        // Kiểm tra xem các ghế này đã bị ai đặt (Active) chưa
-        // Đây là bước kiểm tra tính duy nhất (Uniqueness) trong ngữ cảnh nghiệp vụ
-        engine.validateUnique(request.getShowTimeSeatIds(), "showTimeSeatIds",
-                ids -> !ticketRepository.existsActiveTicketsForSeats(ids));
-
-        engine.throwIfInvalid();
     }
 }

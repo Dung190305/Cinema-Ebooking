@@ -133,6 +133,7 @@ public class UpdateMovieUseCase {
                 request.getShowingEndDate(),
                 request.getPosterUrl(),
                 request.getBannerUrl(),
+                request.getTrailerUrl(),
                 request.getDirector(),
                 request.getActors(),
                 finalGenres

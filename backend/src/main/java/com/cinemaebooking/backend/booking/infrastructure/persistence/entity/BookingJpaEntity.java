@@ -76,6 +76,15 @@ public class BookingJpaEntity extends BaseJpaEntity {
     @Column(name = "showtime_start_time", nullable = false)
     private Instant showtimeStartTime;
 
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+            name = "booking_seat_ids",
+            joinColumns = @JoinColumn(name = "booking_id")
+    )
+    @Column(name = "showtime_seat_id", nullable = false)
+    @Builder.Default
+    private List<Long> showtimeSeatIds = new ArrayList<>();
+
     @Positive
     @Column(name = "total_ticket_price", nullable = false, precision = 12, scale = 2)
     private BigDecimal totalTicketPrice;

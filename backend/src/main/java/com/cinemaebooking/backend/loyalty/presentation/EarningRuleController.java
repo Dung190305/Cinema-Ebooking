@@ -15,7 +15,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/loyalty/earning-rules")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
 public class EarningRuleController {
     private final CreateEarningRuleUseCase create;
     private final UpdateEarningRuleUseCase update;
@@ -23,17 +22,20 @@ public class EarningRuleController {
     private final GetEarningRuleDetailUseCase detail;
     private final GetEarningRuleListUseCase list;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public EarningRuleResponse create(@RequestBody CreateEarningRuleRequest request) {
         return create.execute(request);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public EarningRuleResponse update(@PathVariable Long id, @RequestBody UpdateEarningRuleRequest request) {
         return update.execute(EarningRuleId.of(id), request);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {

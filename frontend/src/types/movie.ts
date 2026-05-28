@@ -15,6 +15,7 @@ export interface MovieResponse {
   status: MovieStatus
   posterUrl: string
   bannerUrl: string
+  trailerUrl: string
   director: string
   actors: string
   genres: GenreResponse[]
@@ -31,6 +32,7 @@ export interface CreateMovieRequest {
   showingEndDate: string | null
   posterUrl: string
   bannerUrl: string
+  trailerUrl: string
   director: string
   actors: string
   genreIds: number[]
@@ -45,6 +47,7 @@ export interface UpdateMovieRequest {
   showingEndDate: string | null
   posterUrl: string
   bannerUrl: string
+  trailerUrl: string
   director: string
   actors: string
   genreIds: number[]

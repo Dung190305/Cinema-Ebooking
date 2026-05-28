@@ -33,8 +33,22 @@ public class Booking extends BaseEntity<BookingId> {
     private final String roomName;
     private final Instant showtimeStartTime;
     private final LocalDateTime createdAt;
+
+    /**
+     * IDs của ShowtimeSeat đã được validate + lock khi tạo booking.
+     * Dùng bởi ConfirmPaymentUseCase để tạo Ticket sau khi thanh toán thành công.
+     * Không dùng để hiển thị — dùng tickets sau khi confirm.
+     */
+    @Builder.Default
+    private List<Long> showtimeSeatIds = new ArrayList<>();
+
+    /**
+     * Tickets chỉ tồn tại sau khi booking được CONFIRMED (thanh toán xong).
+     * Trước đó list này luôn rỗng.
+     */
     @Builder.Default
     private List<Ticket> tickets = new ArrayList<>();
+
     @Builder.Default
     private List<BookingCombo> combos = new ArrayList<>();
     private BookingCoupon coupon;
@@ -51,6 +65,46 @@ public class Booking extends BaseEntity<BookingId> {
     private String membershipTierName;
     private BigDecimal membershipDiscountPercent;
 
+    // -------------------------------------------------------------------------
+    // Domain operations
+    // -------------------------------------------------------------------------
+
+    /**
+     * Chuyển PENDING → CONFIRMED.
+     * Chỉ gọi từ ConfirmPaymentUseCase sau khi đã setTickets().
+     */
+    public void confirm() {
+        if (this.status != BookingStatus.PENDING) {
+            throw CommonExceptions.invalidInput(
+                    "Chỉ booking PENDING mới có thể confirm."
+            );
+        }
+        this.status = BookingStatus.CONFIRMED;
+    }
+
+    /**
+     * Hủy booking PENDING.
+     * Không cần loop cancel từng Ticket vì Ticket chưa tồn tại ở giai đoạn này.
+     */
+    public void cancel() {
+        if (this.status == BookingStatus.CANCELLED) return;
+
+        if (this.status == BookingStatus.CONFIRMED) {
+            throw CommonExceptions.invalidInput("Không thể hủy đơn hàng đã thanh toán.");
+        }
+        this.status = BookingStatus.CANCELLED;
+    }
+
+    public boolean isExpired() {
+        return status == BookingStatus.PENDING
+                && expiredAt != null
+                && LocalDateTime.now().isAfter(expiredAt);
+    }
+
+    // -------------------------------------------------------------------------
+    // Pricing
+    // -------------------------------------------------------------------------
+
     public void applyTierDiscount(BigDecimal discountPercent) {
         this.membershipDiscountPercent = discountPercent;
         if (discountPercent == null || discountPercent.compareTo(BigDecimal.ZERO) <= 0) {
@@ -58,7 +112,9 @@ public class Booking extends BaseEntity<BookingId> {
             return;
         }
         BigDecimal subTotal = calculateSubtotal();
-        BigDecimal tierDiscount = subTotal.multiply(discountPercent).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        BigDecimal tierDiscount = subTotal
+                .multiply(discountPercent)
+                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
         this.tierDiscountAmount = tierDiscount.min(subTotal);
     }
 
@@ -68,21 +124,24 @@ public class Booking extends BaseEntity<BookingId> {
             this.couponDiscountAmount = BigDecimal.ZERO;
             return;
         }
-
         this.coupon = couponData;
         this.couponDiscountAmount = couponData.getDiscountValue();
     }
 
+    /**
+     * Tính subtotal từ totalTicketPrice (set lúc create) + combo.
+     * Sau khi confirm, có thể tính lại từ tickets nếu cần.
+     */
     public BigDecimal calculateSubtotal() {
-        BigDecimal ticketSum = (tickets == null) ? BigDecimal.ZERO : tickets.stream()
-                .map(Ticket::getPrice)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        // Khi chưa confirm: totalTicketPrice được set trực tiếp từ CreateBookingUseCase
+        BigDecimal ticketSum = (totalTicketPrice != null)
+                ? totalTicketPrice
+                : BigDecimal.ZERO;
 
         BigDecimal comboSum = (combos == null) ? BigDecimal.ZERO : combos.stream()
                 .map(c -> c.getUnitPrice().multiply(BigDecimal.valueOf(c.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        this.totalTicketPrice = ticketSum;
         this.totalComboPrice = comboSum;
 
         return ticketSum.add(comboSum);
@@ -90,46 +149,10 @@ public class Booking extends BaseEntity<BookingId> {
 
     public void calculateTotal() {
         BigDecimal subTotal = calculateSubtotal();
-        BigDecimal totalDiscount = (couponDiscountAmount != null ? couponDiscountAmount : BigDecimal.ZERO)
-                .add(tierDiscountAmount != null ? tierDiscountAmount : BigDecimal.ZERO);
+        BigDecimal totalDiscount =
+                (couponDiscountAmount != null ? couponDiscountAmount : BigDecimal.ZERO)
+                        .add(tierDiscountAmount != null ? tierDiscountAmount : BigDecimal.ZERO);
 
-        this.finalAmount = subTotal.subtract(totalDiscount);
-
-        if (this.finalAmount.compareTo(BigDecimal.ZERO) < 0) {
-            this.finalAmount = BigDecimal.ZERO;
-        }
-    }
-
-    public void markAsPaid() {
-        if (this.status != BookingStatus.PENDING) {
-            throw BookingExceptions.invalidStatus(this.status);
-        }
-        this.status = BookingStatus.CONFIRMED;
-        this.paidAt = LocalDateTime.now();
-    }
-
-    public void cancel() {
-        if (this.status == BookingStatus.CANCELLED) return;
-
-        if (this.status == BookingStatus.CONFIRMED) {
-            throw BookingExceptions.processFailed("Không thể hủy đơn hàng đã thanh toán.");
-        }
-        this.status = BookingStatus.CANCELLED;
-    }
-
-    public boolean isExpired() {
-        return status == BookingStatus.PENDING &&
-                expiredAt != null &&
-                LocalDateTime.now().isAfter(expiredAt);
-    }
-
-    public void confirm() {
-        if (this.status != BookingStatus.PENDING) {
-            throw CommonExceptions.invalidInput(
-                    "Chỉ booking PENDING mới có thể confirm."
-            );
-        }
-
-        this.status = BookingStatus.CONFIRMED;
+        this.finalAmount = subTotal.subtract(totalDiscount).max(BigDecimal.ZERO);
     }
 }

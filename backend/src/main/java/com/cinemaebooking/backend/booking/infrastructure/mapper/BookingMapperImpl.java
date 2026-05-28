@@ -37,6 +37,9 @@ public class BookingMapperImpl implements BookingMapper {
                 .cinemaName(entity.getCinemaName())
                 .roomName(entity.getRoomName())
                 .showtimeStartTime(entity.getShowtimeStartTime())
+                .showtimeSeatIds(entity.getShowtimeSeatIds() != null
+                        ? new ArrayList<>(entity.getShowtimeSeatIds())
+                        : new ArrayList<>())
                 .createdAt(entity.getCreatedAt())
                 .expiredAt(entity.getExpiredAt())
                 .paidAt(entity.getPaidAt())
@@ -74,6 +77,9 @@ public class BookingMapperImpl implements BookingMapper {
                 .cinemaName(domain.getCinemaName())
                 .roomName(domain.getRoomName())
                 .showtimeStartTime(domain.getShowtimeStartTime())
+                .showtimeSeatIds(domain.getShowtimeSeatIds() != null
+                        ? new ArrayList<>(domain.getShowtimeSeatIds())
+                        : new ArrayList<>())
                 .totalTicketPrice(domain.getTotalTicketPrice())
                 .totalComboPrice(domain.getTotalComboPrice())
                 .tierDiscountAmount(domain.getTierDiscountAmount())

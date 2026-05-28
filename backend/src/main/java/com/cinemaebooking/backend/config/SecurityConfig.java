@@ -52,6 +52,16 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/**").permitAll()
 
                         // All other requests require authentication
+                        .requestMatchers(HttpMethod.POST, "/api/v1/payments/*/complete").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/payments/*/cancel").permitAll()
+
+                        // User
+                        .requestMatchers("/api/v1/users/me/**").authenticated()
+
+                        // Admin prefix (nếu sau này dùng)
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+
+                        // All other requests → require authentication
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(
