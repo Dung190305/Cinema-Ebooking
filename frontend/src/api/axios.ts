@@ -16,9 +16,12 @@ export const apiClient = axios.create({
 const PUBLIC_ENDPOINTS = [
   '/auth/login',
   '/auth/register',
+  '/auth/verify-otp',
+  '/auth/resend-otp',
   '/auth/forgot_password',
+  '/auth/verify-forgot-otp',
   '/auth/reset_password',
-  '/auth/refresh_token' 
+  '/auth/refresh_token'
 ]
 
 const PROTECTED_GET_PATHS = [

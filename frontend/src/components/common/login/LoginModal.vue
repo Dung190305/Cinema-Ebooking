@@ -5,10 +5,11 @@ import BaseButton from '@/components/ui/button/BaseButton.vue';
 import BaseIcon from '@/components/ui/icon/BaseIcon.vue';
 import LoginForm from '@/components/common/login/subcomponents/LoginForm.vue'
 import RegisterForm from '@/components/common/login/subcomponents/RegisterForm.vue'
+import ForgotPasswordForm from '@/components/common/login/subcomponents/ForgotPasswordForm.vue'
 
 const emit = defineEmits<{ close: [] }>()
 
-const isLogin = ref(true)
+const modalState = ref<'login' | 'register' | 'forgot'>('login')
 const closeModal = () => emit('close')
 </script>
 
@@ -29,8 +30,10 @@ const closeModal = () => emit('close')
 
             <!-- FORM CONTENT -->
             <div class="px-6 pt-0">
-                <LoginForm v-if="isLogin" @switch="isLogin = false" @close="closeModal" />
-                <RegisterForm v-else @switch="isLogin = true" @close="closeModal" />
+                <LoginForm v-if="modalState === 'login'" @switch="modalState = 'register'" @close="closeModal"
+                    @forgot="modalState = 'forgot'" />
+                <RegisterForm v-else-if="modalState === 'register'" @switch="modalState = 'login'" @close="closeModal" />
+                <ForgotPasswordForm v-else-if="modalState === 'forgot'" @switch="modalState = 'login'" @close="closeModal" />
             </div>
         </div>
     </div>

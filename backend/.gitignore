@@ -1,0 +1,46 @@
+# Build output
+target/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+
+# Environment - NEVER commit these
+.env
+*.env
+*.properties
+
+# Logs
+*.log
+logs/
+hs_err_pid*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python virtualenv (accidentally created in backend)
+.venv/
+
+# IDE run configs
+*.run/
+
+# Spring Boot
+/spring-boot-devtools-*.jar
+
+# Compiled class files
+*.class
+
+# Package files
+*.jar
+*.war
+*.ear
+
+# Maven target
+bin/

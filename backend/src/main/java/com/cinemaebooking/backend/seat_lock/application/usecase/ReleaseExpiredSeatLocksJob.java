@@ -4,6 +4,7 @@ import com.cinemaebooking.backend.seat_lock.application.port.SeatLockService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * ScheduledJob giải phóng seat lock hết hạn.
@@ -23,6 +24,7 @@ public class ReleaseExpiredSeatLocksJob {
      * Dùng fixedDelay để đảm bảo job này không chồng chéo nhau.
      */
     @Scheduled(fixedDelay = 60_000)
+    @Transactional
     public void cleanupExpiredLocks() {
         seatLockService.releaseExpiredLocks();
     }

@@ -5,6 +5,7 @@ import com.cinemaebooking.backend.booking.domain.valueObject.BookingId;
 import com.cinemaebooking.backend.booking_combo.domain.model.BookingCombo;
 import com.cinemaebooking.backend.booking_coupon.domain.model.BookingCoupon;
 import com.cinemaebooking.backend.common.domain.BaseEntity;
+import com.cinemaebooking.backend.common.exception.domain.BookingExceptions;
 import com.cinemaebooking.backend.common.exception.domain.CommonExceptions;
 import com.cinemaebooking.backend.ticket.domain.model.Ticket;
 import lombok.Builder;
