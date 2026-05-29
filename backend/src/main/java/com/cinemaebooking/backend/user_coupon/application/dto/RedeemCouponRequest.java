@@ -9,5 +9,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class RedeemCouponRequest {
     private Long userId;
-    private Long couponId;
+    private String couponCode;
 }

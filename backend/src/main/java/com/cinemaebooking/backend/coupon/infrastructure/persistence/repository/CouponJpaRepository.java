@@ -1,7 +1,10 @@
 package com.cinemaebooking.backend.coupon.infrastructure.persistence.repository;
 
+import com.cinemaebooking.backend.coupon.domain.enums.CouponStatus;
 import com.cinemaebooking.backend.coupon.infrastructure.persistence.entity.CouponJpaEntity;
 import com.cinemaebooking.backend.infrastructure.persistence.repository.SoftDeleteJpaRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -31,5 +34,7 @@ public interface CouponJpaRepository extends SoftDeleteJpaRepository<CouponJpaEn
 
     boolean existsByCodeIgnoreCaseAndEndDateAfterAndUsageLimitGreaterThan(
             String code, LocalDate currentDate, Integer usedCount);
+
+    Page<CouponJpaEntity> findByStatusAndEndDateAfter(CouponStatus status, LocalDate endDate, Pageable pageable);
 
 }

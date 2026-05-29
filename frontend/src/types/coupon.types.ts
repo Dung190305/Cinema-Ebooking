@@ -35,3 +35,18 @@ export interface UpdateCouponRequest {
   usageLimit: number
   endDate: string
 }
+
+export interface PublicCouponResponse {
+  id: number
+  code: string
+  type: CouponType
+  value: number
+  perUserUsage: number
+  pointsToRedeem: number         
+  minimumBookingValue: number
+  maximumDiscountAmount: number
+  startDate: string
+  endDate: string
+  status: CouponStatus
+  remainingSlots: number 
+}

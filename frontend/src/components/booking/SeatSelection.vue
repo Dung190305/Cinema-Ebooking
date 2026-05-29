@@ -144,6 +144,7 @@
 import { ref, inject } from 'vue'
 import { useAuthStore } from '@/stores/auth.store'
 import { useUIStore } from '@/stores/ui.store'
+import { useToast } from 'vue-toastification'
 import SeatGrid from '@/components/seat/SeatGrid.vue'
 import ShowtimePill from '@/components/showtime/ShowtimePill.vue'
 import { webSeatGridConfig } from '@/components/seat/seatGridConfig'
@@ -160,7 +161,7 @@ const booking = inject<any>('booking')!
 const authStore = useAuthStore()
 const uiStore = useUIStore()
 const seatLock = inject<ReturnType<typeof useSeatLock>>('seatLock')!
-
+const toast = useToast()
 const showLoginPrompt = ref(false)
 
 // ── Composables ─────────────────────────────
@@ -208,7 +209,7 @@ const goToLogin = () => {
 async function validateAndNext() {
     if (!requireLogin()) return false
     if (selectedSeats.value.length === 0) {
-        alert('Vui lòng chọn ít nhất một ghế')
+        toast.warning('Vui lòng chọn ít nhất một ghế')
         return false
     }
 
@@ -218,7 +219,7 @@ async function validateAndNext() {
             !currentLayout.bookedIds.includes(seat.id) && !currentLayout.lockedIds.includes(seat.id)
         )
         if (!stillAvailable) {
-            alert('Một số ghế đã bị đặt hoặc giữ bởi người khác. Vui lòng chọn lại.')
+            toast.error('Một số ghế đã bị đặt hoặc giữ bởi người khác. Vui lòng chọn lại.')
             await retry()
             return false
         }
@@ -246,7 +247,7 @@ async function doNext() {
 
     const result = await seatLock.acquireLocks(userId, showtimeId, selectedIds.value)
     if (!result?.success) {
-        alert(seatLock.error.value || 'Không thể giữ ghế. Vui lòng thử lại.')
+        toast.error(seatLock.error.value || 'Không thể giữ ghế. Vui lòng thử lại.')
         await retry()
         return false
     }

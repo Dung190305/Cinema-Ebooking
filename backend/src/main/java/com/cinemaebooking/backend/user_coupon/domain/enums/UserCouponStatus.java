@@ -11,9 +11,11 @@ package com.cinemaebooking.backend.user_coupon.domain.enums;
  */
 public enum UserCouponStatus {
 
-    AVAILABLE,
+    ACTIVE,
 
     USED,
 
-    EXPIRED
+    EXPIRED,
+
+    REVOKED
 }

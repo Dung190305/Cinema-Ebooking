@@ -48,12 +48,9 @@ public class SecurityConfig {
                         // Admin endpoints - must have ADMIN role
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 
-                        // Public read-only endpoints (GET for all)
-                        .requestMatchers(HttpMethod.GET, "/**").permitAll()
-
-                        // All other requests require authentication
                         .requestMatchers(HttpMethod.POST, "/api/v1/payments/*/complete").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/payments/*/cancel").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/coupons/public").permitAll()
 
                         // ⭐ Các GET cần xác thực - đặt TRƯỚC rule permitAll chung
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/me/**").authenticated()

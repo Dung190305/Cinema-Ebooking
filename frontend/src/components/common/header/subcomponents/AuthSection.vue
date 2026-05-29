@@ -24,7 +24,7 @@
                     <!-- User info - hidden on very small screens -->
                     <div class="hidden xs:flex flex-col gap-1 sm:gap-2">
                         <div class="flex items-center gap-1 sm:gap-2">
-                            <MembershipIcon :membership="auth.loyaltyAccount?.tierName || null"></MembershipIcon>
+                            <MembershipIcon :membership="auth.loyaltyAccount?.tierName || 'basic'"></MembershipIcon>
                             <div class="flex flex-col">
                                 <div class="truncate max-w-20 sm:max-w-29 text-body-sm sm:text-body font-medium"
                                     :title="auth.user.fullName">
@@ -36,7 +36,7 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-1 sm:gap-3">
-                            <GiftIcon :membership="auth.loyaltyAccount?.tierName || null"></GiftIcon>
+                            <GiftIcon :membership="auth.loyaltyAccount?.tierName || 'basic'"></GiftIcon>
                             <div class="flex max-w-20 sm:max-w-29 text-xs sm:text-sm">
                                 <span class="truncate" :title="auth.user.points">
                                     {{ (auth.loyaltyAccount?.currentPoints || 0).toLocaleString() }}
@@ -58,6 +58,11 @@
                             <div @click="goToProfile"
                                 class="block rounded-t-md px-3 sm:px-4 py-2 text-sm text-text-primary hover:bg-accent cursor-pointer">
                                 Hồ sơ cá nhân
+                            </div>
+
+                            <div @click="goToCoupons"
+                                class="block rounded-t-md px-3 sm:px-4 py-2 text-sm text-text-primary hover:bg-accent cursor-pointer">
+                                Mã khuyến mãi
                             </div>
                             <div v-if="auth.user?.role == 'ADMIN'" @click="goToAdminPage"
                                 class="group flex items-center justify-between px-3 sm:px-4 py-2 text-sm text-text-primary hover:bg-accent/30 cursor-pointer transition-all duration-200">
@@ -134,14 +139,18 @@ function logout() {
 }
 
 function goToAdminPage() {
-    if (auth.user?.role == "USER") return
-    router.push(
-        '/admin/analystics/dashboard'
-    )
+    if (!auth.isAdmin) return
+    router.push('/admin/analytics/dashboard')
+    showDropdown.value = false
 }
 
 function goToProfile() {
     router.push('/profile')
     showDropdown.value = false // đóng dropdown
+}
+
+function goToCoupons() {
+    router.push('/my-coupons')
+    showDropdown.value = false
 }
 </script>

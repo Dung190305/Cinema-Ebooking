@@ -5,8 +5,8 @@ import java.util.Optional;
 
 public interface CouponPort {
 
-    Optional<CouponSnapshot> findValidCoupon(Long couponId, LocalDateTime now);
+    CouponSnapshot findValidCoupon(String code, LocalDateTime now);
 
-    record CouponSnapshot(Long id, boolean active, LocalDateTime expiryDate,
+    record CouponSnapshot(Long id, String code, boolean active, LocalDateTime expiryDate,
                           int pointsToRedeem, int perUserUsage) {}
 }

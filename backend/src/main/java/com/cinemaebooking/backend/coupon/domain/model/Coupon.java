@@ -144,4 +144,8 @@ public class Coupon extends BaseEntity<CouponId> {
         return !startDate.isAfter(LocalDate.now()) && !endDate.isBefore(LocalDate.now());
     }
 
+    public void decreaseRemainingUsage() {
+        this.remainingUsage -= 1;
+    }
+
 }

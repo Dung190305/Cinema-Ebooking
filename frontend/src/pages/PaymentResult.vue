@@ -4,12 +4,14 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { paymentApi } from '@/api/payment.api'
 import { bookingApi } from '@/api/booking.api'
+import { useAuthStore } from '@/stores/auth.store'
 import BaseButton from '@/components/ui/button/BaseButton.vue'
 import BaseIcon from '@/components/ui/icon/BaseIcon.vue'
 import { CheckCircle, XCircle } from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
+const auth = useAuthStore()
 
 const status = ref<'loading' | 'success' | 'failed' | 'cancel'>('loading')
 const errorMessage = ref('')
@@ -37,6 +39,8 @@ onMounted(async () => {
         // Xoá các flags đã lưu
         sessionStorage.removeItem('returned_from_payment')
         sessionStorage.removeItem('failed_payment_showtimeId')
+        auth.refreshLoyaltyAccount()
+        auth
     } else if (queryStatus === 'cancel') {
         status.value = 'cancel'
         errorMessage.value = 'Bạn đã huỷ giao dịch thanh toán.'

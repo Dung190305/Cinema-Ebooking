@@ -38,8 +38,8 @@ const isPublicEndpoint = (url?: string): boolean => {
 
 const isPublicGetRequest = (config: InternalAxiosRequestConfig): boolean => {
   if (config.method?.toUpperCase() !== 'GET') return false
-  if (PROTECTED_GET_PATHS.some(path => config.url?.includes(path))) return false  
-  return true
+  const isProtected = PROTECTED_GET_PATHS.some(path => config.url?.startsWith(path)) 
+  return !isProtected
 }
 
 // ================= REQUEST =================

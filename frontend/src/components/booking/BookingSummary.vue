@@ -44,6 +44,8 @@ const combos = computed(() => booking.selectedCombos.value)
 const coupon = computed(() => booking.appliedCoupon.value)
 
 const seatTotal = computed(() => booking.seatTotal?.value ?? 0)
+const comboTotal = computed(() => booking.comboTotal?.value ?? 0)
+const discount = computed(() => booking.discount?.value ?? 0)
 const total = computed(() => booking.grandTotal?.value ?? 0)
 
 defineEmits<{
@@ -323,14 +325,20 @@ function showtimeLabel(iso: string): string {
                     <div v-if="coupon"
                         :class="['flex justify-between items-center text-green-500', combos.length ? 'mt-2' : '']">
                         <span class="flex items-center gap-1.5">
-                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M20 12V4H4v8a4 4 0 0 0 0 8v4h16v-4a4 4 0 0 0 0-8Z" />
-                                <path d="M10 10h.01M14 14h.01" />
-                            </svg>
                             <span class="font-medium">{{ coupon.code }}</span>
+                            <!-- Label giảm: hiển thị đúng % hoặc số tiền cố định -->
+                            <span class="text-green-400 text-xs">
+                                <template v-if="coupon.couponType === 'PERCENT'">
+                                    (-{{ coupon.couponValue }}%)
+                                </template>
+                                <template v-else>
+                                    (-{{ coupon.couponValue.toLocaleString() }}đ)
+                                </template>
+                            </span>
                         </span>
+                        <!-- Số tiền giảm thực tế (computed từ useBooking) -->
                         <span class="font-semibold tabular-nums shrink-0 ml-3">
-                            −{{ coupon.discountValue.toLocaleString() }}đ
+                            −{{ discount.toLocaleString() }}đ
                         </span>
                     </div>
                 </div>

@@ -29,10 +29,15 @@ export interface BookingComboInfo {
   totalPrice: number
 }
 
+
 export interface BookingCouponInfo {
   couponId?: number
   code: string
+  couponType: 'PERCENT' | 'FIXED'
+  couponValue: number
   discountValue: number
+  minimumBookingValue?: number
+  maximumDiscountAmount?: number
 }
 
 export interface BookingDetailResponse {

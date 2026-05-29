@@ -1,6 +1,7 @@
 package com.cinemaebooking.backend.coupon.infrastructure.adapter;
 
 import com.cinemaebooking.backend.coupon.application.port.CouponRepository;
+import com.cinemaebooking.backend.coupon.domain.enums.CouponStatus;
 import com.cinemaebooking.backend.coupon.domain.model.Coupon;
 import com.cinemaebooking.backend.coupon.domain.valueobject.CouponId;
 import com.cinemaebooking.backend.coupon.infrastructure.mapper.CouponMapper;
@@ -11,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 @Component
@@ -110,5 +112,26 @@ public class CouponRepositoryImpl implements CouponRepository {
     @Override
     public boolean existsByCodeAndIdNot(String code, CouponId id) {
         return jpaRepository.existsByCodeIgnoreCaseAndIdNot(code, id.getValue());
+    }
+
+    @Override
+    public Page<Coupon> findByStatusAndEndDateAfter(CouponStatus status, LocalDate endDate, Pageable pageable){
+        return jpaRepository.findByStatusAndEndDateAfter(status,endDate,pageable).map(mapper::toDomain);
+    }
+
+    @Override
+    public Optional<Coupon> findByCode(String code) {
+        return jpaRepository.findByCodeIgnoreCase(code).map(mapper::toDomain);
+    }
+
+    @Override
+    public void updateRemainingUsage(Coupon coupon) {
+        CouponJpaEntity existing =
+                jpaRepository.findByIdOrThrow(
+                        coupon.getId().getValue()
+                );
+
+        existing.setRemainingUsage(coupon.getRemainingUsage());
+        jpaRepository.save(existing);
     }
 }

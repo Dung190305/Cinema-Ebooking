@@ -3,7 +3,7 @@ import { ref, watch, onUnmounted } from 'vue'
 import { showtimeApi } from '@/api/showtime.api'
 import type { ShowtimeSeatLayoutResponse } from '@/types/showtime-seat'
 
-const POLL_INTERVAL_MS = 8_000   // 8s — đủ realtime, không spam
+const POLL_INTERVAL_MS = 20_000   
 
 export function useSeatPolling(
   booking: any,
