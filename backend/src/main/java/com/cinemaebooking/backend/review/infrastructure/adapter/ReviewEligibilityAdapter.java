@@ -18,8 +18,10 @@ public class ReviewEligibilityAdapter implements ReviewEligibilityPort {
     private final BookingJpaRepository bookingJpaRepository;
 
     @Override
-    public boolean isEligibleToReview(Long userId, Long bookingId) {
-        BookingJpaEntity booking = bookingJpaRepository.findById(bookingId).orElse(null);
+    public boolean isEligibleToReview(Long userId, String bookingCode) {
+        BookingJpaEntity booking = bookingJpaRepository
+                .findByBookingCodeAndDeletedFalse(bookingCode)
+                .orElse(null);
 
         if (booking == null) return false;
         if (!booking.getUser().getId().equals(userId)) return false;

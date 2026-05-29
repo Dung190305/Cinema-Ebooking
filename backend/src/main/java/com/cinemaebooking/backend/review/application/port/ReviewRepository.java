@@ -1,5 +1,6 @@
 package com.cinemaebooking.backend.review.application.port;
 
+import com.cinemaebooking.backend.review.application.dto.MyReviewResponse;
 import com.cinemaebooking.backend.review.application.dto.ReviewResponse;
 import com.cinemaebooking.backend.review.domain.model.Review;
 import org.springframework.data.domain.Page;
@@ -18,6 +19,8 @@ public interface ReviewRepository {
     Optional<Review> findByBookingId(Long bookingId);
 
     boolean existsByUserIdAndMovieId(Long userId, Long movieId);
+
+    Optional<MyReviewResponse> findMyReviewByUserIdAndMovieId(Long userId, Long movieId);
 
     Page<ReviewResponse> findByMovieId(Long movieId, Pageable pageable);
 

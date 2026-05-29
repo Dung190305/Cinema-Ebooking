@@ -87,6 +87,7 @@ public class CreateBookingUseCase {
                 .bookingCode(generateBookingCode())
                 .userId(request.getUserId())
                 .showtimeId(request.getShowtimeId())
+                .movieId(showtimeSnapshot.getMovieId())
                 .movieTitle(showtimeSnapshot.getMovieTitle())
                 .cinemaName(showtimeSnapshot.getCinemaName())
                 .roomName(showtimeSnapshot.getRoomName())

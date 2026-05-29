@@ -24,9 +24,9 @@ public final class ReviewExceptions {
                 String.format("Người dùng %d đã đánh giá phim %d rồi", userId, movieId));
     }
 
-    public static BaseException notEligibleToReview(Long bookingId) {
+    public static BaseException notEligibleToReview(String bookingCode) {
         return new BaseException(ErrorCode.REVIEW_NOT_ELIGIBLE,
-                String.format("Booking %d chưa được check-in hoặc chưa thanh toán", bookingId));
+                String.format("Booking %s chưa được check-in hoặc chưa thanh toán", bookingCode));
     }
 
     public static BaseException cannotEdit(ReviewId reviewId) {
