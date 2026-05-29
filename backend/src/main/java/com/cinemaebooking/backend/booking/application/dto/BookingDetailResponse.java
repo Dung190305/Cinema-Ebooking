@@ -26,6 +26,7 @@ public class BookingDetailResponse {
 
     private Long userId;
     private Long showtimeId;
+    private Long movieId;
 
     private String movieTitle;
     private String cinemaName;

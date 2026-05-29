@@ -13,6 +13,7 @@ import com.cinemaebooking.backend.ticket.infrastructure.mapper.TicketMapper;
 import com.cinemaebooking.backend.ticket.infrastructure.persistence.entity.TicketJpaEntity;
 import com.cinemaebooking.backend.user.infrastructure.persistence.repository.UserJpaRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
@@ -21,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-
+@Slf4j
 @Repository
 @RequiredArgsConstructor
 public class BookingRepositoryImpl implements BookingRepository {
@@ -122,8 +123,11 @@ public class BookingRepositoryImpl implements BookingRepository {
     @Override
     @Transactional(readOnly = true)
     public Optional<Booking> findByBookingCode(String bookingCode) {
-        return jpaRepository.findByBookingCodeAndDeletedFalse(bookingCode)
-                .map(mapper::toDomain);
+        Optional<BookingJpaEntity> entity = jpaRepository.findByBookingCodeAndDeletedFalse(bookingCode);
+        if (entity.isEmpty()) {
+            log.warn("[BookingRepo] findByBookingCode: not found, code='{}'", bookingCode);
+        }
+        return entity.map(mapper::toDomain);
     }
 
     @Override

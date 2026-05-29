@@ -1,5 +1,6 @@
 package com.cinemaebooking.backend.ticket.application.usecase;
 
+import com.cinemaebooking.backend.booking.infrastructure.persistence.repository.BookingJpaRepository;
 import com.cinemaebooking.backend.common.exception.domain.TicketExceptions;
 import com.cinemaebooking.backend.ticket.application.dto.TicketCheckInResponse;
 import com.cinemaebooking.backend.ticket.application.port.TicketRepository;
@@ -25,9 +26,14 @@ import java.util.List;
 public class BatchCheckInUseCase {
 
     private final TicketRepository ticketRepository;
+    private final BookingJpaRepository bookingJpaRepository;
 
     @Transactional
     public List<TicketCheckInResponse> execute(String bookingCode) {
+        if (!bookingJpaRepository.findByBookingCodeAndDeletedFalse(bookingCode).isPresent()) {
+            throw TicketExceptions.notFound(bookingCode);
+        }
+
         List<Ticket> tickets = ticketRepository.findByBookingCode(bookingCode);
 
         if (tickets.isEmpty()) {

@@ -59,6 +59,9 @@ public class NotificationJpaEntity extends BaseJpaEntity {
     @Column(nullable = false, length = 30)
     private NotificationType type;
 
+    @Column(nullable = false)
+    private Boolean isRead = false;
+
     @NotNull
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

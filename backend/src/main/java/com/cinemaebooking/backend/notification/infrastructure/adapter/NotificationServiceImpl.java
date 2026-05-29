@@ -80,14 +80,14 @@ public class NotificationServiceImpl implements NotificationService {
 
     private String buildPaymentSuccessMessage(BookingEmailData booking) {
         StringBuilder sb = new StringBuilder();
-        sb.append("Thanh toán thanh cong! Ma dat ve: ").append(booking.getBookingCode());
+        sb.append("Thanh toán thành công! Mã đặt vé: ").append(booking.getBookingCode());
         sb.append(". Phim: ").append(booking.getMovieTitle());
-        sb.append(". Tong tien: ").append(booking.getFinalAmount()).append(" VND");
+        sb.append(". Tổng tiền: ").append(booking.getFinalAmount()).append(" VND");
         return sb.toString();
     }
 
     private String buildReminderMessage(BookingEmailData booking) {
-        return "Phim \"" + booking.getMovieTitle() + "\" se chieu trong 2 gio nua tai "
+        return "Phim \"" + booking.getMovieTitle() + "\" sẽ chiếu trong 2 giờ nữa tại "
                 + booking.getCinemaName() + " - " + booking.getRoomName();
     }
 }

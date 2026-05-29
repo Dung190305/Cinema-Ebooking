@@ -32,6 +32,7 @@ public interface BookingJpaRepository extends SoftDeleteJpaRepository<BookingJpa
     Optional<BookingJpaEntity> findByIdForUpdate(@Param("id") Long id);
 
     // 2. Tìm theo mã code (giữ nguyên logic của Hiếu)
+    @EntityGraph(attributePaths = {"user", "tickets", "combos", "coupon"})
     Optional<BookingJpaEntity> findByBookingCodeAndDeletedFalse(String bookingCode);
 
     // 3. Phân trang danh sách theo User và Status
@@ -102,12 +103,13 @@ public interface BookingJpaRepository extends SoftDeleteJpaRepository<BookingJpa
             """)
     Optional<BookingJpaEntity> findByIdWithUser(@Param("bookingId") Long bookingId);
 
-    // Dùng cho email: fetch booking kèm user, tickets, combos
+    // Dùng cho email: fetch booking kèm user, tickets, combos, coupon
     @Query("""
             SELECT DISTINCT b FROM BookingJpaEntity b
             JOIN FETCH b.user u
             LEFT JOIN FETCH b.tickets
             LEFT JOIN FETCH b.combos
+            LEFT JOIN FETCH b.coupon
             WHERE b.id = :bookingId AND b.deleted = false
             """)
     Optional<BookingJpaEntity> findByIdWithDetails(@Param("bookingId") Long bookingId);

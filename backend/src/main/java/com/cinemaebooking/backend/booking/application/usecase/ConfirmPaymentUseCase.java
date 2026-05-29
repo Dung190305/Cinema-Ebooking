@@ -60,14 +60,18 @@ public class ConfirmPaymentUseCase {
     private final SeatLockService seatLockService;
     private final AddPointsAfterBookingUseCase addPointsAfterBookingUseCase;
 
-    /** Thanh toán tại quầy — paidAt = now(). */
-    @Transactional
+    /**
+     * Thanh toán tại quầy — paidAt = now().
+     * Chạy trong transaction của caller (PaymentCompletionTransactionalService).
+     */
     public void execute(Long bookingId) {
         doExecute(bookingId, LocalDateTime.now(), null, null);
     }
 
-    /** Thanh toán online qua CompletePaymentUseCase. */
-    @Transactional
+    /**
+     * Thanh toán online qua CompletePaymentUseCase.
+     * Chạy trong transaction của caller (PaymentCompletionTransactionalService).
+     */
     public void execute(Long bookingId, Payment payment) {
         LocalDateTime paidAt = (payment != null && payment.getPaidAt() != null)
                 ? payment.getPaidAt()
