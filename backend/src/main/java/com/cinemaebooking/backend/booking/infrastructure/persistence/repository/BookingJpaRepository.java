@@ -114,6 +114,10 @@ public interface BookingJpaRepository extends SoftDeleteJpaRepository<BookingJpa
             """)
     Optional<BookingJpaEntity> findByIdWithDetails(@Param("bookingId") Long bookingId);
 
+    // Dùng cho review eligibility: chỉ cần booking + tickets để kiểm tra check-in
+    @Query("SELECT b FROM BookingJpaEntity b LEFT JOIN FETCH b.tickets WHERE b.id = :bookingId AND b.deleted = false")
+    Optional<BookingJpaEntity> findByIdWithTickets(@Param("bookingId") Long bookingId);
+
     // Dùng cho ReminderNotificationJob: tìm booking CONFIRMED sắp chiếu trong khoảng thời gian
     @Query("""
             SELECT b FROM BookingJpaEntity b
@@ -127,5 +131,22 @@ public interface BookingJpaRepository extends SoftDeleteJpaRepository<BookingJpa
             @Param("status") BookingStatus status,
             @Param("fromTime") Instant fromTime,
             @Param("toTime") Instant toTime
+    );
+
+    // ── Review eligibility: kiểm tra vé đã check-in theo user + movie ───────────
+    // Trả về danh sách booking (đã check-in) của user cho 1 phim cụ thể
+    // Dùng cho GET /reviews/movies/{movieId}/check-ticket
+    @Query("""
+            SELECT DISTINCT b FROM BookingJpaEntity b
+            JOIN b.tickets t
+            WHERE b.user.id = :userId
+              AND b.movieId = :movieId
+              AND b.status = 'CONFIRMED'
+              AND t.status = 'USED'
+              AND b.deleted = false
+            """)
+    List<BookingJpaEntity> findCheckedInBookingsByUserAndMovie(
+            @Param("userId") Long userId,
+            @Param("movieId") Long movieId
     );
 }

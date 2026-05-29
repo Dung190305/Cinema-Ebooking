@@ -19,6 +19,7 @@ public class BookingDetailResponseMapper {
                 .bookingCode(booking.getBookingCode())
                 .userId(booking.getUserId())
                 .showtimeId(booking.getShowtimeId())
+                .movieId(booking.getMovieId())
                 .movieTitle(booking.getMovieTitle())
                 .cinemaName(booking.getCinemaName())
                 .roomName(booking.getRoomName())
