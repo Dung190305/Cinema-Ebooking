@@ -1,8 +1,10 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { UserProfile, LoyaltyAccountSummaryResponse } from '@/types/auth.types'
+import type { UserProfile } from '@/types/auth.types'
+import type { LoyaltyAccountSummaryResponse } from '@/types/loyalty.types'
 import { apiClient } from '@/api/axios'
 import { userApi } from '@/api/user.api'
+import { loyaltyApi } from '@/api/loyalty.api'
 
 export const useAuthStore = defineStore('auth', () => {
 
@@ -56,10 +58,19 @@ export const useAuthStore = defineStore('auth', () => {
 
     const refreshUserProfile = async () => {
         try {
-            const response = await userApi.getMe(accessToken)
+            const response = await userApi.getMe(accessToken.value)
             user.value = response
         } catch (error) {
             console.error('Refresh profile failed', error)
+        }
+    }
+
+    const refreshLoyaltyAccount = async () => {
+        try {
+            const res = await loyaltyApi.getMySummary()
+            loyaltyAccount.value = res
+        } catch (error) {
+            console.log('refresh loyalty failed', error)
         }
     }
 
@@ -77,6 +88,7 @@ export const useAuthStore = defineStore('auth', () => {
         updateUserProfile,
         updateLoyalty,
         refreshUserProfile,
+        refreshLoyaltyAccount,
     }
 },{
     persist: {

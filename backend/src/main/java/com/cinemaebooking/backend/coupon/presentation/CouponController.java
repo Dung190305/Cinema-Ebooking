@@ -1,10 +1,7 @@
 package com.cinemaebooking.backend.coupon.presentation;
 
 import com.cinemaebooking.backend.common.exception.domain.CommonExceptions;
-import com.cinemaebooking.backend.coupon.application.dto.CouponResponse;
-import com.cinemaebooking.backend.coupon.application.dto.CreateCouponRequest;
-import com.cinemaebooking.backend.coupon.application.dto.UpdateCouponRequest;
-import com.cinemaebooking.backend.coupon.application.dto.UpdateDraftCouponRequest;
+import com.cinemaebooking.backend.coupon.application.dto.*;
 import com.cinemaebooking.backend.coupon.application.usecase.*;
 import com.cinemaebooking.backend.coupon.domain.valueobject.CouponId;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +25,7 @@ public class CouponController {
     private final GetCouponListUseCase getCouponListUseCase;
     private final ActivateCouponUseCase activateCouponUseCase;
     private final DisableCouponUseCase disableCouponUseCase;
+    private final GetPublicCouponListUseCase getPublicCouponListUseCase;
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
@@ -70,6 +68,12 @@ public class CouponController {
     public Page<CouponResponse> getCouponList(@PageableDefault(size = 10) Pageable pageable) {
         return getCouponListUseCase.execute(pageable);
     }
+
+    @GetMapping("/public")
+     public Page<PublicCouponResponse> listPublic(
+            @PageableDefault(size = 12) Pageable pageable) {
+        return getPublicCouponListUseCase.execute(pageable);
+     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id}/activate")

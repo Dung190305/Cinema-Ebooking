@@ -9,8 +9,7 @@
         <!-- Dropdown Khuyến mãi -->
         <NavDropdownItem label="Khuyến mãi" :items="promotionMenuItems" />
 
-        <!-- Link vé của tôi -->
-        <router-link to=""
+        <router-link to="/my-bookings"
             class="hover:underline hover:text-accent text-text-primary text-body-sm sm:text-body whitespace-nowrap">
             Vé của tôi
         </router-link>

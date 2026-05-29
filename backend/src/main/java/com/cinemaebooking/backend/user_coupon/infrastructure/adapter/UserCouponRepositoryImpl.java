@@ -62,7 +62,7 @@ public class UserCouponRepositoryImpl implements UserCouponRepository {
 
     @Override
     public List<UserCoupon> findAvailableExpiredBefore(LocalDateTime dateTime) {
-        return jpaRepository.findByStatusAndExpiredAtBefore(UserCouponStatus.AVAILABLE, dateTime)
+        return jpaRepository.findByStatusAndExpiredAtBefore(UserCouponStatus.ACTIVE, dateTime)
                 .stream()
                 .map(mapper::toDomain)
                 .collect(Collectors.toList());
@@ -92,6 +92,10 @@ public class UserCouponRepositoryImpl implements UserCouponRepository {
 
     @Override
     public void updateStatus(Long userCouponId, UserCouponStatus status) {
-        jpaRepository.updateStatus(userCouponId, status);
+        UserCouponJpaEntity entity = jpaRepository.findByIdOrThrow(userCouponId);
+        entity.setStatus(status);
+        entity.setUsageRemain(entity.getUsageRemain() + 1);
+        entity.setUsedAt(null);
+        jpaRepository.save(entity);
     }
 }

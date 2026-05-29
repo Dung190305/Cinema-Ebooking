@@ -12,6 +12,8 @@ import com.cinemaebooking.backend.ticket.domain.model.Ticket;
 import com.cinemaebooking.backend.ticket.infrastructure.mapper.TicketMapper;
 import com.cinemaebooking.backend.ticket.infrastructure.persistence.entity.TicketJpaEntity;
 import com.cinemaebooking.backend.user.infrastructure.persistence.repository.UserJpaRepository;
+import com.cinemaebooking.backend.user_coupon.infrastructure.persistence.entity.UserCouponJpaEntity;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -32,6 +34,7 @@ public class BookingRepositoryImpl implements BookingRepository {
     private final UserJpaRepository userJpaRepository;
     private final ShowtimeSeatJpaRepository showtimeSeatJpaRepository;
     private final TicketMapper  ticketMapper;
+    private final EntityManager entityManager;
 
     @Override
     public Booking save(Booking booking) {
@@ -43,6 +46,13 @@ public class BookingRepositoryImpl implements BookingRepository {
             entity.setUser(
                     userJpaRepository.getReferenceById(booking.getUserId())
             );
+
+            if (entity.getCoupon() != null && entity.getCoupon().getUserCoupon() != null) {
+                Long userCouponId = entity.getCoupon().getUserCoupon().getId();
+                entity.getCoupon().setUserCoupon(
+                        entityManager.getReference(UserCouponJpaEntity.class, userCouponId)
+                );
+            }
 
             List<Ticket> domainTickets = booking.getTickets();
             List<TicketJpaEntity> ticketEntities = new java.util.ArrayList<>(entity.getTickets());
@@ -65,6 +75,10 @@ public class BookingRepositoryImpl implements BookingRepository {
             entity.setUser(
                     userJpaRepository.getReferenceById(booking.getUserId())
             );
+
+            if (entity.getCoupon() != null) {
+                entity.getCoupon().setBooking(entity);
+            }
 
             if (booking.getTickets() != null && !booking.getTickets().isEmpty()) {
                 if (entity.getTickets().isEmpty()) {
@@ -98,10 +112,6 @@ public class BookingRepositoryImpl implements BookingRepository {
         }
 
         entity.getCombos().forEach(c -> c.setBooking(entity));
-
-        if (entity.getCoupon() != null) {
-            entity.getCoupon().setBooking(entity);
-        }
 
         return mapper.toDomain(jpaRepository.save(entity));
     }
@@ -186,5 +196,25 @@ public class BookingRepositoryImpl implements BookingRepository {
     @Transactional(readOnly = true)
     public boolean existsByBookingCode(String bookingCode) {
         return jpaRepository.existsByBookingCodeAndDeletedFalse(bookingCode);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Booking> findAllForUser(
+            Long userId,
+            Long movieId,
+            BookingStatus status,
+            LocalDateTime fromDate,
+            LocalDateTime toDate,
+            Pageable pageable
+    ) {
+        return jpaRepository.searchUserBookings(
+                userId,
+                movieId,
+                status,
+                fromDate,
+                toDate,
+                pageable
+        ).map(mapper::toDomain);
     }
 }

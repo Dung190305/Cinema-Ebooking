@@ -9,11 +9,13 @@ type Membership = 'basic' | 'silver' | 'gold'
 
 // ===== PROPS =====
 const props = defineProps<{
-    membership?: Membership
+    membership?: string
 }>()
 
-// ===== SAFE TIER =====
-const tier = computed<Membership>(() => props.membership ?? 'basic')
+const tier = computed<Membership>(() => {
+    const raw = (props.membership || 'basic').toLowerCase()
+    return (['basic', 'silver', 'gold'].includes(raw) ? raw : 'basic') as Membership
+})
 
 // ===== CONFIG =====
 const membershipConfig: Record<Membership, {

@@ -28,9 +28,19 @@ public final class UserCouponExceptions {
                 "Coupon " + couponId + " is not active");
     }
 
+    public static BaseException couponNotActive(String code) {
+        return new BaseException(ErrorCode.COUPON_INVALID,
+                "Coupon " + code + " is not active");
+    }
+
     public static BaseException couponExpired(Long couponId) {
         return new BaseException(ErrorCode.COUPON_EXPIRED,
                 "Coupon " + couponId + " has expired");
+    }
+
+    public static BaseException couponExpired(String code) {
+        return new BaseException(ErrorCode.COUPON_EXPIRED,
+                "Coupon " + code + " has expired");
     }
 
     public static BaseException insufficientPoints(Long userId, int required, int available) {

@@ -33,22 +33,14 @@ public class RedeemCouponValidator {
         // ========== FORMAT VALIDATION ==========
         var profile = ValidationFactory.userCoupon();
         executeRules(request.getUserId(), "userId", profile.userIdRules());
-        executeRules(request.getCouponId(), "couponId", profile.couponIdRules());
 
         Long userId = request.getUserId();
-        Long couponId = request.getCouponId();
+        String couponCode = request.getCouponCode();
 
         // ========== BUSINESS RULES ==========
         LocalDateTime now = LocalDateTime.now();
-        var snapshot = couponPort.findValidCoupon(couponId, now)
-                .orElseThrow(() -> UserCouponExceptions.couponNotFound(couponId));
-
-        if (!snapshot.active()) {
-            throw UserCouponExceptions.couponNotActive(couponId);
-        }
-        if (snapshot.expiryDate() != null && snapshot.expiryDate().isBefore(now)) {
-            throw UserCouponExceptions.couponExpired(couponId);
-        }
+        var snapshot = couponPort.findValidCoupon(couponCode, now);
+        Long couponId = snapshot.id();
 
         int pointsRequired = snapshot.pointsToRedeem();
         if (pointsRequired > 0) {
