@@ -2,6 +2,7 @@ package com.cinemaebooking.backend.review.infrastructure.adapter;
 
 import com.cinemaebooking.backend.booking.infrastructure.persistence.repository.BookingJpaRepository;
 import com.cinemaebooking.backend.common.exception.domain.ReviewExceptions;
+import com.cinemaebooking.backend.review.application.dto.MyReviewResponse;
 import com.cinemaebooking.backend.review.application.dto.ReviewResponse;
 import com.cinemaebooking.backend.review.application.mapper.ReviewResponseMapper;
 import com.cinemaebooking.backend.review.application.port.ReviewRepository;
@@ -75,6 +76,25 @@ public class ReviewRepositoryImpl implements ReviewRepository {
     @Transactional(readOnly = true)
     public boolean existsByUserIdAndMovieId(Long userId, Long movieId) {
         return jpaRepository.existsByUserIdAndMovieIdAndDeletedFalse(userId, movieId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<MyReviewResponse> findMyReviewByUserIdAndMovieId(Long userId, Long movieId) {
+        return jpaRepository.findByUserIdAndMovieIdAndDeletedFalse(userId, movieId)
+                .map(entity -> MyReviewResponse.builder()
+                        .hasReview(true)
+                        .review(MyReviewResponse.ReviewDetail.builder()
+                                .reviewId(entity.getId())
+                                .userId(entity.getUser() != null ? entity.getUser().getId() : null)
+                                .userName(entity.getUser() != null ? entity.getUser().getFullName() : null)
+                                .movieId(entity.getMovieId())
+                                .bookingId(entity.getBooking() != null ? entity.getBooking().getId() : null)
+                                .rating(entity.getRating())
+                                .comment(entity.getComment())
+                                .finalText(entity.getFinalText() != null ? entity.getFinalText() : entity.getComment())
+                                .build())
+                        .build());
     }
 
     @Override

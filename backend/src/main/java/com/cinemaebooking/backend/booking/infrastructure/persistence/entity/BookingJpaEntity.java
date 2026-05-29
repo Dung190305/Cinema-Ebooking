@@ -64,6 +64,9 @@ public class BookingJpaEntity extends BaseJpaEntity {
     @Column(name = "showtime_id", nullable = false)
     private Long showtimeId;
 
+    @Column(name = "movie_id", nullable = false)
+    private Long movieId;
+
     @Column(name = "movie_title", nullable = false)
     private String movieTitle;
 

@@ -58,6 +58,7 @@ public interface ShowtimeJpaRepository extends SoftDeleteJpaRepository<ShowtimeJ
 
     @Query("""
         SELECT new com.cinemaebooking.backend.showtime.application.dto.showtime.ShowtimeSnapshot(
+            m.id,
             m.title, 
             c.name, 
             r.name, 

@@ -2,11 +2,15 @@ package com.cinemaebooking.backend.review.presentation;
 
 import com.cinemaebooking.backend.common.api.response.ApiResponse;
 import com.cinemaebooking.backend.review.application.dto.CreateReviewRequest;
+import com.cinemaebooking.backend.review.application.dto.MyReviewResponse;
 import com.cinemaebooking.backend.review.application.dto.ReviewResponse;
+import com.cinemaebooking.backend.review.application.dto.TicketCheckResponse;
 import com.cinemaebooking.backend.review.application.dto.UpdateReviewRequest;
+import com.cinemaebooking.backend.review.application.usecase.CheckTicketEligibilityUseCase;
 import com.cinemaebooking.backend.review.application.usecase.CreateReviewUseCase;
 import com.cinemaebooking.backend.review.application.usecase.DeleteReviewUseCase;
 import com.cinemaebooking.backend.review.application.usecase.GetMovieReviewsUseCase;
+import com.cinemaebooking.backend.review.application.usecase.GetMyReviewUseCase;
 import com.cinemaebooking.backend.review.application.usecase.GetReviewDetailUseCase;
 import com.cinemaebooking.backend.review.application.usecase.GetUserReviewsUseCase;
 import com.cinemaebooking.backend.review.application.usecase.UpdateReviewUseCase;
@@ -28,6 +32,8 @@ public class ReviewController {
     private final GetReviewDetailUseCase getReviewDetailUseCase;
     private final GetMovieReviewsUseCase getMovieReviewsUseCase;
     private final GetUserReviewsUseCase getUserReviewsUseCase;
+    private final GetMyReviewUseCase getMyReviewUseCase;
+    private final CheckTicketEligibilityUseCase checkTicketEligibilityUseCase;
 
     // ================== LIST (DANH SÁCH REVIEW THEO PHIM) ==================
     @GetMapping("/movies/{movieId}")
@@ -85,5 +91,25 @@ public class ReviewController {
             @PathVariable Long id,
             @RequestParam Long userId) {
         deleteReviewUseCase.execute(id, userId);
+    }
+
+    // ================== MY REVIEW (KIỂM TRA REVIEW CỦA USER HIỆN TẠI) ==================
+    @GetMapping("/movies/{movieId}/my-review")
+    public ApiResponse<MyReviewResponse> getMyReview(
+            @PathVariable Long movieId,
+            @RequestParam Long userId,
+            HttpServletRequest request) {
+        MyReviewResponse result = getMyReviewUseCase.execute(userId, movieId);
+        return ApiResponse.success(result, request.getHeader("X-Trace-Id"), request.getRequestURI());
+    }
+
+    // ================== CHECK TICKET (KIỂM TRA VÉ ĐÃ CHECK-IN) ==================
+    @GetMapping("/movies/{movieId}/check-ticket")
+    public ApiResponse<TicketCheckResponse> checkTicketEligibility(
+            @PathVariable Long movieId,
+            @RequestParam Long userId,
+            HttpServletRequest request) {
+        TicketCheckResponse result = checkTicketEligibilityUseCase.execute(userId, movieId);
+        return ApiResponse.success(result, request.getHeader("X-Trace-Id"), request.getRequestURI());
     }
 }

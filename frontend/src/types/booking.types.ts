@@ -4,6 +4,7 @@ export interface BookingListItemResponse {
   bookingId: number
   bookingCode: string
 
+  movieId: number
   movieTitle: string
   showtime: string
 
@@ -46,6 +47,7 @@ export interface BookingDetailResponse {
 
   userId: number
   showtimeId: number
+  movieId: number
 
   movieTitle: string
   cinemaName: string
