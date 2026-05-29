@@ -27,6 +27,7 @@ public class Booking extends BaseEntity<BookingId> {
     private final String bookingCode;
     private final Long userId;
     private final Long showtimeId;
+    private final Long movieId;
 
     private final String movieTitle;
     private final String cinemaName;

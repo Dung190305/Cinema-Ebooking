@@ -30,8 +30,8 @@ public class ReviewCommandValidator {
         if (request.getUserId() == null) {
             throw CommonExceptions.invalidInput("userId is required");
         }
-        if (request.getBookingId() == null) {
-            throw CommonExceptions.invalidInput("bookingId is required");
+        if (request.getBookingCode() == null || request.getBookingCode().isBlank()) {
+            throw CommonExceptions.invalidInput("bookingCode is required");
         }
         if (request.getMovieId() == null) {
             throw CommonExceptions.invalidInput("movieId is required");
@@ -44,8 +44,8 @@ public class ReviewCommandValidator {
             throw ReviewExceptions.alreadyExists(request.getUserId(), request.getMovieId());
         }
 
-        if (!eligibilityPort.isEligibleToReview(request.getUserId(), request.getBookingId())) {
-            throw ReviewExceptions.notEligibleToReview(request.getBookingId());
+        if (!eligibilityPort.isEligibleToReview(request.getUserId(), request.getBookingCode())) {
+            throw ReviewExceptions.notEligibleToReview(request.getBookingCode());
         }
     }
 

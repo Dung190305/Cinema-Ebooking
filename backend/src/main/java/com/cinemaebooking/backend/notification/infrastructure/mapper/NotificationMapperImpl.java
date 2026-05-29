@@ -30,12 +30,21 @@ public class NotificationMapperImpl implements NotificationMapper {
     public NotificationJpaEntity toEntity(Notification domain) {
         if (domain == null) return null;
 
-        return NotificationJpaEntity.builder()
+        NotificationJpaEntity.NotificationJpaEntityBuilder builder = NotificationJpaEntity.builder()
                 .id(domain.getId() != null ? domain.getId().getValue() : null)
                 .title(domain.getTitle())
                 .message(domain.getMessage())
                 .type(domain.getType())
-                .status(domain.getStatus())
-                .build();
+                .status(domain.getStatus());
+
+        // isRead is derived from status: UNREAD=false, READ=true
+        if (domain.getStatus() != null) {
+            builder.isRead(domain.getStatus() ==
+                    com.cinemaebooking.backend.notification.domain.enums.NotificationStatus.READ);
+        } else {
+            builder.isRead(false);
+        }
+
+        return builder.build();
     }
 }

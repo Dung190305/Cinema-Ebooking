@@ -4,5 +4,5 @@ package com.cinemaebooking.backend.review.application.port;
  * Check: booking đã thanh toán + ít nhất vé đã được check-in.
  */
 public interface ReviewEligibilityPort {
-    boolean isEligibleToReview(Long userId, Long bookingId);
+    boolean isEligibleToReview(Long userId, String bookingCode);
 }

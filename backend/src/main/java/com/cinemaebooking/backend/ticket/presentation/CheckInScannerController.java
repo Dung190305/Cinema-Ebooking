@@ -39,8 +39,9 @@ public class CheckInScannerController {
     public ResponseEntity<BookingDetailResponse> lookupBooking(
             @RequestParam("code") String bookingCode
     ) {
-        log.info("[CHECKIN] Lookup request for bookingCode: {}", bookingCode);
-        BookingDetailResponse booking = getBookingDetailUseCase.executeByBookingCode(bookingCode.trim());
+        String trimmed = bookingCode.trim();
+        log.info("[CHECKIN] Lookup request for bookingCode: '{}'", trimmed);
+        BookingDetailResponse booking = getBookingDetailUseCase.executeByBookingCode(trimmed);
         log.info("[CHECKIN] Found booking: id={}, code={}, status={}", booking.getBookingId(), booking.getBookingCode(), booking.getStatus());
         return ResponseEntity.ok(booking);
     }
