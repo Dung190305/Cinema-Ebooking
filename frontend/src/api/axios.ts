@@ -24,11 +24,12 @@ const PUBLIC_ENDPOINTS = [
   '/auth/refresh_token'
 ]
 
-const PROTECTED_GET_PATHS = [
-  '/users/me',
-  '/loyalty/my-account',
-  '/admin',
-  '/bookings/me', 
+const PROTECTED_GET_REGEX = [
+  /^\/users\/me(\/|$)/,
+  /^\/loyalty\/my-account(\/|$)/,
+  /^\/admin(\/|$)/,
+  /^\/bookings\/me(\/|$)/,
+  /^\/bookings\/\d+\/qr-code$/     
 ]
 
 const isPublicEndpoint = (url?: string): boolean => {
@@ -38,7 +39,9 @@ const isPublicEndpoint = (url?: string): boolean => {
 
 const isPublicGetRequest = (config: InternalAxiosRequestConfig): boolean => {
   if (config.method?.toUpperCase() !== 'GET') return false
-  const isProtected = PROTECTED_GET_PATHS.some(path => config.url?.startsWith(path)) 
+  const url = config.url || ''
+  // Nếu URL khớp với bất kỳ protected regex nào → không phải public GET
+  const isProtected = PROTECTED_GET_REGEX.some(regex => regex.test(url))
   return !isProtected
 }
 

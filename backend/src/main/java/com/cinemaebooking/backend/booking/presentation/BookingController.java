@@ -6,6 +6,7 @@ import com.cinemaebooking.backend.booking.application.dto.CreateBookingRequest;
 import com.cinemaebooking.backend.booking.application.usecase.*;
 import com.cinemaebooking.backend.booking.domain.enums.BookingStatus;
 import com.cinemaebooking.backend.common.security.CustomUserPrincipal;
+import com.cinemaebooking.backend.notification.application.port.QRCodeService;
 import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDate;
 import jakarta.validation.Valid;
@@ -29,6 +30,7 @@ public class BookingController {
     private final GetAdminBookingsUseCase getAdminBookingsUseCase;
     private final GetPendingBookingUseCase getPendingBookingUseCase;
     private final GetUserTransactionHistoryUseCase getUserTransactionHistoryUseCase;
+    private final QRCodeService qrCodeService;
 
     // ================== LIST (DANH SÁCH TẤT CẢ ĐƠN HÀNG) ==================
     @GetMapping("/admin/all")
@@ -124,5 +126,14 @@ public class BookingController {
                 toDate,
                 pageable
         );
+    }
+
+    public record QRCodeResponse(String base64Image) {}
+
+    @GetMapping("/{id}/qr-code")
+    public QRCodeResponse getBookingQRCode(@PathVariable Long id) {
+        BookingDetailResponse booking = getBookingDetailUseCase.execute(id);
+        String base64 = qrCodeService.generateQRCodeBase64(booking.getBookingCode(), 300, 300);
+        return new QRCodeResponse(base64);
     }
 }

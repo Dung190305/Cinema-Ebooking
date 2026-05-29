@@ -1,10 +1,11 @@
 <!-- pages/MyBookingsPage.vue -->
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useBookingFilters } from '@/composables/useBookingFilters'
 import type { BookingStatus } from '@/types/booking.types'
-import { formatDateVN, formatDateTimeVN } from '@/utils/dateFormat'
+import { formatDateTimeVN } from '@/utils/dateFormat'
 import CalendarPicker from '@/components/ui/calendar/CalendarPicker.vue'
+import BookingDetailModal from '@/components/booking/BookingDetailModal.vue'
 
 const {
     loading,
@@ -26,29 +27,33 @@ const statusOptions = [
     { value: 'CANCELLED', label: 'Đã hủy' },
 ]
 
+// ── Modal state ──────────────────────────────────────────────────────────────
+const selectedBookingId = ref<number | null>(null)
+
+function openDetail(bookingId: number) {
+    selectedBookingId.value = bookingId
+}
+
+function closeDetail() {
+    selectedBookingId.value = null
+}
+
+// ── Status helpers ───────────────────────────────────────────────────────────
 const getStatusBadgeClass = (status: BookingStatus) => {
     switch (status) {
-        case 'CONFIRMED':
-            return 'bg-green-100 text-green-800'
-        case 'PENDING':
-            return 'bg-yellow-100 text-yellow-800'
-        case 'CANCELLED':
-            return 'bg-red-100 text-red-800'
-        default:
-            return 'bg-gray-100 text-gray-800'
+        case 'CONFIRMED': return 'bg-green-100 text-green-800'
+        case 'PENDING': return 'bg-yellow-100 text-yellow-800'
+        case 'CANCELLED': return 'bg-red-100 text-red-800'
+        default: return 'bg-gray-100 text-gray-800'
     }
 }
 
 const getStatusText = (status: BookingStatus) => {
     switch (status) {
-        case 'CONFIRMED':
-            return 'Đã thanh toán'
-        case 'PENDING':
-            return 'Chờ thanh toán'
-        case 'CANCELLED':
-            return 'Đã hủy'
-        default:
-            return status
+        case 'CONFIRMED': return 'Đã thanh toán'
+        case 'PENDING': return 'Chờ thanh toán'
+        case 'CANCELLED': return 'Đã hủy'
+        default: return status
     }
 }
 
@@ -156,15 +161,17 @@ onMounted(() => {
                                 <span v-if="booking.paidAt">Thanh toán: {{ formatDateTimeVN(booking.paidAt) }}</span>
                             </div>
                         </div>
+
+                        <!-- Xem chi tiết → mở modal thay vì router-link -->
                         <div class="mt-4">
-                            <router-link :to="`/bookings/${booking.bookingId}`"
-                                class="inline-flex items-center text-sm text-accent hover:underline">
+                            <button @click="openDetail(booking.bookingId)"
+                                class="inline-flex items-center text-sm text-accent hover:underline focus:outline-none">
                                 Xem chi tiết
                                 <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M9 5l7 7-7 7" />
                                 </svg>
-                            </router-link>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -189,4 +196,7 @@ onMounted(() => {
             </div>
         </div>
     </div>
+
+    <!-- Booking Detail Modal -->
+    <BookingDetailModal :booking-id="selectedBookingId" @close="closeDetail" />
 </template>
