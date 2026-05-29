@@ -57,4 +57,25 @@ export const bookingApi = {
     apiClient.post<CreateBookingResponse>('/bookings', data) as Promise<CreateBookingResponse>,
 
   cancel: (id: number) => apiClient.post(`/bookings/${id}/cancel`),
+
+  getMyHistory: (params: {
+    movieId?: number | '';
+    status?: BookingStatus | '';
+    fromDate?: string;
+    toDate?: string;
+    page?: number;
+    size?: number;
+    sort?: string;
+  }) =>
+    apiClient.get<NestedPage<BookingListItemResponse>>('/bookings/me', {
+      params: {
+        movieId: params.movieId || undefined,
+        status: params.status || undefined,
+        fromDate: params.fromDate || undefined,
+        toDate: params.toDate || undefined,
+        page: params.page ?? 0,
+        size: params.size ?? 10,
+        sort: params.sort ?? 'createdAt,desc',
+      },
+    }) as Promise<NestedPage<BookingListItemResponse>>,
 }

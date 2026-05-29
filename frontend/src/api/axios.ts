@@ -28,6 +28,7 @@ const PROTECTED_GET_PATHS = [
   '/users/me',
   '/loyalty/my-account',
   '/admin',
+  '/bookings/me', 
 ]
 
 const isPublicEndpoint = (url?: string): boolean => {

@@ -52,4 +52,14 @@ public interface BookingRepository {
      * Kiểm tra xem một code đã tồn tại chưa (dùng khi generate bookingCode)
      */
     boolean existsByBookingCode(String bookingCode);
+
+
+    Page<Booking> findAllForUser(
+            Long userId,
+            Long movieId,
+            BookingStatus status,
+            LocalDateTime fromDate,
+            LocalDateTime toDate,
+            Pageable pageable
+    );
 }

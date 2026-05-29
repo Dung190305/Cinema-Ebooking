@@ -183,4 +183,24 @@ public class BookingRepositoryImpl implements BookingRepository {
     public boolean existsByBookingCode(String bookingCode) {
         return jpaRepository.existsByBookingCodeAndDeletedFalse(bookingCode);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Booking> findAllForUser(
+            Long userId,
+            Long movieId,
+            BookingStatus status,
+            LocalDateTime fromDate,
+            LocalDateTime toDate,
+            Pageable pageable
+    ) {
+        return jpaRepository.searchUserBookings(
+                userId,
+                movieId,
+                status,
+                fromDate,
+                toDate,
+                pageable
+        ).map(mapper::toDomain);
+    }
 }

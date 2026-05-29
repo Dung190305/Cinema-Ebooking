@@ -48,6 +48,12 @@ const routes: RouteRecordRaw[] = [
         name: 'bookings',
         component: () => import('@/pages/BookingPage.vue'),
         meta: { title: 'Đặt vé' }
+      },
+      {
+        path: 'my-bookings',
+        name: 'my-bookings',
+        component: () => import('@/pages/MyBookingsPage.vue'),
+        meta: { title: 'Vé của tôi', requiresAuth: true }
       }
     ],
   },

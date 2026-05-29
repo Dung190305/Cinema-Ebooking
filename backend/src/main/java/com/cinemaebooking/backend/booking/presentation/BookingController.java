@@ -5,6 +5,7 @@ import com.cinemaebooking.backend.booking.application.dto.BookingListItemRespons
 import com.cinemaebooking.backend.booking.application.dto.CreateBookingRequest;
 import com.cinemaebooking.backend.booking.application.usecase.*;
 import com.cinemaebooking.backend.booking.domain.enums.BookingStatus;
+import com.cinemaebooking.backend.common.security.CustomUserPrincipal;
 import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDate;
 import jakarta.validation.Valid;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 @RestController
@@ -26,6 +28,7 @@ public class BookingController {
     private final GetUserBookingsUseCase getUserBookingsUseCase;
     private final GetAdminBookingsUseCase getAdminBookingsUseCase;
     private final GetPendingBookingUseCase getPendingBookingUseCase;
+    private final GetUserTransactionHistoryUseCase getUserTransactionHistoryUseCase;
 
     // ================== LIST (DANH SÁCH TẤT CẢ ĐƠN HÀNG) ==================
     @GetMapping("/admin/all")
@@ -100,5 +103,26 @@ public class BookingController {
     @ResponseStatus(HttpStatus.OK)
     public void confirmPayment(@PathVariable Long id) {
         confirmPaymentUseCase.execute(id);
+    }
+
+
+    @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    public Page<BookingListItemResponse> getMyTransactionHistory(
+            @AuthenticationPrincipal CustomUserPrincipal currentUser,
+            @RequestParam(required = false) Long movieId,
+            @RequestParam(required = false) BookingStatus status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            Pageable pageable
+    ) {
+        return getUserTransactionHistoryUseCase.execute(
+                currentUser.getUserId(),
+                movieId,
+                status,
+                fromDate,
+                toDate,
+                pageable
+        );
     }
 }

@@ -55,11 +55,20 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/payments/*/complete").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/payments/*/cancel").permitAll()
 
-                        // User
-                        .requestMatchers("/api/v1/users/me/**").authenticated()
+                        // ⭐ Các GET cần xác thực - đặt TRƯỚC rule permitAll chung
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users/me/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/bookings/me").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/loyalty/my-account").authenticated()
 
-                        // Admin prefix (nếu sau này dùng)
-                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        // Các POST/PUT/DELETE liên quan đến booking, user, payment cần auth
+                        .requestMatchers(HttpMethod.POST, "/api/v1/bookings/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/users/**").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/users/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/users/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/payments/**").authenticated()
+
+                        // Tất cả các GET còn lại đều public (phim, suất chiếu, rạp...)
+                        .requestMatchers(HttpMethod.GET, "/**").permitAll()
 
                         // All other requests → require authentication
                         .anyRequest().authenticated()

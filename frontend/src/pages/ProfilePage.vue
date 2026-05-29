@@ -58,6 +58,7 @@ const handleSaveProfile = async () => {
 const tabs = [
     { id: 'info' as const, label: 'Thông tin cá nhân' },
     { id: 'loyalty' as const, label: 'Thành viên' },
+    { id: 'bookings' as const, label: 'Vé của tôi' },
     { id: 'security' as const, label: 'Bảo mật' },
 ]
 </script>
@@ -97,6 +98,19 @@ const tabs = [
                     :next-tier-name="nextTierName" :next-tier-spending-required="nextTierSpendingRequired"
                     :spending-needed="spendingNeeded" :progress-percent="progressPercent"
                     :is-highest-tier="isHighestTier" :loading="loading" />
+            </div>
+
+            <div v-if="activeTab === 'bookings'" class="space-y-4">
+                <div class="bg-bg-surface rounded-xl p-6 border border-border-subtle text-center">
+                    <p class="text-body text-text-secondary mb-4">Xem lịch sử đặt vé và quản lý các đơn hàng của bạn</p>
+                    <router-link to="/my-bookings"
+                        class="inline-flex items-center px-4 py-2 bg-accent text-text-on-accent rounded-lg hover:scale-110 transition">
+                        Đến trang Vé của tôi
+                        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </router-link>
+                </div>
             </div>
 
 

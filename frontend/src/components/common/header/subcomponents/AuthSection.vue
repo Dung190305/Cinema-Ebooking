@@ -59,10 +59,6 @@
                                 class="block rounded-t-md px-3 sm:px-4 py-2 text-sm text-text-primary hover:bg-accent cursor-pointer">
                                 Hồ sơ cá nhân
                             </div>
-                            <div
-                                class="block px-3 sm:px-4 py-2 text-sm text-text-primary hover:bg-accent cursor-pointer">
-                                Lịch sử giao dịch
-                            </div>
                             <div v-if="auth.user?.role == 'ADMIN'" @click="goToAdminPage"
                                 class="group flex items-center justify-between px-3 sm:px-4 py-2 text-sm text-text-primary hover:bg-accent/30 cursor-pointer transition-all duration-200">
                                 <span>Trang quản trị</span>
