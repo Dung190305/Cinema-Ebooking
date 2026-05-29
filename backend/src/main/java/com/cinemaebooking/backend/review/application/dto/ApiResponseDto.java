@@ -14,7 +14,8 @@ import java.util.List;
 public class ApiResponseDto {
 
     private boolean valid;
-    private String sentiment;
+    @JsonProperty("label")
+    private String label;
 
     @JsonProperty("final_decision")
     private String finalDecision;

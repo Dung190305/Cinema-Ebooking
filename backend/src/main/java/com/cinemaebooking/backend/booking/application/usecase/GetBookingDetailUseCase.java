@@ -22,4 +22,11 @@ public class GetBookingDetailUseCase {
                 .map(mapper::toDetailResponse)
                 .orElseThrow(() -> BookingExceptions.notFound(BookingId.of(bookingId)));
     }
+
+    @Transactional(readOnly = true)
+    public BookingDetailResponse executeByBookingCode(String bookingCode) {
+        return bookingRepository.findByBookingCode(bookingCode)
+                .map(mapper::toDetailResponse)
+                .orElseThrow(() -> BookingExceptions.notFoundByCode(bookingCode));
+    }
 }

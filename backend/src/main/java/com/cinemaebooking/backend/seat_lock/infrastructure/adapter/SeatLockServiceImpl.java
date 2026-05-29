@@ -1,6 +1,7 @@
 package com.cinemaebooking.backend.seat_lock.infrastructure.adapter;
 
 import com.cinemaebooking.backend.common.exception.domain.ShowtimeSeatExceptions;
+import com.cinemaebooking.backend.common.exception.domain.SeatLockExceptions;
 import com.cinemaebooking.backend.seat_lock.application.dto.AcquireLockResponse;
 import com.cinemaebooking.backend.seat_lock.application.port.SeatLockService;
 import com.cinemaebooking.backend.seat_lock.infrastructure.persistence.entity.SeatLockJpaEntity;
@@ -11,6 +12,7 @@ import com.cinemaebooking.backend.showtime_seat.infrastructure.persistence.repos
 import com.cinemaebooking.backend.user.infrastructure.persistence.entity.UserJpaEntity;
 import com.cinemaebooking.backend.user.infrastructure.persistence.repository.UserJpaRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,7 +57,8 @@ public class SeatLockServiceImpl implements SeatLockService {
     private final ShowtimeSeatJpaRepository showtimeSeatJpaRepository;
     private final UserJpaRepository userJpaRepository;
 
-    private static final int LOCK_DURATION_MINUTES = 7;
+    @Value("${seat-lock.lock-duration-minutes:7}")
+    private int lockDurationMinutes;
 
     // ================== ACQUIRE (KHÓA GHẾ) ==================
 
@@ -71,7 +74,7 @@ public class SeatLockServiceImpl implements SeatLockService {
         }
 
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime expiredAt = now.plusMinutes(LOCK_DURATION_MINUTES);
+        LocalDateTime expiredAt = now.plusMinutes(lockDurationMinutes);
         List<AcquireLockResponse.LockedSeatDto> lockedSeats = new ArrayList<>();
 
         // Validate user tồn tại
@@ -99,8 +102,7 @@ public class SeatLockServiceImpl implements SeatLockService {
             seatLockJpaRepository.findActiveLockByShowtimeSeatId(seatId, now)
                     .ifPresent(existingLock -> {
                         if (!existingLock.getUser().getId().equals(userId)) {
-                            throw new RuntimeException(
-                                    "Ghế " + seatEntity.getSeatNumber() + " đã được người khác khóa");
+                            throw SeatLockExceptions.conflict(seatEntity.getSeatNumber());
                         }
                     });
 

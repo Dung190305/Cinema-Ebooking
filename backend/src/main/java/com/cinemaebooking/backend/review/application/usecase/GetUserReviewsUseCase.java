@@ -18,7 +18,6 @@ public class GetUserReviewsUseCase {
 
     @Transactional(readOnly = true)
     public Page<ReviewResponse> execute(Long userId, Pageable pageable) {
-        return reviewRepository.findByUserId(userId, pageable)
-                .map(mapper::toResponse);
+        return reviewRepository.findByUserId(userId, pageable);
     }
 }

@@ -68,6 +68,14 @@ public class TicketRepositoryImpl implements TicketRepository {
     }
 
     @Override
+    public List<Ticket> findByBookingCode(String bookingCode) {
+        return ticketJpaRepository.findAllByBookingBookingCodeAndDeletedAtIsNull(bookingCode)
+                .stream()
+                .map(ticketMapper::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public List<Ticket> findAllByIds(List<Long> ids) {
         return ticketJpaRepository.findAllByIdInAndDeletedAtIsNull(ids)
                 .stream()

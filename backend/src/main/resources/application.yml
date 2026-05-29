@@ -6,14 +6,17 @@ spring:
     name: cinema-ebooking
 
   profiles:
-    active: local  # mặc định chạy local
+    active: local
 
   flyway:
     enabled: false
     baseline-on-migrate: true
     locations: classpath:db/migration
-  # ================== HIKARI CONNECTION POOL ==================
+
   datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:cinema_ebooking}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 10
@@ -26,22 +29,54 @@ spring:
     features:
       serialization:
         WRITE_DATES_AS_TIMESTAMPS: false
-    time-zone: UTC
+    time-zone: Asia/Ho_Chi_Minh
 
-# ================== LOGGING ==================
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc:
+          time_zone: Asia/Ho_Chi_Minh
+
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  # ================== SEAT LOCK CONFIG ==================
+  seat-lock:
+    lock-duration-minutes: 7
+    payment-duration-minutes: 10
+
 logging:
   level:
     com.zaxxer.hikari: INFO
     org.hibernate.SQL: OFF
     org.hibernate.orm.jdbc.bind: OFF
-    org.flywaydb: DEBUG   # THÊM
-    org.springframework.boot.autoconfigure.flyway: DEBUG  # THÊM
+    org.hibernate.type.descriptor.sql.BasicBinder: OFF
 
 # ================== JWT VARIABLES ==================
 jwt:
-  secret: my-secret-key-my-secret-key-my-secret-key-123456   # ⚠️ đổi thành biến môi trường khi production
+  secret: ${JWT_SECRET:cinema-ebooking-super-secret-key-for-jwt-signing-256bit-minimum-length-required}
   access:
     expiration: 900000      # 15 phút (miligiây)
   refresh:
     expiration: 604800000   # 7 ngày
 
+# ================== NOTIFICATION CONFIG ==================
+notification:
+  reminder:
+    hours-before: 2
+    check-window-minutes: 20
+
+#lt --port 8080 --subdomain cinema-checkinn

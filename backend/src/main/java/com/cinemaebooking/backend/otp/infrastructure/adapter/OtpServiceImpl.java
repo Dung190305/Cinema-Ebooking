@@ -282,6 +282,43 @@ public class OtpServiceImpl implements OtpService {
                 .isActivated(true)
                 .build();
     }
+    @Override
+    @Transactional
+    public VerifyOtpResponse verifyForgotPasswordOtp(String email, String code) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> CommonExceptions.resourceNotFound(
+                        "Không tìm thấy người dùng với email: " + email));
+
+        Long userId = user.getId().getValue();
+
+        Otp otp = otpRepository.findActiveByUserIdAndType(userId, OtpType.PASSWORD_RESET)
+                .orElseThrow(() -> OtpExceptions.notFound(userId));
+
+        if (otp.isExpired()) {
+            throw OtpExceptions.expired();
+        }
+
+        if (otp.isMaxAttemptsReached()) {
+            throw OtpExceptions.maxAttemptsReached();
+        }
+
+        if (!otp.getCode().equals(code)) {
+            otp.incrementAttempts();
+            otpRepository.save(otp);
+            throw OtpExceptions.incorrect();
+        }
+
+        otp.markAsVerified();
+        otpRepository.save(otp);
+
+        return VerifyOtpResponse.builder()
+                .success(true)
+                .message("Xác minh OTP thành công")
+                .userId(userId)
+                .isActivated(false)
+                .build();
+    }
+
     private String generateOtp() {
         int code = RANDOM.nextInt(900_000) + 100_000;
         return String.valueOf(code);

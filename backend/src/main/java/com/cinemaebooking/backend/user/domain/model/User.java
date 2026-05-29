@@ -79,11 +79,27 @@ public class User extends BaseEntity<UserId> {
      * Deactivate / ban user
      */
     public void deactivate() {
+        if (this.status == UserStatus.INACTIVE) return;
         this.status = UserStatus.INACTIVE;
+    }
+
+    /**
+     * Ban/khoá tài khoản vi phạm (khác với INACTIVE = chưa xác minh).
+     */
+    public void ban() {
+        this.status = UserStatus.BANNED;
     }
 
     public boolean isActive() {
         return this.status == UserStatus.ACTIVE;
+    }
+
+    public boolean isBanned() {
+        return this.status == UserStatus.BANNED;
+    }
+
+    public boolean isInactive() {
+        return this.status == UserStatus.INACTIVE;
     }
 
     // ================== VALIDATION ==================

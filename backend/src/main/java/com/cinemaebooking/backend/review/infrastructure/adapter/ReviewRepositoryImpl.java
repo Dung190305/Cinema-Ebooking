@@ -2,7 +2,10 @@ package com.cinemaebooking.backend.review.infrastructure.adapter;
 
 import com.cinemaebooking.backend.booking.infrastructure.persistence.repository.BookingJpaRepository;
 import com.cinemaebooking.backend.common.exception.domain.ReviewExceptions;
+import com.cinemaebooking.backend.review.application.dto.ReviewResponse;
+import com.cinemaebooking.backend.review.application.mapper.ReviewResponseMapper;
 import com.cinemaebooking.backend.review.application.port.ReviewRepository;
+import com.cinemaebooking.backend.review.domain.enums.ReviewStatus;
 import com.cinemaebooking.backend.review.domain.model.Review;
 import com.cinemaebooking.backend.review.domain.valueobject.ReviewId;
 import com.cinemaebooking.backend.review.infrastructure.mapper.ReviewMapper;
@@ -22,6 +25,7 @@ public class ReviewRepositoryImpl implements ReviewRepository {
 
     private final ReviewJpaRepository jpaRepository;
     private final ReviewMapper mapper;
+    private final ReviewResponseMapper responseMapper;
     private final BookingJpaRepository bookingJpaRepository;
 
     @Override
@@ -75,16 +79,20 @@ public class ReviewRepositoryImpl implements ReviewRepository {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<Review> findByMovieId(Long movieId, Pageable pageable) {
-        return jpaRepository.findByMovieIdAndDeletedFalse(movieId, pageable)
-                .map(mapper::toDomain);
+    public Page<ReviewResponse> findByMovieId(Long movieId, Pageable pageable) {
+        // @EntityGraph load user + booking eagerly trong 1 query
+        // Chỉ trả ACTIVE reviews (APPROVED + SPOILER_WARNING), không trả HIDDEN
+        return jpaRepository.findActiveByMovieId(movieId, ReviewStatus.ACTIVE, pageable)
+                .map(responseMapper::toResponseFromEntity);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<Review> findByUserId(Long userId, Pageable pageable) {
+    public Page<ReviewResponse> findByUserId(Long userId, Pageable pageable) {
+        // @EntityGraph load user + booking eagerly trong 1 query
+        // User tự quản lý → trả tất cả (ACTIVE + HIDDEN)
         return jpaRepository.findByUserIdAndDeletedFalse(userId, pageable)
-                .map(mapper::toDomain);
+                .map(responseMapper::toResponseFromEntity);
     }
 
     @Override
