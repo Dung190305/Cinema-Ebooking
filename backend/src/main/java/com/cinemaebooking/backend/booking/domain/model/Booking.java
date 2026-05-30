@@ -129,6 +129,12 @@ public class Booking extends BaseEntity<BookingId> {
         this.couponDiscountAmount = couponData.getDiscountValue();
     }
 
+    public void cancelAfterRefund(){
+        if (this.status == BookingStatus.CANCELLED) return;
+
+        this.status = BookingStatus.CANCELLED;
+    }
+
     /**
      * Tính subtotal từ totalTicketPrice (set lúc create) + combo.
      * Sau khi confirm, có thể tính lại từ tickets nếu cần.

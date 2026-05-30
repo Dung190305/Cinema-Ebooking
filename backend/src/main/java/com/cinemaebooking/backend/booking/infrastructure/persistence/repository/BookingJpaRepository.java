@@ -149,4 +149,27 @@ public interface BookingJpaRepository extends SoftDeleteJpaRepository<BookingJpa
             @Param("userId") Long userId,
             @Param("movieId") Long movieId
     );
+
+    @Query("""
+    SELECT DISTINCT b
+    FROM BookingJpaEntity b
+    LEFT JOIN b.tickets t
+    LEFT JOIN t.showtimeSeat ss
+    LEFT JOIN ss.showtime st
+    LEFT JOIN st.movie m
+    WHERE b.deleted = false
+      AND b.user.id = :userId
+      AND (:movieId IS NULL OR m.id = :movieId)
+      AND (:status IS NULL OR b.status = :status)
+      AND (:fromDate IS NULL OR b.createdAt >= :fromDate)
+      AND (:toDate IS NULL OR b.createdAt < :toDate)
+""")
+    Page<BookingJpaEntity> searchUserBookings(
+            @Param("userId") Long userId,
+            @Param("movieId") Long movieId,
+            @Param("status") BookingStatus status,
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate") LocalDateTime toDate,
+            Pageable pageable
+    );
 }

@@ -40,7 +40,7 @@ public class UseUserCouponValidator {
             throw UserCouponExceptions.notOwnedByUser(id, request.getUserId());
         }
 
-        if (userCoupon.getStatus() != UserCouponStatus.AVAILABLE) {
+        if (userCoupon.getStatus() != UserCouponStatus.ACTIVE) {
             throw UserCouponExceptions.notAvailable(id);
         }
 

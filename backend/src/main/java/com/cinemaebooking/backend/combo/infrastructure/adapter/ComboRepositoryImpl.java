@@ -35,6 +35,13 @@ public class ComboRepositoryImpl implements ComboRepository {
     }
 
     @Override
+    public void updateQuantity(Combo combo){
+        ComboJpaEntity entity = findEntityByIdForUpdate(combo.getId().getValue());
+        entity.setStock(combo.getStock());
+        jpaRepository.save(entity);
+    }
+
+    @Override
     public Optional<Combo> findById(ComboId id) {
         return jpaRepository.findById(id.getValue()).map(mapper::toDomain);
     }

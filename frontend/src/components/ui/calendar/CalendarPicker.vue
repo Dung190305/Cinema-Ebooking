@@ -454,7 +454,8 @@ const onFocusOut = (e: FocusEvent) => {
 
         <!-- Calendar Dropdown -->
         <div v-if="showCalendar" :class="['absolute top-full left-0 z-70 mt-1 border rounded-lg shadow-xl p-3',
-            mode === 'datetime' ? 'min-w-95' : 'min-w-62.5', th.dropdown]">
+            mode === 'datetime' ? 'min-w-72' : 'min-w-64',
+            'max-w-[calc(100vw-2rem)]', , th.dropdown]">
 
             <div :class="mode === 'datetime' ? 'flex gap-3' : ''">
                 <!-- Calendar -->

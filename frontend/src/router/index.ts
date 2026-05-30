@@ -48,7 +48,26 @@ const routes: RouteRecordRaw[] = [
         name: 'bookings',
         component: () => import('@/pages/BookingPage.vue'),
         meta: { title: 'Đặt vé' }
-      }
+      },
+      {
+        path: 'my-bookings',
+        name: 'my-bookings',
+        component: () => import('@/pages/MyBookingsPage.vue'),
+        meta: { title: 'Vé của tôi', requiresAuth: true }
+      },
+      {
+        path: 'coupons',
+        name: 'coupon-browse',
+        component: () => import('@/pages/CouponBrowsePage.vue'),
+        meta: { title: 'Đổi coupon' },
+        // public — không cần auth để xem, chỉ cần auth khi bấm "Lưu coupon"
+      },
+      {
+        path: 'my-coupons',
+        name: 'my-coupons',
+        component: () => import('@/pages/MyCouponsPage.vue'),
+        meta: { title: 'Coupon của tôi', requiresAuth: true },
+      },
     ],
   },
 
@@ -59,15 +78,15 @@ const routes: RouteRecordRaw[] = [
 
       // ── Analytics ──────────────────────────────────────────────────────────
       {
-        path: 'analystics',
-        name: 'admin-analystics',
+        path: 'analytics',
+        name: 'admin-analytics',
         meta: {
-          sidebar: { label: 'Analystics', icon: LayoutDashboard },
+          sidebar: { label: 'Analytics', icon: LayoutDashboard },
         },
         children: [
           {
             path: 'dashboard',
-            name: 'admin-analystics-dashboard',
+            name: 'admin-analytics-dashboard',
             component: () => import('@/pages/admin/DashboardPage.vue'),
             meta: { sidebar: { label: 'Dashboard' } },
           },

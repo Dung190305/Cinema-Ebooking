@@ -1,8 +1,10 @@
 package com.cinemaebooking.backend.user_coupon.application.usecase;
 
 import com.cinemaebooking.backend.common.exception.domain.CommonExceptions;
+import com.cinemaebooking.backend.common.exception.domain.CouponExceptions;
 import com.cinemaebooking.backend.common.exception.domain.UserCouponExceptions;
 import com.cinemaebooking.backend.coupon.application.port.CouponRepository;
+import com.cinemaebooking.backend.coupon.domain.model.Coupon;
 import com.cinemaebooking.backend.loyalty.application.usecase.transactional.DeductPointsUseCase;
 import com.cinemaebooking.backend.loyalty.domain.enums.LoyaltyTransactionType;
 import com.cinemaebooking.backend.user_coupon.application.dto.RedeemCouponRequest;
@@ -34,12 +36,11 @@ public class RedeemCouponUseCase {
     public UserCouponResponse execute(RedeemCouponRequest request) {
         validator.validate(request);
 
-        var coupon = couponPort.findValidCoupon(request.getCouponId(), LocalDateTime.now())
-                .orElseThrow(); // already validated
+        var coupon = couponPort.findValidCoupon(request.getCouponCode(), LocalDateTime.now());
 
         UserCoupon userCoupon = UserCoupon.redeem(
                 request.getUserId(),
-                request.getCouponId(),
+                coupon.id(),
                 LocalDateTime.now(),
                 coupon.perUserUsage(),
                 coupon.expiryDate()
@@ -56,6 +57,13 @@ public class RedeemCouponUseCase {
             );
         }
 
+        Coupon couponDomain = couponRepository.findByCode(request.getCouponCode()).orElse(null);
+        if (couponDomain == null) {
+            throw CouponExceptions.notFound(request.getCouponCode());
+        }
+
+        couponDomain.decreaseRemainingUsage();
+        couponRepository.updateRemainingUsage(couponDomain);
         return mapper.toResponse(saved);
     }
 }
