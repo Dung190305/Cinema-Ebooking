@@ -1002,7 +1002,6 @@ async function fetchMovies() {
     const res = (await movieApi.getList({
       page: 0,
       size: 100,
-      status: 'NOW_SHOWING',
     })) as unknown as PageLike<MovieOption>
     movies.value = res.content || []
   } catch {
