@@ -82,7 +82,7 @@ export function useLoginForm(emit: (event: string) => void) {
             }
 
             if (loginData.role === 'ADMIN') {
-                router.push('/admin/analystics/dashboard')
+                router.push('/admin/analytics/dashboard')
             }
             
             emit('close')
