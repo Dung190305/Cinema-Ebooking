@@ -1,20 +1,35 @@
 package com.cinemaebooking.backend.report.presentation;
 
-import com.cinemaebooking.backend.report.application.dto.*;
-import com.cinemaebooking.backend.report.application.usecase.GetMoviePerformanceUseCase;
-import com.cinemaebooking.backend.report.application.usecase.GetRevenueOverviewUseCase;
-import com.cinemaebooking.backend.report.application.usecase.GetRevenueTrendUseCase;
+import com.cinemaebooking.backend.report.application.dto.CinemaPerformanceResponse;
+import com.cinemaebooking.backend.report.application.dto.ComboSalesReportResponse;
+import com.cinemaebooking.backend.report.application.dto.GoldenHourResponse;
+import com.cinemaebooking.backend.report.application.dto.MoviePerformanceResponse;
+import com.cinemaebooking.backend.report.application.dto.PaymentMethodReportResponse;
+import com.cinemaebooking.backend.report.application.dto.PromotionEffectivenessResponse;
+import com.cinemaebooking.backend.report.application.dto.RefundReportResponse;
+import com.cinemaebooking.backend.report.application.dto.ReportGroupBy;
+import com.cinemaebooking.backend.report.application.dto.RetentionReportResponse;
+import com.cinemaebooking.backend.report.application.dto.RevenueOverviewResponse;
+import com.cinemaebooking.backend.report.application.dto.RevenueTrendPointResponse;
+import com.cinemaebooking.backend.report.application.dto.RoomPerformanceResponse;
 import com.cinemaebooking.backend.report.application.usecase.GetCinemaPerformanceUseCase;
 import com.cinemaebooking.backend.report.application.usecase.GetComboSalesReportUseCase;
 import com.cinemaebooking.backend.report.application.usecase.GetGoldenHoursUseCase;
+import com.cinemaebooking.backend.report.application.usecase.GetMoviePerformanceUseCase;
 import com.cinemaebooking.backend.report.application.usecase.GetPaymentMethodReportUseCase;
 import com.cinemaebooking.backend.report.application.usecase.GetPromotionEffectivenessUseCase;
+import com.cinemaebooking.backend.report.application.usecase.GetRefundReportUseCase;
 import com.cinemaebooking.backend.report.application.usecase.GetRetentionReportUseCase;
+import com.cinemaebooking.backend.report.application.usecase.GetRevenueOverviewUseCase;
+import com.cinemaebooking.backend.report.application.usecase.GetRevenueTrendUseCase;
 import com.cinemaebooking.backend.report.application.usecase.GetRoomPerformanceUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -34,6 +49,7 @@ public class ReportController {
     private final GetGoldenHoursUseCase getGoldenHoursUseCase;
     private final GetRetentionReportUseCase getRetentionReportUseCase;
     private final GetPromotionEffectivenessUseCase getPromotionEffectivenessUseCase;
+    private final GetRefundReportUseCase getRefundReportUseCase;
 
     @GetMapping("/overview")
     @PreAuthorize("hasRole('ADMIN')")
@@ -49,12 +65,7 @@ public class ReportController {
             @RequestParam(required = false) Long cinemaId,
             @RequestParam(required = false) Long movieId
     ) {
-        return getRevenueOverviewUseCase.execute(
-                fromDate,
-                toDate,
-                cinemaId,
-                movieId
-        );
+        return getRevenueOverviewUseCase.execute(fromDate, toDate, cinemaId, movieId);
     }
 
     @GetMapping("/revenue-trend")
@@ -73,13 +84,7 @@ public class ReportController {
 
             @RequestParam(defaultValue = "DAY") ReportGroupBy groupBy
     ) {
-        return getRevenueTrendUseCase.execute(
-                fromDate,
-                toDate,
-                cinemaId,
-                movieId,
-                groupBy
-        );
+        return getRevenueTrendUseCase.execute(fromDate, toDate, cinemaId, movieId, groupBy);
     }
 
     @GetMapping("/movie-performance")
@@ -96,12 +101,7 @@ public class ReportController {
             @RequestParam(required = false) Long cinemaId,
             @RequestParam(required = false) Long movieId
     ) {
-        return getMoviePerformanceUseCase.execute(
-                fromDate,
-                toDate,
-                cinemaId,
-                movieId
-        );
+        return getMoviePerformanceUseCase.execute(fromDate, toDate, cinemaId, movieId);
     }
 
     @GetMapping("/combo-sales")
@@ -221,5 +221,22 @@ public class ReportController {
             @RequestParam(required = false) Long movieId
     ) {
         return getPromotionEffectivenessUseCase.execute(fromDate, toDate, cinemaId, movieId);
+    }
+
+    @GetMapping("/refunds")
+    @PreAuthorize("hasRole('ADMIN')")
+    public RefundReportResponse getRefundReport(
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate fromDate,
+
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate toDate,
+
+            @RequestParam(required = false) Long cinemaId,
+            @RequestParam(required = false) Long movieId
+    ) {
+        return getRefundReportUseCase.execute(fromDate, toDate, cinemaId, movieId);
     }
 }

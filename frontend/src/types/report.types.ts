@@ -9,17 +9,39 @@ export interface ReportFilterParams {
 
 export interface RevenueOverviewResponse {
   totalRevenue: number
+  grossRevenue: number
   totalTicketRevenue: number
   totalComboRevenue: number
+  totalRefundAmount: number
+  netRevenue: number
 
   totalBookings: number
   confirmedBookings: number
   pendingBookings: number
   cancelledBookings: number
 
+  totalRefunds: number
+  requestedRefunds: number
+  approvedRefunds: number
+  completedRefunds: number
+  rejectedRefunds: number
+  cancelledRefunds: number
+
   totalTicketsSold: number
 
   averageRevenuePerBooking: number
+}
+
+export interface RefundReportResponse {
+  totalRefunds: number
+  requestedRefunds: number
+  approvedRefunds: number
+  completedRefunds: number
+  rejectedRefunds: number
+  cancelledRefunds: number
+  totalOriginalAmount: number
+  totalRefundAmount: number
+  averageRefundAmount: number
 }
 
 export interface RevenueTrendPointResponse {
