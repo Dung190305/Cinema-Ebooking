@@ -19,9 +19,9 @@ public class ReleaseBookingCouponUseCase {
         // 1. Tìm coupon đã áp dụng cho booking này
         bookingCouponRepository.findByBookingId(bookingId).ifPresent(coupon -> {
 
-            // 2. Chuyển trạng thái UserCoupon về AVAILABLE (Sẵn sàng sử dụng)
+            // 2. Chuyển trạng thái UserCoupon về ACTIVE (Sẵn sàng sử dụng)
             // Lưu ý: userCouponId là ID của bản ghi sở hữu coupon của User
-            userCouponRepository.updateStatus(coupon.getUserCouponId(), UserCouponStatus.AVAILABLE);
+            userCouponRepository.updateStatus(coupon.getUserCouponId(), UserCouponStatus.ACTIVE);
 
             // 3. Đánh dấu bản ghi BookingCoupon này là đã hủy/thu hồi
             bookingCouponRepository.delete(coupon);

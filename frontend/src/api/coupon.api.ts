@@ -32,5 +32,8 @@ export const couponApi = {
   // PATCH /api/v1/coupons/{id}/disable
   disable: (id: number) => apiClient.patch(`/coupons/${id}/disable`),
 
-  // DELETE đã bị comment ở backend, không dùng nữa
+  getPublicList: (page = 0, size = 12) =>
+    apiClient.get<NestedPage<PublicCouponResponse>>(`/coupons/public`, {
+      params: { page, size },
+    }),
 }

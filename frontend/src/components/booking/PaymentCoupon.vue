@@ -2,8 +2,8 @@
 import { ref, inject, computed, onMounted } from 'vue'
 import { couponApi } from '@/api/coupon.api'
 import { paymentApi } from '@/api/payment.api'
-import { bookingApi } from '@/api/booking.api'          // ← thêm
-import { useUserCoupon } from '@/composables/useUserCoupon'
+import { bookingApi } from '@/api/booking.api'
+import { useUserCouponWallet } from '@/composables/useUserCouponWallet'
 import type { CouponResponse } from '@/types/coupon.types'
 import type { PaymentMethod } from '@/types/payment.types'
 import type { BookingState } from '@/composables/useBooking'
@@ -15,12 +15,18 @@ const { getTransformedUrl } = useCloudinaryImage()
 const emit = defineEmits(['prev', 'success'])
 const booking = inject<BookingState>('booking')!
 const authStore = useAuthStore()
-const { userCoupons, fetchUserCoupons, redeemCoupon, useCoupon, restoreCoupon } = useUserCoupon()
+const {
+    coupons: userCoupons,
+    fetchAllCoupons,
+    redeemCoupon,
+    useCoupon,
+    restoreCoupon,
+    error: couponError,
+    loading: couponLoading,
+} = useUserCouponWallet()
 
 // UI state
 const code = ref('')
-const couponError = ref('')
-const couponLoading = ref(false)
 const appliedCouponDetail = ref<CouponResponse | null>(null)
 const selectedUserCouponId = ref<number | null>(null)
 const selectedPaymentMethod = ref<PaymentMethod>('MOMO')
@@ -32,64 +38,71 @@ const generalError = ref('')
 const pendingBookingId = ref<number | null>(null)
 const showPendingDialog = ref(false)
 
-// Danh sách user coupon
+// Danh sách coupon khả dụng (ACTIVE, còn lượt)
 const availableUserCoupons = computed(() =>
-    userCoupons.value.filter(uc => uc.status === 'ACTIVE' && uc.usageRemain > 0 && uc.coupon)
+    userCoupons.value.filter(uc => uc.status === 'ACTIVE' && uc.usageRemain > 0)
 )
 
-// Áp dụng từ user coupon có sẵn
+// Áp dụng coupon từ danh sách có sẵn
 function applyUserCoupon(uc: typeof availableUserCoupons.value[0]) {
-    if (!uc.coupon) return
-    appliedCouponDetail.value = uc.coupon
+    appliedCouponDetail.value = {
+        id: uc.couponId,
+        code: uc.couponCode,
+        type: uc.couponType,
+        value: uc.couponValue,
+        minimumBookingValue: uc.minimumBookingValue,
+        maximumDiscountAmount: uc.maximumDiscountAmount,
+    } as CouponResponse
     selectedUserCouponId.value = uc.id
+    const subtotal = booking.seatTotal.value + booking.comboTotal.value
+    const rawDiscount = uc.couponType === 'PERCENT'
+        ? subtotal * (uc.couponValue / 100)
+        : uc.couponValue
+    const actualDiscount = Math.min(rawDiscount, uc.maximumDiscountAmount ?? Infinity)
     booking.appliedCoupon.value = {
-        couponId: uc.coupon.id,
-        code: uc.coupon.code,
-        discountValue: uc.coupon.value ?? 0,
+        couponId: uc.couponId,
+        code: uc.couponCode,
+        couponType: uc.couponType,
+        couponValue: uc.couponValue,
+        discountValue: actualDiscount,
+        minimumBookingValue: uc.minimumBookingValue,
+        maximumDiscountAmount: uc.maximumDiscountAmount,
     }
-    couponError.value = ''
 }
 
 // Nhập mã mới
 async function applyCoupon() {
     if (!code.value.trim()) return
-    couponError.value = ''
-    couponLoading.value = true
-
-    try {
-        const res = await couponApi.getList(0, 200)
-        const found = (res.content ?? []).find(
-            (c: CouponResponse) =>
-                c.code.toLowerCase() === code.value.trim().toLowerCase() &&
-                c.status === 'ACTIVE'
-        )
-        if (!found) {
-            couponError.value = 'Mã không hợp lệ hoặc đã hết hạn'
-            return
+    const newUserCoupon = await redeemCoupon(code.value.trim())
+    if (newUserCoupon) {
+        appliedCouponDetail.value = {
+            id: newUserCoupon.couponId,
+            code: newUserCoupon.couponCode,
+            type: newUserCoupon.couponType,
+            value: newUserCoupon.couponValue,
+            minimumBookingValue: newUserCoupon.minimumBookingValue,
+            maximumDiscountAmount: newUserCoupon.maximumDiscountAmount,
+        } as CouponResponse
+        selectedUserCouponId.value = newUserCoupon.id
+        const subtotal2 = booking.seatTotal.value + booking.comboTotal.value
+        const rawDiscount2 = newUserCoupon.couponType === 'PERCENT'
+            ? subtotal2 * (newUserCoupon.couponValue / 100)
+            : newUserCoupon.couponValue
+        const actualDiscount2 = Math.min(rawDiscount2, newUserCoupon.maximumDiscountAmount ?? Infinity)
+        booking.appliedCoupon.value = {
+            couponId: newUserCoupon.couponId,
+            code: newUserCoupon.couponCode,
+            couponType: newUserCoupon.couponType,
+            couponValue: newUserCoupon.couponValue,
+            discountValue: actualDiscount2,
+            minimumBookingValue: newUserCoupon.minimumBookingValue,
+            maximumDiscountAmount: newUserCoupon.maximumDiscountAmount,
         }
-        if (found.pointsToRedeem > 0) {
-            couponError.value = 'Mã này yêu cầu điểm đổi thưởng, vui lòng dùng từ danh sách coupon của bạn'
-            return
-        }
-
-        const newUserCoupon = await redeemCoupon(found.code)
-        if (newUserCoupon && newUserCoupon.coupon) {
-            appliedCouponDetail.value = newUserCoupon.coupon
-            selectedUserCouponId.value = newUserCoupon.id
-            booking.appliedCoupon.value = {
-                couponId: newUserCoupon.coupon.id,
-                code: newUserCoupon.coupon.code,
-                discountValue: newUserCoupon.coupon.value ?? 0,
-            }
-            code.value = ''
-            await fetchUserCoupons()
-        } else {
-            couponError.value = 'Không thể đổi coupon, vui lòng thử lại'
-        }
-    } catch (err: any) {
-        couponError.value = err?.message || 'Lỗi khi kiểm tra mã'
-    } finally {
-        couponLoading.value = false
+        code.value = ''
+        await fetchAllCoupons()
+    } else {
+        // lỗi đã được set trong composable
+        if (couponError.value) generalError.value = couponError.value
     }
 }
 
@@ -98,8 +111,8 @@ function removeCoupon() {
     selectedUserCouponId.value = null
     booking.appliedCoupon.value = null
     code.value = ''
-    couponError.value = ''
 }
+
 
 function restoreLockFromStorage(showtimeId: number): boolean {
     const key = `seatlock_${showtimeId}`
@@ -291,7 +304,7 @@ async function validateAndNext() {
 
 onMounted(async () => {
     try {
-        await fetchUserCoupons()
+        await fetchAllCoupons()
     } catch (err: any) {
         generalError.value = 'Không thể tải danh sách coupon.'
     }
@@ -345,6 +358,7 @@ defineExpose({ next: validateAndNext })
             <button @click="generalError = ''" class="ml-2 text-text-tertiary hover:text-white transition">✕</button>
         </div>
 
+
         <!-- Nhập mã giảm giá -->
         <div class="bg-bg-surface border border-border-default rounded-xl p-4 mb-4">
             <p class="text-body font-medium mb-2">Nhập mã giảm giá</p>
@@ -363,40 +377,69 @@ defineExpose({ next: validateAndNext })
                 class="flex items-center justify-between p-3 rounded-lg bg-green-500/10 border border-green-500/30">
                 <div>
                     <span class="text-green-500 font-semibold text-body">{{ appliedCouponDetail.code }}</span>
-                    <span class="text-text-secondary text-caption ml-2">Giảm {{
-                        appliedCouponDetail.value?.toLocaleString() }}đ</span>
+                    <span class="text-text-secondary text-caption ml-2">
+                        Giảm
+                        <template v-if="appliedCouponDetail.type === 'PERCENT'">
+                            {{ appliedCouponDetail.value }}%
+                        </template>
+                        <template v-else>
+                            {{ appliedCouponDetail.value?.toLocaleString() }}đ
+                        </template>
+                    </span>
+                    <div class="text-caption text-text-tertiary">
+                        Đơn tối thiểu: {{ appliedCouponDetail.minimumBookingValue?.toLocaleString() }}đ &nbsp;|&nbsp;
+                        Giảm tối đa: {{ appliedCouponDetail.maximumDiscountAmount?.toLocaleString() }}đ
+                    </div>
                 </div>
                 <button class="text-text-tertiary text-caption hover:text-red-400 transition"
                     @click="removeCoupon">Xoá</button>
             </div>
         </div>
 
-        <!-- Coupon của tôi (Accordion) -->
         <div class="bg-bg-surface border border-border-default rounded-xl p-4 mb-4">
-            <div class="flex justify-between items-center cursor-pointer"
-                @click="isUserCouponExpanded = !isUserCouponExpanded">
-                <p class="text-body font-medium">Coupon của tôi</p>
-                <span class="text-text-secondary">{{ isUserCouponExpanded ? '▲' : '▼' }}</span>
-            </div>
-            <div v-if="isUserCouponExpanded" class="mt-3">
-                <div v-if="availableUserCoupons.length === 0" class="text-text-secondary text-caption p-2 text-center">
-                    Bạn chưa có coupon nào. Hãy nhập mã ở trên để nhận ưu đãi!
+            <button @click="isUserCouponExpanded = !isUserCouponExpanded"
+                class="flex items-center justify-between w-full text-body font-medium transition">
+                <span>Mã giảm giá đang có ({{ availableUserCoupons.length }})</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 transition-transform duration-200"
+                    :class="{ 'rotate-180': isUserCouponExpanded }" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd"
+                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                        clip-rule="evenodd" />
+                </svg>
+            </button>
+
+            <div v-if="isUserCouponExpanded" class="mt-3 space-y-2 max-h-60 overflow-y-auto">
+                <div v-if="availableUserCoupons.length === 0" class="text-text-tertiary text-caption text-center py-3">
+                    Bạn chưa có mã giảm giá khả dụng
                 </div>
-                <div v-else class="space-y-2">
-                    <label v-for="uc in availableUserCoupons" :key="uc.id"
-                        class="flex items-center gap-3 p-2 rounded-lg border border-border-default hover:bg-bg-hover cursor-pointer"
-                        :class="{ 'border-accent bg-accent/5': selectedUserCouponId === uc.id }">
-                        <input type="radio" name="userCoupon" :value="uc.id" v-model="selectedUserCouponId"
-                            @change="applyUserCoupon(uc)" class="w-4 h-4" />
-                        <div>
-                            <span class="font-medium">{{ uc.coupon?.code }}</span>
-                            <span class="text-caption text-text-secondary ml-2">
-                                Giảm {{ uc.coupon?.value?.toLocaleString() }}đ
+                <label v-for="uc in availableUserCoupons" :key="uc.id"
+                    class="flex items-start gap-3 p-3 rounded-lg border border-border-default hover:bg-bg-hover cursor-pointer transition"
+                    :class="{ 'border-accent bg-accent/5': selectedUserCouponId === uc.id }">
+                    <input type="radio" name="userCoupon" :value="uc.id" v-model="selectedUserCouponId"
+                        @change="applyUserCoupon(uc)" class="w-4 h-4 mt-1 accent-accent" />
+                    <div class="flex-1 min-w-0">
+                        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                            <span class="font-medium truncate">{{ uc.couponCode }}</span>
+                            <span class="text-accent font-semibold whitespace-nowrap">
+                                <template v-if="uc.couponType === 'PERCENT'">
+                                    -{{ uc.couponValue }}%
+                                </template>
+                                <template v-else>
+                                    -{{ uc.couponValue?.toLocaleString() }}đ
+                                </template>
                             </span>
-                            <p class="text-caption text-text-tertiary">Còn lại {{ uc.usageRemain }} lượt</p>
+                            <span class="text-caption text-text-tertiary whitespace-nowrap">Còn {{ uc.usageRemain }}
+                                lượt</span>
                         </div>
-                    </label>
-                </div>
+                        <div class="text-caption text-text-secondary mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
+                            <span>Đơn tối thiểu: {{ uc.minimumBookingValue?.toLocaleString() }}đ</span>
+                            <span>Giảm tối đa: {{ uc.maximumDiscountAmount?.toLocaleString() }}đ</span>
+                        </div>
+                        <p v-if="uc.expiredAt" class="text-caption text-warning mt-0.5">
+                            HSD: {{ new Date(uc.expiredAt).toLocaleDateString('vi-VN') }}
+                        </p>
+                    </div>
+                </label>
             </div>
         </div>
 

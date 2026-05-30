@@ -2,6 +2,7 @@ package com.cinemaebooking.backend.notification.infrastructure.persistence.entit
 
 import com.cinemaebooking.backend.booking.infrastructure.persistence.entity.BookingJpaEntity;
 import com.cinemaebooking.backend.infrastructure.persistence.entity.BaseJpaEntity;
+import com.cinemaebooking.backend.notification.domain.enums.NotificationStatus;
 import com.cinemaebooking.backend.notification.domain.enums.NotificationType;
 import com.cinemaebooking.backend.payment.infrastructure.persistence.entity.PaymentJpaEntity;
 import com.cinemaebooking.backend.user.infrastructure.persistence.entity.UserJpaEntity;
@@ -58,9 +59,13 @@ public class NotificationJpaEntity extends BaseJpaEntity {
     @Column(nullable = false, length = 30)
     private NotificationType type;
 
+    @Column(nullable = false)
+    private Boolean isRead = false;
+
     @NotNull
-    @Column(name = "is_read", nullable = false)
-    private Boolean isRead;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private NotificationStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "booking_id")

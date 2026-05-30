@@ -13,7 +13,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="vi">
-      <body className="bg-gray-50 antialiased">{children}</body>
+      <body className="bg-gray-50 antialiased" suppressHydrationWarning>
+        {children}
+      </body>
     </html>
   );
 }

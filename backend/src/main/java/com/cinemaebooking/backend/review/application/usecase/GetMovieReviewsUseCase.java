@@ -18,7 +18,6 @@ public class GetMovieReviewsUseCase {
 
     @Transactional(readOnly = true)
     public Page<ReviewResponse> execute(Long movieId, Pageable pageable) {
-        return reviewRepository.findByMovieId(movieId, pageable)
-                .map(mapper::toResponse);
+        return reviewRepository.findByMovieId(movieId, pageable);
     }
 }

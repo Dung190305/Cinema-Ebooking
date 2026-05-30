@@ -9,7 +9,7 @@ import com.cinemaebooking.backend.ticket.infrastructure.persistence.entity.Ticke
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -18,15 +18,17 @@ public class ReviewEligibilityAdapter implements ReviewEligibilityPort {
     private final BookingJpaRepository bookingJpaRepository;
 
     @Override
-    public boolean isEligibleToReview(Long userId, Long bookingId) {
-        BookingJpaEntity booking = bookingJpaRepository.findById(bookingId).orElse(null);
+    public boolean isEligibleToReview(Long userId, String bookingCode) {
+        BookingJpaEntity booking = bookingJpaRepository
+                .findByBookingCodeAndDeletedFalse(bookingCode)
+                .orElse(null);
 
         if (booking == null) return false;
         if (!booking.getUser().getId().equals(userId)) return false;
         if (booking.isDeleted()) return false;
         if (booking.getStatus() != BookingStatus.CONFIRMED) return false;
 
-        List<TicketJpaEntity> tickets = booking.getTickets();
+        Set<TicketJpaEntity> tickets = booking.getTickets();
         if (tickets == null || tickets.isEmpty()) return false;
 
         return tickets.stream()

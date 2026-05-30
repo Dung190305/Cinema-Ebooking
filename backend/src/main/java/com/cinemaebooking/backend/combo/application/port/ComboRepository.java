@@ -13,6 +13,8 @@ public interface ComboRepository {
 
     Combo update(Combo combo);
 
+    void updateQuantity(Combo combo);
+
     Optional<Combo> findById(ComboId id);
 
     Optional<Combo> findByIdForUpdate(ComboId id);

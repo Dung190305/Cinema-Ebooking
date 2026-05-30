@@ -35,24 +35,38 @@ public class SecurityConfig {
                                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
                 )
                 .authorizeHttpRequests(auth -> auth
-                        // Auth
+                        // CORS preflight - always allow OPTIONS
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // Auth - public endpoints
+                        .requestMatchers(HttpMethod.OPTIONS, "/api/v1/auth/**").permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
 
-                        .requestMatchers("/api/v1/users/me/**").authenticated()
-                        .requestMatchers("/api/v1/loyalty/my-account/**").authenticated()
-                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        // Admin scanner page - serve HTML without login (JWT entered inside page)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/admin/scanner").permitAll()
 
-                        // ✅ Tất cả GET còn lại → public
-                        .requestMatchers(HttpMethod.GET, "/**").permitAll()
+                        // Admin endpoints - must have ADMIN role
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 
                         .requestMatchers(HttpMethod.POST, "/api/v1/payments/*/complete").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/payments/*/cancel").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/coupons/public").permitAll()
 
-                        // User
-                        .requestMatchers("/api/v1/users/me/**").authenticated()
+                        // ⭐ Các GET cần xác thực - đặt TRƯỚC rule permitAll chung
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users/me/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/bookings/me").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/loyalty/my-account").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/bookings/{id}/qr-code").authenticated()
 
-                        // Admin prefix (nếu sau này dùng)
-                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        // Các POST/PUT/DELETE liên quan đến booking, user, payment cần auth
+                        .requestMatchers(HttpMethod.POST, "/api/v1/bookings/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/users/**").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/users/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/users/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/payments/**").authenticated()
+
+                        // Tất cả các GET còn lại đều public (phim, suất chiếu, rạp...)
+                        .requestMatchers(HttpMethod.GET, "/**").permitAll()
 
                         // All other requests → require authentication
                         .anyRequest().authenticated()

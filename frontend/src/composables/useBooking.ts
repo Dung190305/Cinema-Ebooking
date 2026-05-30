@@ -42,8 +42,26 @@ export function useBooking() {
   // ── Computed totals ───────────────────────────────────────────────────────
   const seatTotal = computed(() => selectedSeats.value.reduce((s, x) => s + x.price, 0))
   const comboTotal = computed(() => selectedCombos.value.reduce((s, x) => s + x.totalPrice, 0))
-  const discount = computed(() => appliedCoupon.value?.discountValue ?? 0)
-  const grandTotal = computed(() => Math.max(0, seatTotal.value + comboTotal.value - discount.value))
+  const subtotal = computed(() => seatTotal.value + comboTotal.value)
+
+  /**
+   * ‘discount’ là số tiền giảm thực tế đã tính toán:
+   * - PERCENT: subtotal × (couponValue / 100), cap bởi maximumDiscountAmount
+   * - FIXED: couponValue cố định (không vượt quá subtotal)
+   */
+  const discount = computed(() => {
+    const coupon = appliedCoupon.value
+    if (!coupon) return 0
+    if (coupon.couponType === 'PERCENT') {
+      const raw = subtotal.value * (coupon.couponValue / 100)
+      const max = coupon.maximumDiscountAmount ?? Infinity
+      return Math.min(raw, max)
+    }
+    // FIXED
+    return Math.min(coupon.couponValue, subtotal.value)
+  })
+
+  const grandTotal = computed(() => Math.max(0, subtotal.value - discount.value))
 
   const allSeatIds = computed(() => selectedSeats.value.map(s => s.id))
 

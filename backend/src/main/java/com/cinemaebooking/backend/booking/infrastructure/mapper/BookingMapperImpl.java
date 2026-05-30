@@ -33,6 +33,7 @@ public class BookingMapperImpl implements BookingMapper {
                 .bookingCode(entity.getBookingCode())
                 .userId(entity.getUser() != null ? entity.getUser().getId() : null)
                 .showtimeId(entity.getShowtimeId())
+                .movieId(entity.getMovieId())
                 .movieTitle(entity.getMovieTitle())
                 .cinemaName(entity.getCinemaName())
                 .roomName(entity.getRoomName())
@@ -73,6 +74,7 @@ public class BookingMapperImpl implements BookingMapper {
                 .id(domain.getId() != null ? domain.getId().getValue() : null)
                 .bookingCode(domain.getBookingCode())
                 .showtimeId(domain.getShowtimeId())
+                .movieId(domain.getMovieId())
                 .movieTitle(domain.getMovieTitle())
                 .cinemaName(domain.getCinemaName())
                 .roomName(domain.getRoomName())
@@ -90,8 +92,8 @@ public class BookingMapperImpl implements BookingMapper {
                 .status(domain.getStatus())
                 .expiredAt(domain.getExpiredAt())
                 .paidAt(domain.getPaidAt())
-                .tickets(new ArrayList<>())
-                .combos(new ArrayList<>())
+                .tickets(new java.util.HashSet<>())
+                .combos(new java.util.HashSet<>())
                 .build();
 
         if (domain.getTickets() != null) {

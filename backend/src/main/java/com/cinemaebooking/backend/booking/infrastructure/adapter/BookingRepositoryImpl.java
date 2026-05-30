@@ -12,7 +12,10 @@ import com.cinemaebooking.backend.ticket.domain.model.Ticket;
 import com.cinemaebooking.backend.ticket.infrastructure.mapper.TicketMapper;
 import com.cinemaebooking.backend.ticket.infrastructure.persistence.entity.TicketJpaEntity;
 import com.cinemaebooking.backend.user.infrastructure.persistence.repository.UserJpaRepository;
+import com.cinemaebooking.backend.user_coupon.infrastructure.persistence.entity.UserCouponJpaEntity;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
@@ -21,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-
+@Slf4j
 @Repository
 @RequiredArgsConstructor
 public class BookingRepositoryImpl implements BookingRepository {
@@ -31,6 +34,7 @@ public class BookingRepositoryImpl implements BookingRepository {
     private final UserJpaRepository userJpaRepository;
     private final ShowtimeSeatJpaRepository showtimeSeatJpaRepository;
     private final TicketMapper  ticketMapper;
+    private final EntityManager entityManager;
 
     @Override
     public Booking save(Booking booking) {
@@ -43,8 +47,15 @@ public class BookingRepositoryImpl implements BookingRepository {
                     userJpaRepository.getReferenceById(booking.getUserId())
             );
 
+            if (entity.getCoupon() != null && entity.getCoupon().getUserCoupon() != null) {
+                Long userCouponId = entity.getCoupon().getUserCoupon().getId();
+                entity.getCoupon().setUserCoupon(
+                        entityManager.getReference(UserCouponJpaEntity.class, userCouponId)
+                );
+            }
+
             List<Ticket> domainTickets = booking.getTickets();
-            List<TicketJpaEntity> ticketEntities = entity.getTickets();
+            List<TicketJpaEntity> ticketEntities = new java.util.ArrayList<>(entity.getTickets());
 
             for (int i = 0; i < ticketEntities.size(); i++) {
                 Long seatId = domainTickets.get(i).getShowtimeSeatId();
@@ -56,7 +67,7 @@ public class BookingRepositoryImpl implements BookingRepository {
             }
         } else {
             // UPDATE: booking đã tồn tại
-            entity = jpaRepository.findWithDetailsById(booking.getId().getValue())
+            entity = jpaRepository.findByIdAndDeletedFalse(booking.getId().getValue())
                     .orElseThrow(() -> new RuntimeException("Booking not found: " + booking.getId().getValue()));
 
             mapper.updateEntity(booking, entity);
@@ -64,6 +75,10 @@ public class BookingRepositoryImpl implements BookingRepository {
             entity.setUser(
                     userJpaRepository.getReferenceById(booking.getUserId())
             );
+
+            if (entity.getCoupon() != null) {
+                entity.getCoupon().setBooking(entity);
+            }
 
             if (booking.getTickets() != null && !booking.getTickets().isEmpty()) {
                 if (entity.getTickets().isEmpty()) {
@@ -98,26 +113,31 @@ public class BookingRepositoryImpl implements BookingRepository {
 
         entity.getCombos().forEach(c -> c.setBooking(entity));
 
-        if (entity.getCoupon() != null) {
-            entity.getCoupon().setBooking(entity);
-        }
-
         return mapper.toDomain(jpaRepository.save(entity));
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<Booking> findById(Long id) {
-        return jpaRepository.findWithDetailsById(id)
-                .filter(entity -> !entity.isDeleted())
+        return jpaRepository.findByIdAndDeletedFalse(id)
+                .map(mapper::toDomain);
+    }
+
+    @Override
+    @Transactional
+    public Optional<Booking> findByIdForUpdate(Long id) {
+        return jpaRepository.findByIdForUpdate(id)
                 .map(mapper::toDomain);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<Booking> findByBookingCode(String bookingCode) {
-        return jpaRepository.findByBookingCodeAndDeletedFalse(bookingCode)
-                .map(mapper::toDomain);
+        Optional<BookingJpaEntity> entity = jpaRepository.findByBookingCodeAndDeletedFalse(bookingCode);
+        if (entity.isEmpty()) {
+            log.warn("[BookingRepo] findByBookingCode: not found, code='{}'", bookingCode);
+        }
+        return entity.map(mapper::toDomain);
     }
 
     @Override
@@ -154,7 +174,7 @@ public class BookingRepositoryImpl implements BookingRepository {
     @Override
     @Transactional(readOnly = true)
     public Optional<Booking> findWithDetailsById(Long id) {
-        return jpaRepository.findWithDetailsById(id)
+        return jpaRepository.findByIdAndDeletedFalse(id)
                 .map(mapper::toDomain);
     }
 
@@ -176,5 +196,25 @@ public class BookingRepositoryImpl implements BookingRepository {
     @Transactional(readOnly = true)
     public boolean existsByBookingCode(String bookingCode) {
         return jpaRepository.existsByBookingCodeAndDeletedFalse(bookingCode);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Booking> findAllForUser(
+            Long userId,
+            Long movieId,
+            BookingStatus status,
+            LocalDateTime fromDate,
+            LocalDateTime toDate,
+            Pageable pageable
+    ) {
+        return jpaRepository.searchUserBookings(
+                userId,
+                movieId,
+                status,
+                fromDate,
+                toDate,
+                pageable
+        ).map(mapper::toDomain);
     }
 }

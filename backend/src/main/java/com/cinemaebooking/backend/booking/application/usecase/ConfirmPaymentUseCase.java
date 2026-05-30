@@ -35,13 +35,13 @@ import java.util.stream.Collectors;
  *
  * <p>Trách nhiệm:
  * <ol>
- *   <li>Fetch Booking → validate chưa expired</li>
- *   <li>Tạo {@link Ticket} từ {@code booking.showtimeSeatIds} (snapshot giá, tên ghế tại đây)</li>
- *   <li>Booking.confirm() → PENDING → CONFIRMED</li>
- *   <li>Set paidAt</li>
- *   <li>ShowtimeSeats → BOOKED</li>
- *   <li>Giải phóng seat locks</li>
- *   <li>Tích điểm loyalty</li>
+ * <li>Fetch Booking → validate chưa expired</li>
+ * <li>Tạo {@link Ticket} từ {@code booking.showtimeSeatIds} (snapshot giá, tên ghế tại đây)</li>
+ * <li>Booking.confirm() → PENDING → CONFIRMED</li>
+ * <li>Set paidAt</li>
+ * <li>ShowtimeSeats → BOOKED</li>
+ * <li>Giải phóng seat locks</li>
+ * <li>Tích điểm loyalty</li>
  * </ol>
  *
  * <p>Dùng cho cả thanh toán online (qua {@code CompletePaymentUseCase})
@@ -60,29 +60,33 @@ public class ConfirmPaymentUseCase {
     private final SeatLockService seatLockService;
     private final AddPointsAfterBookingUseCase addPointsAfterBookingUseCase;
 
-    /** Thanh toán tại quầy — paidAt = now(). */
-    @Transactional
+    /**
+     * Thanh toán tại quầy — paidAt = now().
+     * Chạy trong transaction của caller (PaymentCompletionTransactionalService).
+     */
     public void execute(Long bookingId) {
-        doExecute(bookingId, LocalDateTime.now(), null,null);
+        doExecute(bookingId, LocalDateTime.now(), null, null);
     }
 
-    /** Thanh toán online qua CompletePaymentUseCase. */
-    @Transactional
+    /**
+     * Thanh toán online qua CompletePaymentUseCase.
+     * Chạy trong transaction của caller (PaymentCompletionTransactionalService).
+     */
     public void execute(Long bookingId, Payment payment) {
         LocalDateTime paidAt = (payment != null && payment.getPaidAt() != null)
                 ? payment.getPaidAt()
                 : LocalDateTime.now();
-        doExecute(bookingId, paidAt, null,payment.getId().getValue());
+        doExecute(bookingId, paidAt, null, payment.getId().getValue());
     }
 
     // -------------------------------------------------------------------------
-    // Internal
+    // Internal Execution
     // -------------------------------------------------------------------------
 
     private void doExecute(Long bookingId, LocalDateTime paidAt, Long overrideUserId, Long paymentId) {
 
-        // 1. Fetch booking
-        Booking booking = bookingRepository.findById(bookingId)
+        // 1. Fetch booking với pessimistic lock — ngăn race condition khi nhiều thread cùng confirm
+        Booking booking = bookingRepository.findByIdForUpdate(bookingId)
                 .orElseThrow(() -> BookingExceptions.notFound(BookingId.of(bookingId)));
 
         // 2. Không confirm booking đã hết hạn

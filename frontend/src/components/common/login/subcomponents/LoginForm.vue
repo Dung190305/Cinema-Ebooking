@@ -5,6 +5,7 @@ import { useLoginForm } from '@/composables/useLoginForm'
 const emit = defineEmits<{
     close: []
     switch: []
+    forgot: []
 }>()
 
 const {
@@ -91,9 +92,11 @@ const {
         </div>
     </form>
 
-    <p class="text-caption text-left w-fit cursor-pointer text-text-secondary hover:text-accent mb-4">
+    <button type="button"
+        class="text-caption text-left w-fit cursor-pointer text-text-secondary hover:text-accent mb-4"
+        @click="emit('forgot')">
         Quên mật khẩu?
-    </p>
+    </button>
 
     <div class="pt-4 border-t border-border-subtle">
         <h2 class="text-center text-text-primary text-body mb-1">

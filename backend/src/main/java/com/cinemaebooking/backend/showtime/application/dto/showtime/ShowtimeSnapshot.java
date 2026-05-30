@@ -9,10 +9,11 @@ import java.time.Instant;
 /**
  * ShowtimeSnapshot - Đối tượng vận chuyển dữ liệu Snapshot từ Showtime sang Booking.
  */
-@AllArgsConstructor // Biến tất cả field thành private final, tạo Constructor và Getter
+@AllArgsConstructor
 @Builder
 @Getter
 public class ShowtimeSnapshot {
+    Long movieId;
     String movieTitle;
     String cinemaName;
     String roomName;

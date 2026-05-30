@@ -16,15 +16,20 @@ export const apiClient = axios.create({
 const PUBLIC_ENDPOINTS = [
   '/auth/login',
   '/auth/register',
+  '/auth/verify-otp',
+  '/auth/resend-otp',
   '/auth/forgot_password',
+  '/auth/verify-forgot-otp',
   '/auth/reset_password',
-  '/auth/refresh_token' 
+  '/auth/refresh_token'
 ]
 
-const PROTECTED_GET_PATHS = [
-  '/users/me',
-  '/loyalty/my-account',
-  '/admin',
+const PROTECTED_GET_REGEX = [
+  /^\/users\/me(\/|$)/,
+  /^\/loyalty\/my-account(\/|$)/,
+  /^\/admin(\/|$)/,
+  /^\/bookings\/me(\/|$)/,
+  /^\/bookings\/\d+\/qr-code$/     
 ]
 
 const isPublicEndpoint = (url?: string): boolean => {
@@ -34,8 +39,10 @@ const isPublicEndpoint = (url?: string): boolean => {
 
 const isPublicGetRequest = (config: InternalAxiosRequestConfig): boolean => {
   if (config.method?.toUpperCase() !== 'GET') return false
-  if (PROTECTED_GET_PATHS.some(path => config.url?.includes(path))) return false  
-  return true
+  const url = config.url || ''
+  // Nếu URL khớp với bất kỳ protected regex nào → không phải public GET
+  const isProtected = PROTECTED_GET_REGEX.some(regex => regex.test(url))
+  return !isProtected
 }
 
 // ================= REQUEST =================

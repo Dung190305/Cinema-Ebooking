@@ -5,6 +5,7 @@ import com.cinemaebooking.backend.otp.domain.model.OtpType;
 import com.cinemaebooking.backend.otp.infrastructure.persistence.entity.OtpJpaEntity;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -70,4 +71,22 @@ public interface OtpJpaRepository extends SoftDeleteJpaRepository<OtpJpaEntity> 
               AND o.deleted = false
             """)
     void deleteByUserIdAndOtpType(Long userId, OtpType otpType, LocalDateTime now);
+
+    /**
+     * Soft-delete tất cả OTP EMAIL_VERIFICATION đã hết hạn.
+     *
+     * <p>Dùng JPQL với LOCALTIMESTAMP thay vì native query để đảm bảo
+     * Java và database dùng cùng thời gian. Native query với NOW()/SYSDATE()
+     * dễ bị lệch timezone giữa MySQL server và JVM, dẫn đến xóa nhầm OTP
+     * chưa hết hạn.
+     */
+    @Modifying
+    @Query("""
+            UPDATE OtpJpaEntity o
+            SET o.deleted = true, o.deletedAt = LOCALTIMESTAMP
+            WHERE o.deleted = false
+              AND o.otpType = :otpType
+              AND o.expiredAt < LOCALTIMESTAMP
+            """)
+    int deleteExpiredByType(@Param("otpType") OtpType otpType);
 }

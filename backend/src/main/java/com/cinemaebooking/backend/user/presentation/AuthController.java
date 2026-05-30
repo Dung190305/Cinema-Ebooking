@@ -1,8 +1,10 @@
 package com.cinemaebooking.backend.user.presentation;
 
 import com.cinemaebooking.backend.otp.application.dto.SendOtpResponse;
+import com.cinemaebooking.backend.otp.application.dto.VerifyForgotPasswordOtpRequest;
 import com.cinemaebooking.backend.otp.application.dto.VerifyOtpRequest;
 import com.cinemaebooking.backend.otp.application.dto.VerifyOtpResponse;
+import com.cinemaebooking.backend.otp.application.port.OtpService;
 import com.cinemaebooking.backend.user.application.dto.AuthDTO.LoginRequest;
 import com.cinemaebooking.backend.user.application.dto.AuthDTO.RefreshTokenRequest;
 import com.cinemaebooking.backend.user.application.dto.AuthDTO.RegisterRequest;
@@ -28,6 +30,7 @@ public class AuthController {
     private final ForgotPasswordUseCase forgotPasswordUseCase;
     private final SendVerificationEmailUseCase sendVerificationEmailUseCase;
     private final VerifyEmailUseCase verifyEmailUseCase;
+    private final OtpService otpService;
 
     // ================== REGISTER WITH OTP ==================
 
@@ -84,6 +87,15 @@ public class AuthController {
     @PostMapping("/reset_password")
     public VerifyOtpResponse resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         return resetPasswordUseCase.execute(request);
+    }
+
+    /**
+     * Bước 2 (riêng): Xác minh OTP quên mật khẩu (chỉ verify, chưa đổi mật khẩu)
+     */
+    @PostMapping("/verify-forgot-otp")
+    public VerifyOtpResponse verifyForgotPasswordOtp(
+            @Valid @RequestBody VerifyForgotPasswordOtpRequest request) {
+        return otpService.verifyForgotPasswordOtp(request.getEmail(), request.getCode());
     }
 
     @PostMapping("/refresh_token")

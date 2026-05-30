@@ -13,6 +13,7 @@ public class BookingListItemResponseMapper {
         return new BookingListItemResponse(
                 booking.getId() != null ? booking.getId().getValue() : null,
                 booking.getBookingCode(),
+                booking.getMovieId(),
                 booking.getMovieTitle(),
                 booking.getShowtimeStartTime(),
                 booking.getFinalAmount(),

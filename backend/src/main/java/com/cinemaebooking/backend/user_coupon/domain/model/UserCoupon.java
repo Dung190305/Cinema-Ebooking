@@ -35,7 +35,7 @@ public class UserCoupon extends BaseEntity<UserCouponId> {
                 .usageRemain(usageRemain)
                 .usedAt(null)
                 .expiredAt(expiredAt)
-                .status(UserCouponStatus.AVAILABLE)
+                .status(UserCouponStatus.ACTIVE)
                 .build();
     }
 
@@ -45,9 +45,9 @@ public class UserCoupon extends BaseEntity<UserCouponId> {
      * Sử dụng coupon (giảm 1 lần dùng).
      */
     public void use() {
-        if (this.status != UserCouponStatus.AVAILABLE) {
+        if (this.status != UserCouponStatus.ACTIVE) {
             throw CommonExceptions.invalidInput(
-                    "Cannot use coupon: status must be AVAILABLE (current: " + this.status + ")");
+                    "Cannot use coupon: status must be ACTIVE (current: " + this.status + ")");
         }
         if (this.usageRemain <= 0) {
             throw CommonExceptions.invalidInput("Cannot use coupon: no remaining usage");
@@ -60,7 +60,7 @@ public class UserCoupon extends BaseEntity<UserCouponId> {
     }
 
     /**
-     * Hoàn tác một lần sử dụng (khi huỷ booking). Tăng usageRemain, nếu là USED và hết lượt thì quay về AVAILABLE nếu chưa hết hạn.
+     * Hoàn tác một lần sử dụng (khi huỷ booking). Tăng usageRemain, nếu là USED và hết lượt thì quay về ACTIVE nếu chưa hết hạn.
      */
     public void restoreUsage(LocalDateTime now) {
         if (this.status == UserCouponStatus.EXPIRED) {
@@ -72,7 +72,7 @@ public class UserCoupon extends BaseEntity<UserCouponId> {
                 throw CommonExceptions.invalidInput(
                         "Cannot restore coupon: it has passed its expiry date");
             }
-            this.status = UserCouponStatus.AVAILABLE;
+            this.status = UserCouponStatus.ACTIVE;
         }
         this.usageRemain++;
     }
@@ -81,19 +81,19 @@ public class UserCoupon extends BaseEntity<UserCouponId> {
      * Đánh dấu coupon đã hết hạn.
      */
     public void expire() {
-        if (this.status == UserCouponStatus.AVAILABLE) {
+        if (this.status == UserCouponStatus.ACTIVE) {
             this.status = UserCouponStatus.EXPIRED;
         }
     }
 
     /**
-     * Admin thu hồi coupon (đặt trạng thái EXPIRED).
+     * Admin thu hồi coupon
      */
     public void revoke() {
-        if (this.status == UserCouponStatus.EXPIRED) {
-            throw CommonExceptions.invalidInput("Cannot revoke coupon: already EXPIRED");
+        if (this.status == UserCouponStatus.EXPIRED || this.status == UserCouponStatus.REVOKED) {
+            throw CommonExceptions.invalidInput("Cannot revoke coupon: already " + this.status);
         }
-        this.status = UserCouponStatus.EXPIRED;
+        this.status = UserCouponStatus.REVOKED;
     }
 
     // Phương thức cũ giữ lại (không dùng trong use case mới)
@@ -106,7 +106,7 @@ public class UserCoupon extends BaseEntity<UserCouponId> {
      * Kiểm tra coupon có thể sử dụng được hay không.
      */
     public boolean isUsable() {
-        if (this.status != UserCouponStatus.AVAILABLE) {
+        if (this.status != UserCouponStatus.ACTIVE) {
             return false;
         }
 

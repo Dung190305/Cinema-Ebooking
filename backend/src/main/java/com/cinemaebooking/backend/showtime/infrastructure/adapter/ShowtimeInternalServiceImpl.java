@@ -5,7 +5,6 @@ import com.cinemaebooking.backend.common.exception.domain.ShowtimeExceptions;
 import com.cinemaebooking.backend.common.exception.domain.ShowtimeSeatExceptions;
 import com.cinemaebooking.backend.room_layout.application.port.roomLayout.RoomLayoutInternalService;
 import com.cinemaebooking.backend.room_layout.application.port.seatType.SeatTypeRepository;
-import com.cinemaebooking.backend.room_layout.domain.model.roomLayoutSeat.RoomLayoutSeat;
 import com.cinemaebooking.backend.room_layout.domain.model.seatType.SeatType;
 import com.cinemaebooking.backend.seat_lock.application.port.SeatLockService;
 import com.cinemaebooking.backend.showtime.application.dto.showtime.ShowtimeSnapshot;
@@ -15,19 +14,13 @@ import com.cinemaebooking.backend.showtime.domain.valueobject.ShowtimeId;
 import com.cinemaebooking.backend.showtime_seat.application.port.ShowtimeSeatRepository;
 import com.cinemaebooking.backend.showtime_seat.domain.enums.ShowtimeSeatStatus;
 import com.cinemaebooking.backend.showtime_seat.domain.model.ShowtimeSeat;
-import com.cinemaebooking.backend.ticket.domain.enums.TicketStatus;
-import com.cinemaebooking.backend.ticket.domain.model.Ticket;
-import com.cinemaebooking.backend.user.domain.valueObject.UserId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
-
 @Service
 @RequiredArgsConstructor
 public class ShowtimeInternalServiceImpl implements ShowtimeInternalService {
@@ -46,16 +39,26 @@ public class ShowtimeInternalServiceImpl implements ShowtimeInternalService {
     @Override
     @Transactional
     public List<ShowtimeSeat> validateAndLockSeats(Long showtimeId, List<Long> seatIds, Long userId) {
+        // 1. Lấy danh sách ShowtimeSeat từ DB
         List<ShowtimeSeat> seats = seatRepository.findAllByIds(seatIds);
 
+        // 2. Kiểm tra tìm đủ số ghế
         if (seats.size() != seatIds.size()) {
-            throw new RuntimeException("Một số ghế không tồn tại trong hệ thống.");
+            throw CommonExceptions.resourceNotFound("Một số ghế không tồn tại trong hệ thống.");
         }
 
+        // 3. Kiểm tra ghế thuộc đúng showtime (Giữ logic kiểm tra an toàn từ HEAD)
+        for (ShowtimeSeat seat : seats) {
+            if (!seat.getShowtimeId().equals(showtimeId)) {
+                throw ShowtimeSeatExceptions.unavailable(seat.getId());
+            }
+        }
+
+        // 4. Validate trạng thái trống/lock và ghế đôi (Theo logic mới của develop)
         validateSeatsAvailability(seats, userId);
         validateCoupleSeatsInPairs(seats);
 
-        // Chỉ validate + lock, không tạo Ticket
+        // Chỉ validate + lock, không tạo Ticket tại đây
         return seats;
     }
 
@@ -81,7 +84,7 @@ public class ShowtimeInternalServiceImpl implements ShowtimeInternalService {
         }
     }
 
-    private void validateSeatsAvailability(List<ShowtimeSeat> seats , Long currentUserId) {
+    private void validateSeatsAvailability(List<ShowtimeSeat> seats, Long currentUserId) {
         for (ShowtimeSeat seat : seats) {
             ShowtimeSeatStatus status = seat.getStatus();
             if (status == ShowtimeSeatStatus.AVAILABLE) {
@@ -97,13 +100,7 @@ public class ShowtimeInternalServiceImpl implements ShowtimeInternalService {
                     throw ShowtimeSeatExceptions.unavailable(seat.getId());
                 }
             }
-
-            // Các trạng thái khác (BOOKED, DELETED, ...) đều không hợp lệ
             throw ShowtimeSeatExceptions.unavailable(seat.getId());
         }
-    }
-
-    private String generateTicketCode() {
-        return "TIC-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 }

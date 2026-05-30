@@ -73,7 +73,8 @@ export function useLoginForm(emit: (event: string) => void) {
 
             try {
                 const loyaltySummary = await loyaltyApi.getMySummary();
-                auth.setLoyaltyAccount(loyaltySummary.data);
+                console.log(loyaltySummary)
+                auth.setLoyaltyAccount(loyaltySummary);
             } catch (loyaltyErr) {
                 // Loyalty có thể không bắt buộc, chỉ log lỗi
                 console.warn('Không thể lấy thông tin loyalty:', loyaltyErr);
@@ -81,7 +82,7 @@ export function useLoginForm(emit: (event: string) => void) {
             }
 
             if (loginData.role === 'ADMIN') {
-                router.push('/admin/analystics/dashboard')
+                router.push('/admin/analytics/dashboard')
             }
             
             emit('close')

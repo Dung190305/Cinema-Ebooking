@@ -23,6 +23,7 @@ public class BookingListItemResponse {
     private Long bookingId;
     private String bookingCode;
 
+    private Long movieId;
     private String movieTitle;
     Instant showtime;
 

@@ -1,5 +1,9 @@
 package com.cinemaebooking.backend.review.application.usecase;
 
+import com.cinemaebooking.backend.booking.infrastructure.persistence.entity.BookingJpaEntity;
+import com.cinemaebooking.backend.booking.infrastructure.persistence.repository.BookingJpaRepository;
+import com.cinemaebooking.backend.common.exception.domain.ReviewExceptions;
+import com.cinemaebooking.backend.common.exception.domain.TicketExceptions;
 import com.cinemaebooking.backend.review.application.dto.CreateReviewRequest;
 import com.cinemaebooking.backend.review.application.dto.ReviewResponse;
 import com.cinemaebooking.backend.review.application.mapper.ReviewResponseMapper;
@@ -9,7 +13,6 @@ import com.cinemaebooking.backend.review.application.validator.ReviewCommandVali
 import com.cinemaebooking.backend.review.domain.enums.ReviewDecision;
 import com.cinemaebooking.backend.review.domain.enums.ReviewStatus;
 import com.cinemaebooking.backend.review.domain.model.Review;
-import com.cinemaebooking.backend.common.exception.domain.ReviewExceptions;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,16 +25,20 @@ public class CreateReviewUseCase {
     private final ReviewCommandValidator validator;
     private final ReviewResponseMapper mapper;
     private final AIServicePort aiService;
-
+    private final BookingJpaRepository bookingJpaRepository;
     @Transactional
     public ReviewResponse execute(CreateReviewRequest request) {
         validator.validateCreateRequest(request);
+
+        BookingJpaEntity booking = bookingJpaRepository
+                .findByBookingCodeAndDeletedFalse(request.getBookingCode())
+                .orElseThrow(() -> TicketExceptions.notFound(request.getBookingCode()));
 
         // Tạo Review với status HIDDEN (chờ AI phân tích)
         Review review = Review.builder()
                 .userId(request.getUserId())
                 .movieId(request.getMovieId())
-                .bookingId(request.getBookingId())
+                .bookingId(booking.getId())
                 .rating(request.getRating())
                 .comment(request.getComment())
                 .status(ReviewStatus.HIDDEN)

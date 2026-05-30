@@ -12,7 +12,11 @@ import lombok.Setter;
 public class CreateReviewRequest {
 
     private Long userId;
-    private Long bookingId;
+    /**
+     * Booking code (không phải ID) của vé đã check-in gần nhất.
+     * Backend sẽ tra bookingId từ code này để validate eligibility.
+     */
+    private String bookingCode;
     private Long movieId;
     private Integer rating;
     private String comment;

@@ -2,7 +2,11 @@ package com.cinemaebooking.backend.review.infrastructure.adapter;
 
 import com.cinemaebooking.backend.booking.infrastructure.persistence.repository.BookingJpaRepository;
 import com.cinemaebooking.backend.common.exception.domain.ReviewExceptions;
+import com.cinemaebooking.backend.review.application.dto.MyReviewResponse;
+import com.cinemaebooking.backend.review.application.dto.ReviewResponse;
+import com.cinemaebooking.backend.review.application.mapper.ReviewResponseMapper;
 import com.cinemaebooking.backend.review.application.port.ReviewRepository;
+import com.cinemaebooking.backend.review.domain.enums.ReviewStatus;
 import com.cinemaebooking.backend.review.domain.model.Review;
 import com.cinemaebooking.backend.review.domain.valueobject.ReviewId;
 import com.cinemaebooking.backend.review.infrastructure.mapper.ReviewMapper;
@@ -22,6 +26,7 @@ public class ReviewRepositoryImpl implements ReviewRepository {
 
     private final ReviewJpaRepository jpaRepository;
     private final ReviewMapper mapper;
+    private final ReviewResponseMapper responseMapper;
     private final BookingJpaRepository bookingJpaRepository;
 
     @Override
@@ -75,16 +80,39 @@ public class ReviewRepositoryImpl implements ReviewRepository {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<Review> findByMovieId(Long movieId, Pageable pageable) {
-        return jpaRepository.findByMovieIdAndDeletedFalse(movieId, pageable)
-                .map(mapper::toDomain);
+    public Optional<MyReviewResponse> findMyReviewByUserIdAndMovieId(Long userId, Long movieId) {
+        return jpaRepository.findByUserIdAndMovieIdAndDeletedFalse(userId, movieId)
+                .map(entity -> MyReviewResponse.builder()
+                        .hasReview(true)
+                        .review(MyReviewResponse.ReviewDetail.builder()
+                                .reviewId(entity.getId())
+                                .userId(entity.getUser() != null ? entity.getUser().getId() : null)
+                                .userName(entity.getUser() != null ? entity.getUser().getFullName() : null)
+                                .movieId(entity.getMovieId())
+                                .bookingId(entity.getBooking() != null ? entity.getBooking().getId() : null)
+                                .rating(entity.getRating())
+                                .comment(entity.getComment())
+                                .finalText(entity.getFinalText() != null ? entity.getFinalText() : entity.getComment())
+                                .build())
+                        .build());
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<Review> findByUserId(Long userId, Pageable pageable) {
+    public Page<ReviewResponse> findByMovieId(Long movieId, Pageable pageable) {
+        // @EntityGraph load user + booking eagerly trong 1 query
+        // Chỉ trả ACTIVE reviews (APPROVED + SPOILER_WARNING), không trả HIDDEN
+        return jpaRepository.findActiveByMovieId(movieId, ReviewStatus.ACTIVE, pageable)
+                .map(responseMapper::toResponseFromEntity);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ReviewResponse> findByUserId(Long userId, Pageable pageable) {
+        // @EntityGraph load user + booking eagerly trong 1 query
+        // User tự quản lý → trả tất cả (ACTIVE + HIDDEN)
         return jpaRepository.findByUserIdAndDeletedFalse(userId, pageable)
-                .map(mapper::toDomain);
+                .map(responseMapper::toResponseFromEntity);
     }
 
     @Override

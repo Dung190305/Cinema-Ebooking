@@ -5,6 +5,7 @@ import com.cinemaebooking.backend.booking.domain.valueObject.BookingId;
 import com.cinemaebooking.backend.booking_combo.domain.model.BookingCombo;
 import com.cinemaebooking.backend.booking_coupon.domain.model.BookingCoupon;
 import com.cinemaebooking.backend.common.domain.BaseEntity;
+import com.cinemaebooking.backend.common.exception.domain.BookingExceptions;
 import com.cinemaebooking.backend.common.exception.domain.CommonExceptions;
 import com.cinemaebooking.backend.ticket.domain.model.Ticket;
 import lombok.Builder;
@@ -26,6 +27,7 @@ public class Booking extends BaseEntity<BookingId> {
     private final String bookingCode;
     private final Long userId;
     private final Long showtimeId;
+    private final Long movieId;
 
     private final String movieTitle;
     private final String cinemaName;
@@ -125,6 +127,12 @@ public class Booking extends BaseEntity<BookingId> {
         }
         this.coupon = couponData;
         this.couponDiscountAmount = couponData.getDiscountValue();
+    }
+
+    public void cancelAfterRefund(){
+        if (this.status == BookingStatus.CANCELLED) return;
+
+        this.status = BookingStatus.CANCELLED;
     }
 
     /**
