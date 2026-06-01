@@ -11,7 +11,10 @@ const props = defineProps<{
   movieId: number
 }>()
 
-const emit = defineEmits<{ 'request-login': [] }>()
+const emit = defineEmits<{
+  'request-login': []
+  'reviews-updated': [averageRating: number, totalReviews: number]
+}>()
 
 // ==========================================
 // AUTH
@@ -106,6 +109,8 @@ const loadReviews = async () => {
     } else {
       averageRating.value = 0
     }
+
+    emit('reviews-updated', averageRating.value, totalReviews.value)
   } catch (err) {
     console.error('Lỗi tải danh sách review:', err)
   } finally {
@@ -195,6 +200,11 @@ watch(isLoggedIn, (loggedIn) => {
   if (loggedIn) initData()
 }, { immediate: false })
 onMounted(initData)
+
+defineExpose({
+  getAverageRating: () => averageRating.value,
+  getTotalReviews: () => totalReviews.value,
+})
 </script>
 
 <template>
@@ -218,6 +228,28 @@ onMounted(initData)
             class="ml-auto px-2 py-0.5 text-[10px] font-bold bg-zinc-800 text-zinc-400 rounded-full"
           >
             {{ totalReviews }} lượt đánh giá
+          </span>
+        </div>
+
+        <div class="flex items-center gap-0.5 mt-3">
+          <svg
+            v-for="star in 10"
+            :key="star"
+            class="w-3.5 h-3.5"
+            :class="star <= Math.round(averageRating) ? 'text-amber-400' : 'text-zinc-700'"
+            :fill="star <= Math.round(averageRating) ? 'currentColor' : 'none'"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
+            />
+          </svg>
+          <span class="ml-2 text-[11px] font-bold text-zinc-400">
+            {{ Math.round(averageRating) }}/10
           </span>
         </div>
       </div>
