@@ -33,6 +33,7 @@ public class AddPointsAfterBookingUseCase {
     private final LoyaltyTransactionRepository transactionRepository;
 
     private static final BigDecimal ONE_HUNDRED = new BigDecimal("100");
+    private static final BigDecimal PER_UNIT = new BigDecimal("1000");
 
     @Transactional
     public void execute(Long userId, BigDecimal totalTicketPrice, BigDecimal totalComboPrice,Long bookingId, Long paymentId) {
@@ -57,7 +58,7 @@ public class AddPointsAfterBookingUseCase {
             EarningRule ticketRule = findRuleForType(currentTier, EarningType.TICKET);
             BigDecimal ratePercent = ticketRule != null ? ticketRule.getMultiplier() : BigDecimal.ZERO;
             log.info("Ticket rule: ratePercent={}%", ratePercent);
-            BigDecimal ticketPoints = totalTicketPrice.multiply(ratePercent)
+            BigDecimal ticketPoints = totalTicketPrice.divide(PER_UNIT, 10, RoundingMode.FLOOR) .multiply(ratePercent)
                     .divide(ONE_HUNDRED, 0, RoundingMode.HALF_UP);
             pointsEarned = pointsEarned.add(ticketPoints);
             log.info("Ticket points earned: {}", ticketPoints);
@@ -68,7 +69,7 @@ public class AddPointsAfterBookingUseCase {
             EarningRule comboRule = findRuleForType(currentTier, EarningType.CONCESSION);
             BigDecimal ratePercent = comboRule != null ? comboRule.getMultiplier() : BigDecimal.ZERO;
             log.info("Combo rule: ratePercent={}%", ratePercent);
-            BigDecimal comboPoints = totalComboPrice.multiply(ratePercent)
+            BigDecimal comboPoints = totalComboPrice.divide(PER_UNIT, 10, RoundingMode.FLOOR) .multiply(ratePercent)
                     .divide(ONE_HUNDRED, 0, RoundingMode.HALF_UP);
             pointsEarned = pointsEarned.add(comboPoints);
             log.info("Combo points earned: {}", comboPoints);

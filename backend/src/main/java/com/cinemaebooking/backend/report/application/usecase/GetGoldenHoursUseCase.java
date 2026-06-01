@@ -4,7 +4,7 @@ import com.cinemaebooking.backend.booking.infrastructure.persistence.entity.Book
 import com.cinemaebooking.backend.report.application.dto.GoldenHourResponse;
 import com.cinemaebooking.backend.report.application.dto.ReportDateRange;
 import com.cinemaebooking.backend.report.application.port.ReportQueryPort;
-import com.cinemaebooking.backend.report.application.validator.*;
+import com.cinemaebooking.backend.report.application.validator.ReportDateRangeValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,9 +36,17 @@ public class GetGoldenHoursUseCase {
     ) {
         ReportDateRange dateRange = reportDateRangeValidator.validateAndBuild(fromDate, toDate);
 
-        List<BookingJpaEntity> bookings = reportQueryPort.findConfirmedBookingsByPaidAt(
-                dateRange.getFromDateTime(),
-                dateRange.getToDateTime(),
+        Instant showtimeFrom = dateRange.getFromDateTime()
+                .atZone(ZoneId.systemDefault())
+                .toInstant();
+
+        Instant showtimeTo = dateRange.getToDateTime()
+                .atZone(ZoneId.systemDefault())
+                .toInstant();
+
+        List<BookingJpaEntity> bookings = reportQueryPort.findConfirmedBookingsByShowtimeStartTime(
+                showtimeFrom,
+                showtimeTo,
                 cinemaId,
                 movieId
         );
@@ -47,33 +55,32 @@ public class GetGoldenHoursUseCase {
                 .collect(Collectors.groupingBy(this::buildGoldenHourKey))
                 .entrySet()
                 .stream()
-                .map(entry -> {
-                    String key = entry.getKey();
-                    List<BookingJpaEntity> groupBookings = entry.getValue();
-
-                    String[] parts = key.split("-");
-                    String dayOfWeek = parts[0];
-                    int hour = Integer.parseInt(parts[1]);
-
-                    BigDecimal revenue = sum(groupBookings, BookingJpaEntity::getFinalAmount);
-
-                    long ticketSold = groupBookings.stream()
-                            .mapToLong(booking -> booking.getTickets() == null ? 0 : booking.getTickets().size())
-                            .sum();
-
-                    return GoldenHourResponse.builder()
-                            .dayOfWeek(dayOfWeek)
-                            .hour(hour)
-                            .bookingCount(groupBookings.size())
-                            .ticketSold(ticketSold)
-                            .revenue(revenue)
-                            .build();
-                })
+                .map(entry -> buildResponse(entry.getKey(), entry.getValue()))
                 .sorted(
                         Comparator.comparing(GoldenHourResponse::getDayOfWeek)
                                 .thenComparing(GoldenHourResponse::getHour)
                 )
                 .toList();
+    }
+
+    private GoldenHourResponse buildResponse(String key, List<BookingJpaEntity> groupBookings) {
+        String[] parts = key.split("-");
+        String dayOfWeek = parts[0];
+        int hour = Integer.parseInt(parts[1]);
+
+        BigDecimal revenue = sum(groupBookings, BookingJpaEntity::getFinalAmount);
+
+        long ticketSold = groupBookings.stream()
+                .mapToLong(booking -> booking.getTickets() == null ? 0 : booking.getTickets().size())
+                .sum();
+
+        return GoldenHourResponse.builder()
+                .dayOfWeek(dayOfWeek)
+                .hour(hour)
+                .bookingCount(groupBookings.size())
+                .ticketSold(ticketSold)
+                .revenue(revenue)
+                .build();
     }
 
     private String buildGoldenHourKey(BookingJpaEntity booking) {
@@ -84,7 +91,6 @@ public class GetGoldenHoursUseCase {
         }
 
         LocalDateTime localDateTime = LocalDateTime.ofInstant(startTime, ZoneId.systemDefault());
-
         return localDateTime.getDayOfWeek().name() + "-" + localDateTime.getHour();
     }
 

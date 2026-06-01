@@ -45,14 +45,14 @@ public class MembershipTierSeed {
         );
 
         // Ticket earning rules
-        createRuleIfNotExists(basic, EarningType.TICKET, BigDecimal.valueOf(0.003));
-        createRuleIfNotExists(silver, EarningType.TICKET, BigDecimal.valueOf(0.005));
-        createRuleIfNotExists(gold, EarningType.TICKET, BigDecimal.valueOf(0.007));
+        createRuleIfNotExists(basic, EarningType.TICKET, BigDecimal.valueOf(3));
+        createRuleIfNotExists(silver, EarningType.TICKET, BigDecimal.valueOf(5));
+        createRuleIfNotExists(gold, EarningType.TICKET, BigDecimal.valueOf(7));
 
         // Concession earning rules
-        createRuleIfNotExists(basic, EarningType.CONCESSION, BigDecimal.valueOf(0.003));
-        createRuleIfNotExists(silver, EarningType.CONCESSION, BigDecimal.valueOf(0.004));
-        createRuleIfNotExists(gold, EarningType.CONCESSION, BigDecimal.valueOf(0.005));
+        createRuleIfNotExists(basic, EarningType.CONCESSION, BigDecimal.valueOf(3));
+        createRuleIfNotExists(silver, EarningType.CONCESSION, BigDecimal.valueOf(5));
+        createRuleIfNotExists(gold, EarningType.CONCESSION, BigDecimal.valueOf(7));
     }
 
     private MembershipTier createTierIfNotExists(
