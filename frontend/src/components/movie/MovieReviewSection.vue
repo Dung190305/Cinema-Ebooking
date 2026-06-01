@@ -517,7 +517,7 @@ defineExpose({
             </div>
           </div>
 
-          <div v-if="review.isSpoiler && !revealedSpoilers.has(review.reviewId)">
+          <div v-if="review.isSpoiler && review.userId !== currentUserId && !revealedSpoilers.has(review.reviewId)">
             <div class="relative mt-3 pl-0.5">
               <p
                 class="text-xs leading-relaxed text-zinc-300 blur-sm select-none pointer-events-none"
@@ -561,11 +561,11 @@ defineExpose({
           </p>
 
           <button
-            v-if="review.isSpoiler"
+            v-if="review.isSpoiler && review.userId !== currentUserId && revealedSpoilers.has(review.reviewId)"
             class="mt-1 text-[10px] text-zinc-500 hover:text-red-400 transition-colors"
             @click="toggleSpoiler(review.reviewId)"
           >
-            {{ revealedSpoilers.has(review.reviewId) ? '▲ Ẩn nội dung spoiler' : '' }}
+            ▲ Ẩn nội dung spoiler
           </button>
         </div>
       </div>
