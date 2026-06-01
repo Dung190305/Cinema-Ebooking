@@ -54,6 +54,19 @@ const submitError = ref('')
 const isStarActive = (star: number) => star <= (hoverRating.value || selectedRating.value)
 
 // ==========================================
+// SPOILER
+// ==========================================
+const revealedSpoilers = ref(new Set<number>())
+
+const toggleSpoiler = (reviewId: number) => {
+  if (revealedSpoilers.value.has(reviewId)) {
+    revealedSpoilers.value.delete(reviewId)
+  } else {
+    revealedSpoilers.value.add(reviewId)
+  }
+}
+
+// ==========================================
 // KHỞI TẠO DỮ LIỆU
 // ==========================================
 const initData = async () => {
@@ -504,19 +517,56 @@ defineExpose({
             </div>
           </div>
 
+          <div v-if="review.isSpoiler && !revealedSpoilers.has(review.reviewId)">
+            <div class="relative mt-3 pl-0.5">
+              <p
+                class="text-xs leading-relaxed text-zinc-300 blur-sm select-none pointer-events-none"
+              >
+                {{ review.finalText || review.comment }}
+              </p>
+              <div
+                class="absolute inset-0 flex flex-col items-center justify-center gap-2 cursor-pointer bg-zinc-900/40 rounded-lg hover:bg-zinc-900/60 transition-colors"
+                @click="toggleSpoiler(review.reviewId)"
+              >
+                <svg
+                  class="w-5 h-5 text-red-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"
+                  />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M13 13l6 6"
+                  />
+                </svg>
+                <span class="text-[11px] font-bold text-red-400 bg-red-500/20 border border-red-500/30 px-3 py-1 rounded-full">
+                  Nội dung có spoiler — bấm để xem
+                </span>
+              </div>
+            </div>
+          </div>
+
           <p
-            v-if="review.finalText || review.comment"
+            v-else-if="review.finalText || review.comment"
             class="mt-3 text-xs text-zinc-300 leading-relaxed pl-0.5"
           >
             {{ review.finalText || review.comment }}
           </p>
 
-          <div
+          <button
             v-if="review.isSpoiler"
-            class="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] font-bold"
+            class="mt-1 text-[10px] text-zinc-500 hover:text-red-400 transition-colors"
+            @click="toggleSpoiler(review.reviewId)"
           >
-            ⚠ Có spoiler
-          </div>
+            {{ revealedSpoilers.has(review.reviewId) ? '▲ Ẩn nội dung spoiler' : '' }}
+          </button>
         </div>
       </div>
     </div>
