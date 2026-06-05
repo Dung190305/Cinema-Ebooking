@@ -55,34 +55,50 @@ export function getDateKeyVN(instant: string): string {
 /**
  * Format chỉ ngày theo múi giờ Việt Nam
  */
-export function formatDateVN(date: Date | string): string {
-    if (!date) return '—';
-    
-    const d = typeof date === 'string' ? new Date(date) : date;
-    if (isNaN(d.getTime())) return '—';
-
-    return d.toLocaleDateString('vi-VN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        timeZone: VIETNAM_TZ
-    });
+export function formatDateVN(date: unknown): string {
+  if (!date) return '—'
+  
+  let d: Date | null = null
+  if (typeof date === 'string') {
+    d = new Date(date)
+  } else if (date instanceof Date) {
+    d = date
+  } else if (typeof date === 'number') {
+    d = new Date(date)
+  }
+  
+  if (!d || isNaN(d.getTime())) return '—'
+  
+  return d.toLocaleDateString('vi-VN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    timeZone: 'Asia/Ho_Chi_Minh'
+  })
 }
 
 /**
  * Format chỉ giờ (HH:mm) theo múi giờ Việt Nam
  */
-export function formatTimeVN(date: Date | string): string {
-    if (!date) return '';
-    
-    const d = typeof date === 'string' ? new Date(date) : date;
-    if (isNaN(d.getTime())) return '';
-
-    return d.toLocaleTimeString('vi-VN', {
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: VIETNAM_TZ
-    });
+export function formatTimeVN(date: unknown): string {
+  if (!date) return ''
+  
+  let d: Date | null = null
+  if (typeof date === 'string') {
+    d = new Date(date)
+  } else if (date instanceof Date) {
+    d = date
+  } else if (typeof date === 'number') {
+    d = new Date(date)
+  }
+  
+  if (!d || isNaN(d.getTime())) return ''
+  
+  return d.toLocaleTimeString('vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Asia/Ho_Chi_Minh'
+  })
 }
 
 // ====================== GIỮ LẠI CÁC HÀM CŨ ĐỂ TƯƠNG THÍCH ======================
