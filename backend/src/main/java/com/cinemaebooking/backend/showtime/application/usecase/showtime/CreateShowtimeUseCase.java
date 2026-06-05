@@ -68,7 +68,6 @@ public class CreateShowtimeUseCase {
                 .endTime(request.getEndTime())
                 .audioLanguage(request.getAudioLanguage())
                 .subtitleLanguage(request.getSubtitleLanguage())
-                .status(ShowtimeStatus.SCHEDULED)
                 .build();
         showtime.validateForCreate();
 

@@ -14,6 +14,7 @@ import com.cinemaebooking.backend.showtime.infrastructure.persistence.repository
 import com.cinemaebooking.backend.showtime.infrastructure.persistence.repository.ShowtimeJpaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
@@ -64,11 +65,7 @@ public class ShowtimeRepositoryImpl implements ShowtimeRepository {
 
         var entity = jpaRepository.findByIdOrThrow(showtime.getId().getValue());
 
-        entity.setStartTime(showtime.getStartTime());
-        entity.setEndTime(showtime.getEndTime());
-        entity.setAudioLanguage(showtime.getAudioLanguage());
-        entity.setSubtitleLanguage(showtime.getSubtitleLanguage());
-        entity.setStatus(showtime.getStatus());
+        entity.setCancelled(showtime.isCancelled());
 
         var saved = jpaRepository.save(entity);
 
@@ -93,14 +90,16 @@ public class ShowtimeRepositoryImpl implements ShowtimeRepository {
     }
 
     @Override
-    public boolean existsByRoomIdAndStatusIn(Long roomId, List<ShowtimeStatus> status) {
-        return jpaRepository.existsByRoomIdAndStatusIn(roomId, status);
+    public boolean existsActiveByRoomId(Long roomId) {
+        return jpaRepository.existsActiveByRoomId(roomId);
     }
 
     @Override
     public Page<Showtime> search(Long cinemaId, Long movieId, Long roomId,
                                  ShowtimeStatus status, LocalDate date, String city, Pageable pageable) {
-        return jpaRepository.search(cinemaId, movieId, roomId, status, date, city, pageable)
+        String statusStr = status != null ? status.name() : null;
+        Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        return jpaRepository.search(cinemaId, movieId, roomId, statusStr, date, city, unsorted)
                 .map(mapper::toDomain);
     }
 
