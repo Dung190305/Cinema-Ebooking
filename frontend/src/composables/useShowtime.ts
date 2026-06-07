@@ -3,6 +3,7 @@ import { showtimeApi } from '@/api/showtime.api'
 import { movieApi } from '@/api/movie.api'
 import { roomApi } from '@/api/room.api'
 import type { ShowtimeResponse, CreateShowtimeRequest, UpdateShowtimeRequest } from '@/types/showtime'
+import type { RoomType } from '@/types/room'
 
 interface ApiRejected {
   fieldErrors: Record<string, string>
@@ -141,9 +142,9 @@ export function useShowtime(cinemaIdInput: Ref<number | null> | number | null) {
   async function cancel(item: ShowtimeResponse): Promise<boolean> {
     clearErrors()
     try {
-      await showtimeApi.cancel(item.id)
+      const updated = await showtimeApi.cancel(item.id)
       const idx = showtimes.value.findIndex(s => s.id === item.id)
-      if (idx !== -1) showtimes.value[idx] = { ...showtimes.value[idx], status: 'CANCELLED' }
+      if (idx !== -1) showtimes.value[idx] = updated
       return true
     } catch (err) {
       handleError(err)

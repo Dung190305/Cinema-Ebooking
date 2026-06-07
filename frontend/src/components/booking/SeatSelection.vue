@@ -237,6 +237,34 @@ async function validateAndNext() {
         }
     }
 
+    // Bảo mật bổ sung: Poll sơ đồ ghế trước khi xác nhận để lấy trạng thái mới nhất
+    // Điều này giúp phát hiện nếu người khác vừa khóa ghế làm ghế lẻ
+    await retry()
+
+    // Re-validate sau khi polling
+    const freshLayout = adapted.value
+    if (freshLayout) {
+        const stillAvailableAfterPoll = selectedSeats.value.every(seat =>
+            !freshLayout.bookedIds.includes(seat.id) && !freshLayout.lockedIds.includes(seat.id)
+        )
+        if (!stillAvailableAfterPoll) {
+            toast.error('Một số ghế vừa bị đặt hoặc giữ bởi người khác. Vui lòng chọn lại.')
+            return false
+        }
+
+        // Re-check orphan sau khi polling
+        const orphanResultAfterPoll = checkOrphan(
+            freshLayout.grid,
+            new Set(freshLayout.bookedIds),
+            new Set(freshLayout.lockedIds),
+            new Set(selectedIds.value),
+        )
+        if (orphanResultAfterPoll.hasOrphan) {
+            orphanWarning.value = orphanResultAfterPoll
+            return false
+        }
+    }
+
     return doNext()
 }
 
@@ -247,6 +275,21 @@ async function doNext() {
 
     const result = await seatLock.acquireLocks(userId, showtimeId, selectedIds.value)
     if (!result?.success) {
+        const orphanError = extractOrphanError(seatLock.error.value)
+        const rawError = (result as any)?.rawError ?? null
+        const orphanFromRaw = rawError ? extractOrphanError(rawError) : null
+        const orphan = orphanError ?? orphanFromRaw
+
+        if (orphan) {
+            orphanWarning.value = {
+                hasOrphan: true,
+                orphanCount: orphan.orphanCount,
+                message: orphan.message,
+            }
+            await retry()
+            return false
+        }
+
         toast.error(seatLock.error.value || 'Không thể giữ ghế. Vui lòng thử lại.')
         await retry()
         return false

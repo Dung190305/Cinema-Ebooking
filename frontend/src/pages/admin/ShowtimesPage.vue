@@ -53,13 +53,14 @@
         </div>
 
         <!-- Data Table -->
-        <DataTable :rows="showtimes" :columns="columns" createLabel="Thêm suất chiếu" :fieldErrors="fieldErrors"
-            @create="openCreateModal" :showCreate="canCreate" :showDelete="false" :showSave="false">
+        <DataTable ref="dataTableRef" :rows="showtimes" :columns="columns" createLabel="Thêm suất chiếu"
+            :fieldErrors="fieldErrors" @create="openCreateModal" :showCreate="canCreate" :showDelete="false"
+            :showSave="false">
 
             <template #detail-actions="{ item }">
                 <button v-if="item.status !== 'CANCELLED' && item.status !== 'FINISHED'"
                     class="flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 py-2.5 text-sm text-red-600 hover:bg-red-50"
-                    @click="handleCancel(item)">
+                    @click="openCancelConfirm(item)">
                     <XCircle class="size-4" />
                     Hủy suất chiếu
                 </button>
@@ -111,6 +112,48 @@
             </template>
         </CreateModal>
 
+        <Teleport to="body">
+            <Transition name="fade">
+                <div v-if="showCancelConfirmModal"
+                    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+                    @click.self="closeCancelConfirm">
+                    <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
+                        <div class="flex items-start gap-3 mb-4">
+                            <div class="shrink-0 mt-0.5">
+                                <AlertTriangle class="h-6 w-6 text-red-500" />
+                            </div>
+                            <div>
+                                <h2 class="text-lg font-semibold text-gray-900">Xác nhận hủy suất chiếu</h2>
+                                <div class="mt-2 text-sm text-gray-600 space-y-2">
+                                    <p>Bạn có chắc chắn muốn hủy suất chiếu này?</p>
+                                    <p class="text-error font-medium">
+                                        Hủy suất chiếu sẽ hoàn tiền <span class="underline">100%</span> cho tất cả vé đã
+                                        đặt và
+                                        gửi yêu cầu hoàn tiền đến admin.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex justify-end gap-3 mt-6">
+                            <button
+                                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                                @click="closeCancelConfirm">
+                                Quay lại
+                            </button>
+                            <button
+                                class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
+                                :disabled="isCancelling" @click="confirmCancel">
+                                <span v-if="isCancelling" class="flex items-center gap-2">
+                                    <Loader2 class="h-4 w-4 animate-spin" /> Đang xử lý...
+                                </span>
+                                <span v-else>Hủy suất chiếu</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </Transition>
+        </Teleport>
+
         <SeatMapDialog v-model:isOpen="isSeatMapOpen" :showtimeId="seatMapShowtimeId" />
 
     </div>
@@ -119,7 +162,8 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch, readonly } from 'vue';
 import { useRoute } from 'vue-router'
-import { Armchair, XCircle } from 'lucide-vue-next'
+import { Armchair, XCircle, AlertTriangle, Loader2 } from 'lucide-vue-next'
+import { useToast } from 'vue-toastification';
 import DataTable from '@/components/common/table/DataTable.vue'
 import CreateModal from '@/components/common/table/subcomponents/CreateModal.vue'
 import { useShowtime } from '@/composables/useShowtime'
@@ -147,6 +191,13 @@ const isLoadingCinemas = ref(true)
 
 const seatMapShowtimeId = ref<number | null>(null)
 const isSeatMapOpen = ref(false)
+
+const showCancelConfirmModal = ref(false)
+const showtimeToCancel = ref<ShowtimeResponse | null>(null)
+const isCancelling = ref(false)
+
+
+const dataTableRef = ref<InstanceType<typeof DataTable> | null>(null);
 
 const {
     showtimes, isLoading, fieldErrors, globalErrors,
@@ -315,13 +366,28 @@ async function handleCreate(draft: Record<string, unknown>) {
     if (ok) showCreateModal.value = false
 }
 
-async function handleCancel(item: ShowtimeResponse) {
-    if (item.status === 'CANCELLED') {
-        alert('Suất chiếu đã bị hủy trước đó')
-        return
-    }
-    if (confirm(`Hủy suất chiếu #${item.id}?`)) {
-        await cancel(item)
+function openCancelConfirm(item: ShowtimeResponse) {
+    showtimeToCancel.value = item
+    showCancelConfirmModal.value = true
+}
+
+function closeCancelConfirm() {
+    showCancelConfirmModal.value = false
+    showtimeToCancel.value = null
+}
+
+const toast = useToast()
+
+async function confirmCancel() {
+    if (!showtimeToCancel.value) return
+    isCancelling.value = true
+    try {
+        await cancel(showtimeToCancel.value)
+        closeCancelConfirm()
+        dataTableRef.value?.closeDetail();
+        toast.success('Đã hủy suất chiếu thành công', { autoClose: 3000 })
+    } finally {
+        isCancelling.value = false
     }
 }
 

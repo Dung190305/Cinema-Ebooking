@@ -60,7 +60,7 @@ const showtimeMenuItems: NavDropdownItemData[] = [
 const promotionMenuItems: NavDropdownItemData[] = [
     {
         label: 'Ưu đãi thành viên',
-        onClick: () => router.push('/promotions')
+        onClick: () => router.push('/loyalty-program')
     },
     {
         label: 'Coupon',

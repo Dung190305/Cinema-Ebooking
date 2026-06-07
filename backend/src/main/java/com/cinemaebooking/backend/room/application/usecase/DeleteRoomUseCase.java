@@ -6,11 +6,9 @@ import com.cinemaebooking.backend.room.application.port.RoomRepository;
 import com.cinemaebooking.backend.room.domain.model.Room;
 import com.cinemaebooking.backend.room.domain.valueObject.RoomId;
 import com.cinemaebooking.backend.showtime.application.port.ShowtimeRepository;
-import com.cinemaebooking.backend.showtime.domain.enums.ShowtimeStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -32,8 +30,7 @@ public class DeleteRoomUseCase {
         if (room.isEmpty()) {
             throw RoomExceptions.notFound(id);
         }
-        if (showtimeRepository.existsByRoomIdAndStatusIn(id.getValue(), List.of(ShowtimeStatus.SCHEDULED, ShowtimeStatus.ONGOING)
-        )){
+        if (showtimeRepository.existsActiveByRoomId(id.getValue())) {
             throw RoomExceptions.deleteBlockedByShowtime(room.get().getName());
         }
         roomRepository.deleteById(id);

@@ -25,7 +25,7 @@ public class Showtime extends BaseEntity<ShowtimeId> {
     private Language audioLanguage;
     private Language subtitleLanguage;
 
-    private ShowtimeStatus status;
+    private boolean cancelled;
 
     // =====================================================
     // BUSINESS METHODS
@@ -45,16 +45,23 @@ public class Showtime extends BaseEntity<ShowtimeId> {
         this.audioLanguage = audio;
         this.subtitleLanguage = subtitle;
     }
-    public void changeStatus(ShowtimeStatus newStatus) {
-        if (newStatus == null) {
-            throw CommonExceptions.invalidInput("Showtime status cannot be null");
-        }
-        this.status = newStatus;
+
+    public ShowtimeStatus getStatus() {
+        if (cancelled) return ShowtimeStatus.CANCELLED;
+
+        Instant now = Instant.now();
+        if (now.isBefore(startTime))              return ShowtimeStatus.SCHEDULED;
+        if (now.isBefore(endTime))                return ShowtimeStatus.ONGOING;
+        return ShowtimeStatus.FINISHED;
     }
 
     public void cancel() {
-        this.status =ShowtimeStatus.CANCELLED;
+        if (this.cancelled) {
+            throw CommonExceptions.invalidInput("Showtime already cancelled");
+        }
+        this.cancelled = true;
     }
+
 
     public void validateForCreate() {
         validateMovieId(movieId);
@@ -64,9 +71,6 @@ public class Showtime extends BaseEntity<ShowtimeId> {
         validateStartEnd(startTime, endTime);
         validateLanguages(audioLanguage, subtitleLanguage);
 
-        if (status == null) {
-            throw CommonExceptions.invalidInput("Showtime status cannot be null");
-        }
         if (roomLayoutId == null || roomLayoutId <= 0) {
             throw CommonExceptions.invalidInput("roomLayoutId must be a positive number");
         }

@@ -4,9 +4,13 @@ import com.cinemaebooking.backend.common.exception.domain.ShowtimeSeatExceptions
 import com.cinemaebooking.backend.common.exception.domain.SeatLockExceptions;
 import com.cinemaebooking.backend.seat_lock.application.dto.AcquireLockResponse;
 import com.cinemaebooking.backend.seat_lock.application.port.SeatLockService;
+import com.cinemaebooking.backend.seat_lock.application.validator.OrphanSeatValidator;
 import com.cinemaebooking.backend.seat_lock.infrastructure.persistence.entity.SeatLockJpaEntity;
 import com.cinemaebooking.backend.seat_lock.infrastructure.persistence.repository.SeatLockJpaRepository;
 import com.cinemaebooking.backend.showtime_seat.domain.enums.ShowtimeSeatStatus;
+import com.cinemaebooking.backend.showtime_seat.domain.model.ShowtimeSeat;
+import com.cinemaebooking.backend.showtime_seat.domain.valueobject.ShowtimeSeatId;
+import com.cinemaebooking.backend.showtime_seat.infrastructure.mapper.ShowtimeSeatMapper;
 import com.cinemaebooking.backend.showtime_seat.infrastructure.persistence.entity.ShowtimeSeatJpaEntity;
 import com.cinemaebooking.backend.showtime_seat.infrastructure.persistence.repository.ShowtimeSeatJpaRepository;
 import com.cinemaebooking.backend.user.infrastructure.persistence.entity.UserJpaEntity;
@@ -20,6 +24,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -56,6 +61,8 @@ public class SeatLockServiceImpl implements SeatLockService {
     private final SeatLockJpaRepository seatLockJpaRepository;
     private final ShowtimeSeatJpaRepository showtimeSeatJpaRepository;
     private final UserJpaRepository userJpaRepository;
+    private final OrphanSeatValidator orphanSeatValidator;
+    private final ShowtimeSeatMapper showtimeSeatMapper;
 
     @Value("${seat-lock.lock-duration-minutes:7}")
     private int lockDurationMinutes;
@@ -88,25 +95,24 @@ public class SeatLockServiceImpl implements SeatLockService {
         for (Long seatId : seatIds) {
             ShowtimeSeatJpaEntity seatEntity = seatMap.get(seatId);
             if (seatEntity == null) {
-                throw ShowtimeSeatExceptions.unavailable(
-                        new com.cinemaebooking.backend.showtime_seat.domain.valueobject.ShowtimeSeatId(seatId));
+                throw ShowtimeSeatExceptions.unavailable(new ShowtimeSeatId(seatId));
             }
-
-            // Business rule: ghế phải AVAILABLE mới lock được
             if (seatEntity.getStatus() != ShowtimeSeatStatus.AVAILABLE) {
-                throw ShowtimeSeatExceptions.unavailable(
-                        new com.cinemaebooking.backend.showtime_seat.domain.valueobject.ShowtimeSeatId(seatId));
+                throw ShowtimeSeatExceptions.unavailable(new ShowtimeSeatId(seatId));
             }
-
-            // Business rule: không lock được ghế đang bị lock bởi user khác
             seatLockJpaRepository.findActiveLockByShowtimeSeatId(seatId, now)
                     .ifPresent(existingLock -> {
                         if (!existingLock.getUser().getId().equals(userId)) {
                             throw SeatLockExceptions.conflict(seatEntity.getSeatNumber());
                         }
                     });
+        }
 
-            // Tạo mới hoặc extend lock hiện tại
+        validateNoOrphanAfterLock(showtimeId, seatIds, seatMap, userId, now);
+
+        for (Long seatId : seatIds) {
+            ShowtimeSeatJpaEntity seatEntity = seatMap.get(seatId);
+
             SeatLockJpaEntity lockEntity = seatLockJpaRepository
                     .findActiveLockByShowtimeSeatIdAndUserId(seatId, userId, now)
                     .orElse(null);
@@ -124,7 +130,6 @@ public class SeatLockServiceImpl implements SeatLockService {
 
             seatLockJpaRepository.save(lockEntity);
 
-            // Update ShowtimeSeat status: AVAILABLE → LOCKED
             seatEntity.setStatus(ShowtimeSeatStatus.LOCKED);
             showtimeSeatJpaRepository.save(seatEntity);
 
@@ -140,6 +145,44 @@ public class SeatLockServiceImpl implements SeatLockService {
                 .lockedSeats(lockedSeats)
                 .expiredAt(expiredAt)
                 .build();
+    }
+
+    private void validateNoOrphanAfterLock(
+            Long showtimeId,
+            List<Long> proposedSeatIds,
+            Map<Long, ShowtimeSeatJpaEntity> proposedSeatMap,
+            Long userId,
+            LocalDateTime now
+    ) {
+        // Load full layout
+        List<ShowtimeSeatJpaEntity> fullLayoutEntities =
+                showtimeSeatJpaRepository.findByShowtimeId(showtimeId);
+
+        // Convert JPA → domain model tối giản (chỉ các field OrphanSeatValidator cần)
+        List<ShowtimeSeat> fullLayout = fullLayoutEntities.stream()
+                .map(showtimeSeatMapper::toDomain)
+                .toList();
+
+        // coupleTypeId: seatTypeId của ghế nào có coupleGroupId != null
+        // Assumption: tất cả ghế đôi trong layout dùng cùng 1 seatTypeId (đúng với thiết kế hiện tại)
+        // Nếu layout không có ghế đôi → null → validator skip couple logic
+        Long coupleTypeId = fullLayoutEntities.stream()
+                .filter(e -> e.getCoupleGroudId() != null)
+                .map(ShowtimeSeatJpaEntity::getSeatTypeId)
+                .findFirst()
+                .orElse(null);
+
+        // Query existing locks của current user cho showtime này
+        // Những ghế này KHÔNG được tính là "taken" trong orphan validation
+        List<SeatLockJpaEntity> currentUserLocks = seatLockJpaRepository
+                .findActiveLocksByUserIdAndShowtimeId(userId, showtimeId, now);
+        Set<Long> currentUserLockedSeatIds = currentUserLocks.stream()
+                .map(lock -> lock.getShowtimeSeat().getId())
+                .collect(Collectors.toSet());
+
+        Set<Long> proposedIds = proposedSeatIds.stream().collect(Collectors.toSet());
+
+        orphanSeatValidator.validate(fullLayout, coupleTypeId, proposedIds, userId, currentUserLockedSeatIds);
     }
 
     // ================== RELEASE USER LOCKS ==================
