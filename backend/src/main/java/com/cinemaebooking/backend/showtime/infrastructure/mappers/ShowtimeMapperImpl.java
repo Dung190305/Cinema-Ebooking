@@ -27,7 +27,7 @@ public class ShowtimeMapperImpl implements ShowtimeMapper {
                                 ? entity.getSubtitleLanguage()
                                 : null
                 )
-                .status(entity.getStatus())
+                .cancelled(entity.isCancelled())
                 .movieId(entity.getMovie() != null ? entity.getMovie().getId() : null)
                 .roomId(entity.getRoom() != null ? entity.getRoom().getId() : null)
                 .roomLayoutId(entity.getRoomLayoutId())
@@ -54,7 +54,7 @@ public class ShowtimeMapperImpl implements ShowtimeMapper {
                                 : null
                 )
                 .roomLayoutId(domain.getRoomLayoutId())
-                .status(domain.getStatus())
+                .cancelled(domain.isCancelled())
                 .build();
     }
 }

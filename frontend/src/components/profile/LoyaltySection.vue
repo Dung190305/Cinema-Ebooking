@@ -19,9 +19,16 @@ defineProps<{
 <template>
     <section v-if="!loading"
         class="bg-bg-surface rounded-2xl p-5 sm:p-6 shadow-sm border border-border-subtle space-y-6">
-        <p v-if="error" class="text-caption text-red-500">{{ error }}</p>
-        <h2 class="text-title text-text-primary">Thành viên thân thiết</h2>
 
+        <div class="flex items-center justify-between flex-wrap gap-3">
+            <h2 class="text-title text-text-primary">Thành viên thân thiết</h2>
+            <router-link to="/loyalty-program"
+                class="text-caption text-accent hover:underline flex items-center gap-1 transition">
+                Chi tiết chương trình
+                <span aria-hidden="true">→</span>
+            </router-link>
+        </div>
+        <p v-if="error" class="text-caption text-red-500">{{ error }}</p>
         <!-- Hạng hiện tại -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>

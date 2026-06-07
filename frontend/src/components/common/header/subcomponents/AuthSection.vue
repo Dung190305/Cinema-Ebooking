@@ -61,7 +61,7 @@
                             </div>
 
                             <div @click="goToCoupons"
-                                class="block rounded-t-md px-3 sm:px-4 py-2 text-sm text-text-primary hover:bg-accent cursor-pointer">
+                                class="block px-3 sm:px-4 py-2 text-sm text-text-primary hover:bg-accent cursor-pointer">
                                 Mã khuyến mãi
                             </div>
                             <div v-if="auth.user?.role == 'ADMIN'" @click="goToAdminPage"

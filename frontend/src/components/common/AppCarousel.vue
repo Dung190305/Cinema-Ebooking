@@ -14,7 +14,7 @@
             </div>
         </div>
 
-        <div v-if="dots && items.length > 1" class="absolute bottom-6 left-1/2 z-10 flex -translate-x-1/2 gap-2">
+        <div v-if="dots && items.length > 1" class="absolute bottom-6 left-1/2 flex -translate-x-1/2 gap-2">
             <button v-for="(item, idx) in items" :key="idx" type="button"
                 class="h-2.5 w-2.5 rounded-full transition-all duration-300 ease-out focus:outline-none will-change-transform"
                 :class="idx === activeDotIndex
@@ -53,7 +53,7 @@
                 navButtonClass,
             ]" :style="nextBtnStyle" :disabled="isAnimating || (!infinite && currentIndex <= 0)" @click="next"
             aria-label="Next">
-            <span :style="edgeButtons ? { transform: 'translateX(30%)', display: 'inline-flex' } : {}"
+            <span :style="edgeButtons ? { transform: 'translateX(-30%)', display: 'inline-flex' } : {}"
                 class="text-text-secondary hover:text-text-primary">
                 <BaseIcon :icon="nextIcon || ChevronRight" :size="simpleNav ? 28 : 32" />
             </span>

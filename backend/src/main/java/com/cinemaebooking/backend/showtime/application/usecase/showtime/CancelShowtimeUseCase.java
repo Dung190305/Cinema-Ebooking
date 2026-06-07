@@ -33,15 +33,7 @@ public class CancelShowtimeUseCase {
         Showtime showtime = showtimeRepository.findById(id)
                 .orElseThrow(() -> ShowtimeExceptions.notFound(id));
 
-        // Chỉ cho phép huỷ khi suất chiếu chưa kết thúc hoặc chưa huỷ
-        if (showtime.getStatus() == ShowtimeStatus.CANCELLED) {
-            throw CommonExceptions.invalidInput("Showtime already cancelled");
-        }
-        if (showtime.getStatus() == ShowtimeStatus.FINISHED) {
-            throw CommonExceptions.invalidInput("Cannot cancel finished showtime");
-        }
-
-        showtime.cancel(); // thêm method trong domain model: this.status = ShowtimeStatus.CANCELLED;
+        showtime.cancel();
         Showtime saved = showtimeRepository.update(showtime);
 
         Long cinemaId = roomRepository.getCinemaIdByRoomId(RoomId.of(saved.getRoomId()));

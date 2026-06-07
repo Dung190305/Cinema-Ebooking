@@ -15,7 +15,7 @@ export function useBookingFilters() {
   })
 
   // Filter states – using Date objects for CalendarPicker binding
-  const status = ref<BookingStatus | ''>('')
+  const status = ref<BookingStatus | ''>('CONFIRMED')
   const fromDate = ref<Date | null>(null)
   const toDate = ref<Date | null>(null)
 
@@ -59,7 +59,7 @@ export function useBookingFilters() {
   }
 
   const clearFilters = () => {
-    status.value = ''
+    status.value = 'CONFIRMED'
     fromDate.value = null
     toDate.value = null
     handleFilter()

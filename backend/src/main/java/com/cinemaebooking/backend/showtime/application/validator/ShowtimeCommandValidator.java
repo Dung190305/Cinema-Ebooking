@@ -63,7 +63,6 @@ public class ShowtimeCommandValidator {
 
     public void validateUpdateRequest(ShowtimeId id, UpdateShowtimeRequest request) {
         validateUpdateInput(id, request);
-        // ... (giữ nguyên logic update nếu có)
     }
 
     // ================== INPUT VALIDATION ==================

@@ -55,34 +55,33 @@ export function useSeatLock(onTimeout?: () => void) {
         }, 1000)
     }
 
-    async function acquireLocks(userId: number, showtimeId: number, seatIds: number[]) {
-        if (seatIds.length === 0) return { success: true, data: null }
-
+        async function acquireLocks(userId: number, showtimeId: number, seatIds: number[]) {
+        if (seatIds.length === 0) return { success: true, data: null, lockedSeats: [] }
+ 
         isLoading.value = true
         error.value = ''
-
+ 
         try {
-        const result = await seatLockApi.acquireLocks({ userId, showtimeId, seatIds })
-        if (result?.success) {
-            lockedSeats.value = result.lockedSeats || []
-            const expiry = result.expiredAt || new Date(Date.now() + 5 * 60 * 1000).toISOString()
-            expiredAt.value = expiry
-            startTimer()
-            return { success: true, data: result }
-        } else {
-            // Chi tiết lỗi từ backend nếu có
-            const msg = result?.message || (result?.lockedSeats?.length === 0 
-            ? 'Tất cả ghế đã được đặt hoặc bị giữ bởi người khác' 
-            : 'Một số ghế không thể giữ')
+            const result = await seatLockApi.acquireLocks({ userId, showtimeId, seatIds })
+            if (result?.success) {
+                lockedSeats.value = result.lockedSeats || []
+                const expiry = result.expiredAt || new Date(Date.now() + 5 * 60 * 1000).toISOString()
+                expiredAt.value = expiry
+                startTimer()
+                return { success: true, data: result, lockedSeats: result.lockedSeats }
+            } else {
+                const msg = result?.message || 'Một số ghế không thể giữ'
+                error.value = msg
+                return { success: false, error: msg, rawError: null }
+            }
+        } catch (err: unknown) {
+            // err là error object từ axios interceptor: { type, fieldErrors, globalErrors, code, message, raw }
+            const msg = (err as any)?.message || 'Không thể khóa ghế. Vui lòng thử lại.'
             error.value = msg
-            return { success: false, error: msg }
-        }
-        } catch (err: any) {
-        const msg = err?.response?.data?.message || 'Không thể khóa ghế. Vui lòng thử lại.'
-        error.value = msg
-        return { success: false, error: msg }
+            // rawError: giữ nguyên để SeatSelection.vue có thể dùng extractOrphanError()
+            return { success: false, error: msg, rawError: err }
         } finally {
-        isLoading.value = false
+            isLoading.value = false
         }
     }
 

@@ -161,4 +161,10 @@ function onSave(updated: RowItem) {
     }
     emit('save', updated as T, done)
 }
+
+defineExpose({
+    closeDetail: () => {
+        selectedItem.value = null;
+    }
+});
 </script>

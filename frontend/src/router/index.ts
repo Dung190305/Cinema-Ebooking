@@ -68,6 +68,13 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/pages/MyCouponsPage.vue'),
         meta: { title: 'Coupon của tôi', requiresAuth: true },
       },
+
+      {
+        path: '/loyalty-program',
+        name: 'LoyaltyProgram',
+        component: () => import('@/pages/LoyaltyProgramPage.vue'),
+        meta: { title: 'Chương trình thành viên' }
+      }
     ],
   },
 
