@@ -135,63 +135,6 @@ function restoreLockFromStorage(showtimeId: number): boolean {
     }
 }
 
-async function checkPendingBooking(): Promise<boolean> {
-    const userId = authStore.user?.id
-    const showtimeId = booking.selectedShowtime.value?.id
-    if (!userId || !showtimeId) return false
-
-    try {
-        const response = await bookingApi.getPendingBooking(userId, showtimeId)
-        if (response?.data?.bookingId) {
-            pendingBookingId.value = response.data.bookingId
-
-            // 🔁 Khôi phục lock từ storage
-            const restored = restoreLockFromStorage(showtimeId)
-            if (!restored) {
-                // Không khôi phục được → lock đã hết hạn hoặc không có
-                // Tự động hủy booking cũ để tránh xung đột
-                await cancelOldBookingAndReset()
-                return false
-            }
-
-            showPendingDialog.value = true
-            return true
-        }
-    } catch (error: any) {
-        if (![404, 400].includes(error?.response?.status)) {
-            generalError.value = 'Không thể kiểm tra đơn hàng đang chờ'
-        }
-    }
-    pendingBookingId.value = null
-    return false
-}
-
-// Tiếp tục thanh toán với booking cũ
-async function continuePayment() {
-    if (!pendingBookingId.value) return
-    showPendingDialog.value = false
-    isProcessing.value = true
-    generalError.value = ''
-
-    try {
-        const paymentRes = await paymentApi.create({
-            bookingId: pendingBookingId.value,
-            method: selectedPaymentMethod.value,
-            callbackUrl: `${window.location.origin}/payment/result`,
-        })
-        if (!paymentRes.paymentUrl) {
-            generalError.value = 'Không thể tạo lại link thanh toán. Vui lòng thử lại.'
-            return
-        }
-        sessionStorage.setItem('returned_from_payment', 'true')
-        window.location.href = paymentRes.paymentUrl
-    } catch (err: any) {
-        generalError.value = err?.message || 'Lỗi khi tạo lại thanh toán.'
-    } finally {
-        isProcessing.value = false
-    }
-}
-
 // Huỷ booking cũ, reset state để chọn lại ghế
 async function cancelOldBookingAndReset() {
     if (!pendingBookingId.value) return
@@ -290,14 +233,6 @@ async function validateAndNext() {
         return false
     }
 
-    const returnedFlag = sessionStorage.getItem('returned_from_payment')
-    if (returnedFlag === 'true') {
-        const hasPending = await checkPendingBooking()
-        if (hasPending) return false // dialog sẽ hiện, không proceed
-        else sessionStorage.removeItem('returned_from_payment')
-    }
-
-
     await confirmAndPay()
     return true
 }
@@ -307,13 +242,6 @@ onMounted(async () => {
         await fetchAllCoupons()
     } catch (err: any) {
         generalError.value = 'Không thể tải danh sách coupon.'
-    }
-
-    // Chỉ kiểm tra pending nếu người dùng quay lại từ payment gateway
-    const returnedFlag = sessionStorage.getItem('returned_from_payment')
-    if (returnedFlag === 'true' && authStore.user?.id && booking.selectedShowtime.value?.id) {
-        await checkPendingBooking()
-        // Không xoá flag ngay, vì validateAndNext cũng cần biết
     }
 })
 

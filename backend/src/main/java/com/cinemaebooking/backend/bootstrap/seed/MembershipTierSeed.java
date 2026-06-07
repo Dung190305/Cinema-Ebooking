@@ -118,7 +118,7 @@ public class MembershipTierSeed {
                         String.format(
                                 "%s earns %.0f%% points for %s",
                                 tier.getName(),
-                                multiplier.multiply(BigDecimal.valueOf(100)),
+                                multiplier,
                                 earningType
                         )
                 )
