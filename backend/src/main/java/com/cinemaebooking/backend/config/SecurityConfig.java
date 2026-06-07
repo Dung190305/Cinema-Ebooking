@@ -53,6 +53,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/coupons/public").permitAll()
 
                         // ⭐ Các GET cần xác thực - đặt TRƯỚC rule permitAll chung
+                        .requestMatchers(HttpMethod.GET, "/api/v1/bookings/admin/all").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/me/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/bookings/me").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/loyalty/my-account").authenticated()
