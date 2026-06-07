@@ -49,6 +49,7 @@ export function useShowtimes(movieId?: number, options?: { autoFetch?: boolean }
         const params: any = {
           page: 0,
           size: 200,
+          status: 'SCHEDULED',
           sort: 'startTime,asc'
         }
       

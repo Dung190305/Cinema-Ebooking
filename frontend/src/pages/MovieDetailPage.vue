@@ -38,13 +38,13 @@
                   />
                 </svg>
                 <span class="font-semibold text-base xl:text-lg">
-                  {{ movie.rating !== null ? movie.rating.toFixed(1) : '0.0' }}
+                  {{ reviewRatingDisplay !== null ? reviewRatingDisplay.toFixed(1) : '0.0' }}
                 </span>
               </div>
               <span
                 class="text-xs xl:text-sm text-text-secondary border-l border-white/10 pl-2 group-hover:text-text-primary transition-colors downward-arrow"
               >
-                Xem đánh giá
+                {{ reviewCountDisplay > 0 ? `${reviewCountDisplay} đánh giá` : 'Xem đánh giá' }}
               </span>
             </button>
           </div>
@@ -170,7 +170,13 @@
               </div>
 
               <div class="flex-1 overflow-y-auto p-6 custom-scrollbar">
-                <MovieReviewSection :movie-id="movie.id" class="w-full" @request-login="handleRequestLogin" />
+                <MovieReviewSection
+                  ref="reviewSectionRef"
+                  :movie-id="movie.id"
+                  class="w-full"
+                  @request-login="handleRequestLogin"
+                  @reviews-updated="onReviewsUpdated"
+                />
               </div>
             </div>
           </Transition>
@@ -189,6 +195,7 @@ import MovieCard from '@/components/movie/MovieCard.vue'
 import MovieShowtimeSidebar from '@/components/movie/MovieShowtimeSidebar.vue'
 import MovieReviewSection from '@/components/movie/MovieReviewSection.vue' // Import lại vào đây
 import { useMovieDetail } from '@/composables/useMovieDetail'
+import { reviewApi } from '@/api/review.api'
 import { formatDateVN } from '@/utils/dateFormat'
 import GenrePill from '@/components/movie/GenrePill.vue'
 import { Clock, Calendar } from 'lucide-vue-next'
@@ -202,6 +209,38 @@ const ui = useUIStore()
 
 // State quản lý việc đóng/mở Modal đánh giá
 const isReviewOpen = ref(false)
+
+// Ref để truy cập MovieReviewSection
+const reviewSectionRef = ref<InstanceType<typeof MovieReviewSection> | null>(null)
+
+// Rating từ reviews — load trực tiếp ở đây để header hiển thị ngay
+const reviewRating = ref(0)
+const reviewCount = ref(0)
+
+const loadHeaderRating = async (movieId: number) => {
+  try {
+    const res = await reviewApi.getByMovieId(movieId, { size: 0 })
+    const page = (res as any).data ?? res
+    const content: any[] = page.content ?? []
+    reviewCount.value = page.totalElements ?? 0
+    if (content.length > 0) {
+      const sum = content.reduce((acc: number, r: any) => acc + (r.rating ?? 0), 0)
+      reviewRating.value = sum / content.length
+    } else {
+      reviewRating.value = 0
+    }
+  } catch (e) {
+    console.error('Lỗi load header rating:', e)
+  }
+}
+
+const reviewRatingDisplay = computed(() => reviewRating.value)
+const reviewCountDisplay = computed(() => reviewCount.value)
+
+const onReviewsUpdated = (avg: number, total: number) => {
+  reviewRating.value = avg
+  reviewCount.value = total
+}
 
 const handleRequestLogin = () => {
   isReviewOpen.value = false
@@ -228,6 +267,9 @@ watch(
     movie.value = null // reset để tránh hiển thị data cũ trong lúc load
     isReviewOpen.value = false // Tự động đóng popup khi chuyển phim
     await fetchMovie(targetId)
+    if (movie.value) {
+      await loadHeaderRating(movie.value.id)
+    }
   },
   { immediate: true },
 )

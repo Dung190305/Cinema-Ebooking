@@ -5,29 +5,16 @@ import com.cinemaebooking.backend.review.application.port.AIServicePort;
 import com.cinemaebooking.backend.review.application.port.AiAnalysisResult;
 import com.cinemaebooking.backend.review.domain.enums.ReviewDecision;
 import com.cinemaebooking.backend.review.domain.enums.ReviewSentiment;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 
-/**
- * AIServiceAdapter - Gọi FastAPI AI service để phân tích comment.
- *
- * <p>FastAPI trả về đầy đủ thông tin từ pipeline 3 tầng:
- * <ol>
- *   <li>Tầng 1: Hard Filter (toxic/teensex) → cleanedText, censoredWords</li>
- *   <li>Tầng 2: Sentiment Analysis → sentiment, sentimentScore</li>
- *   <li>Tầng 3: Spoiler Detection → isSpoiler, spoilerConf</li>
- * </ol>
- *
- * @author ducthinhn
- * @since 2026
- */
 @Slf4j
 @Component
 public class AIServiceAdapter implements AIServicePort {
@@ -35,6 +22,7 @@ public class AIServiceAdapter implements AIServicePort {
     private final RestTemplate restTemplate;
     private final String aiServiceUrl;
     private final boolean aiEnabled;
+    private final ObjectMapper objectMapper;
 
     public AIServiceAdapter(
             RestTemplate restTemplate,
@@ -44,6 +32,7 @@ public class AIServiceAdapter implements AIServicePort {
         this.restTemplate = restTemplate;
         this.aiServiceUrl = aiServiceUrl;
         this.aiEnabled = aiEnabled;
+        this.objectMapper = new ObjectMapper();
     }
 
     @Override
@@ -71,23 +60,28 @@ public class AIServiceAdapter implements AIServicePort {
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<AiRequest> entity = new HttpEntity<>(request, headers);
 
-            ResponseEntity<ApiResponseDto> response = restTemplate.exchange(
+            ResponseEntity<String> rawResponse = restTemplate.exchange(
                     aiServiceUrl,
                     HttpMethod.POST,
                     entity,
-                    ApiResponseDto.class
+                    String.class
             );
 
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                return toAiResult(response.getBody());
-            }
+            String rawBody = rawResponse.getBody();
+            log.info("AI Raw Response: {}", rawBody);
 
-            log.warn("AI service returned non-2xx or empty body, using fallback");
-        } catch (RestClientException e) {
-            log.error("AI service connection failed: {}. Using fallback result.", e.getMessage());
+            if (rawBody == null || rawBody.isBlank()) {
+                log.warn("AI service returned empty body, using fallback");
+            } else {
+                ApiResponseDto dto = objectMapper.readValue(rawBody, ApiResponseDto.class);
+                if (dto != null) {
+                    return toAiResult(dto);
+                }
+            }
+        } catch (Exception e) {
+            log.error("AI service error: {}", e.getMessage());
         }
 
-        // Fallback: coi comment là hợp lệ
         return AiAnalysisResult.builder()
                 .isValid(true)
                 .sentiment(ReviewSentiment.NEUTRAL)
@@ -128,7 +122,7 @@ public class AIServiceAdapter implements AIServicePort {
         return switch (label.toUpperCase()) {
             case "POSITIVE" -> ReviewSentiment.POSITIVE;
             case "NEGATIVE" -> ReviewSentiment.NEGATIVE;
-            default -> ReviewSentiment.NEUTRAL;  // Spoiler → coi là neutral cho sentiment
+            default -> ReviewSentiment.NEUTRAL;
         };
     }
 
@@ -140,6 +134,7 @@ public class AIServiceAdapter implements AIServicePort {
             default -> ReviewDecision.APPROVED;
         };
     }
+
     @Getter
     private static class AiRequest {
         private final String text;

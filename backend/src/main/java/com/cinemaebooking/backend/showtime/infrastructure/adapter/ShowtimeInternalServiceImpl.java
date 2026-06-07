@@ -3,7 +3,6 @@ package com.cinemaebooking.backend.showtime.infrastructure.adapter;
 import com.cinemaebooking.backend.common.exception.domain.CommonExceptions;
 import com.cinemaebooking.backend.common.exception.domain.ShowtimeExceptions;
 import com.cinemaebooking.backend.common.exception.domain.ShowtimeSeatExceptions;
-import com.cinemaebooking.backend.room_layout.application.port.roomLayout.RoomLayoutInternalService;
 import com.cinemaebooking.backend.room_layout.application.port.seatType.SeatTypeRepository;
 import com.cinemaebooking.backend.room_layout.domain.model.seatType.SeatType;
 import com.cinemaebooking.backend.seat_lock.application.port.SeatLockService;
@@ -26,7 +25,6 @@ import java.util.stream.Collectors;
 public class ShowtimeInternalServiceImpl implements ShowtimeInternalService {
     private final ShowtimeRepository showtimeRepository;
     private final ShowtimeSeatRepository seatRepository;
-    private final RoomLayoutInternalService layoutService;
     private final SeatTypeRepository seatTypeRepository;
     private final SeatLockService seatLockService;
 
@@ -39,7 +37,7 @@ public class ShowtimeInternalServiceImpl implements ShowtimeInternalService {
     @Override
     @Transactional
     public List<ShowtimeSeat> validateAndLockSeats(Long showtimeId, List<Long> seatIds, Long userId) {
-        // 1. Lấy danh sách ShowtimeSeat từ DB
+        // 1. Lấy danh sách ShowtimeSeat được chọn từ DB
         List<ShowtimeSeat> seats = seatRepository.findAllByIds(seatIds);
 
         // 2. Kiểm tra tìm đủ số ghế
@@ -47,29 +45,34 @@ public class ShowtimeInternalServiceImpl implements ShowtimeInternalService {
             throw CommonExceptions.resourceNotFound("Một số ghế không tồn tại trong hệ thống.");
         }
 
-        // 3. Kiểm tra ghế thuộc đúng showtime (Giữ logic kiểm tra an toàn từ HEAD)
+        // 3. Kiểm tra ghế thuộc đúng showtime
         for (ShowtimeSeat seat : seats) {
             if (!seat.getShowtimeId().equals(showtimeId)) {
                 throw ShowtimeSeatExceptions.unavailable(seat.getId());
             }
         }
 
-        // 4. Validate trạng thái trống/lock và ghế đôi (Theo logic mới của develop)
-        validateSeatsAvailability(seats, userId);
-        validateCoupleSeatsInPairs(seats);
+        // 4. Lấy coupleTypeId (lookup 1 lần, tránh N+1)
+        Long coupleTypeId = getCoupleTypeId();
 
-        // Chỉ validate + lock, không tạo Ticket tại đây
+        // 5. Validate trạng thái AVAILABLE / LOCKED-by-user
+        validateSeatsAvailability(seats, userId);
+
+        // 6. Validate ghế đôi phải chọn theo cặp
+        validateCoupleSeatsInPairs(seats, coupleTypeId);
+
         return seats;
     }
 
-    private void validateCoupleSeatsInPairs(List<ShowtimeSeat> seats) {
-        // Lấy coupleTypeId một lần từ DB — tránh hardcode magic number
-        SeatType seatType = seatTypeRepository.findByNameIgnoreCase("COUPLE")
-                .orElse(null);
-        if (seatType == null) throw CommonExceptions.resourceNotFound("Seat type not found");
-        Long coupleTypeId = seatType.getId().getValue();
-        if (coupleTypeId == null) return; // Không có loại ghế đôi → skip
+    // ── PRIVATE HELPERS ──────────────────────────────────────
 
+    private Long getCoupleTypeId() {
+        SeatType seatType = seatTypeRepository.findByNameIgnoreCase("COUPLE").orElse(null);
+        if (seatType == null) throw CommonExceptions.resourceNotFound("Seat type not found");
+        return seatType.getId().getValue();
+    }
+
+    private void validateCoupleSeatsInPairs(List<ShowtimeSeat> seats, Long coupleTypeId) {
         Map<Long, List<ShowtimeSeat>> coupleGroups = seats.stream()
                 .filter(s -> coupleTypeId.equals(s.getSeatTypeId())
                         && s.getCoupleGroupId() != null)

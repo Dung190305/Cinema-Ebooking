@@ -54,9 +54,8 @@ public class ShowtimeJpaEntity extends BaseJpaEntity {
     @Column(length = 10)
     private Language subtitleLanguage;
 
-    @Enumerated(EnumType.STRING)
-    @Column(length = 10)
-    private ShowtimeStatus status;
+    @Column(nullable = false)
+    private boolean cancelled = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "movie_id", nullable = false)

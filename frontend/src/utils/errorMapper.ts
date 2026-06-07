@@ -106,3 +106,28 @@ export function mapFieldErrors(error: ApiError | null) {
 
     return { fieldErrors, globalErrors }
 }
+
+export function extractOrphanError(
+  error: unknown
+): { orphanCount: number; orphanSeats: string[]; message: string } | null {
+  const apiError = (error as any)?.raw as ApiError | undefined
+  if (!apiError) return null
+ 
+  const detail = apiError.details?.find(
+    (d: ApiErrorDetail) => d.field === 'seats' && d.category === 'INVALID_VALUE'
+  )
+  if (!detail) return null
+ 
+  const params = detail.params as Record<string, any> | undefined
+  const orphanCount: number = params?.orphanCount ?? 0
+  const orphanSeats: string[] = params?.orphanSeats ?? []
+ 
+  if (orphanCount === 0) return null
+ 
+  return {
+    orphanCount,
+    orphanSeats,
+    message: detail.reason,
+  }
+}
+ 
