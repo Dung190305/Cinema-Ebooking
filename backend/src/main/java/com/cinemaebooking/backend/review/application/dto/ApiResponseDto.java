@@ -1,5 +1,6 @@
 package com.cinemaebooking.backend.review.application.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,11 +12,15 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ApiResponseDto {
 
     private boolean valid;
     @JsonProperty("label")
     private String label;
+
+    @JsonProperty("label_score")
+    private double sentimentScore;
 
     @JsonProperty("final_decision")
     private String finalDecision;
@@ -24,9 +29,6 @@ public class ApiResponseDto {
 
     @JsonProperty("cleaned_text")
     private String cleanedText;
-
-    @JsonProperty("sentiment_score")
-    private double sentimentScore;
 
     @JsonProperty("is_spoiler")
     private boolean isSpoiler;
