@@ -55,7 +55,7 @@ export const bookingApi = {
     apiClient.get<BookingDetailResponse>(`/bookings/${id}`) as Promise<BookingDetailResponse>,
 
   getPendingBooking: (userId: number, showtimeId: number) =>
-    apiClient.get('/api/v1/bookings/pending', { params: { userId, showtimeId } }),
+    apiClient.get('/bookings/pending', { params: { userId, showtimeId } }),
 
   create: (data: CreateBookingRequest) =>
     apiClient.post<CreateBookingResponse>('/bookings', data) as Promise<CreateBookingResponse>,

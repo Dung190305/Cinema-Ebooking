@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.List;
 
 @Repository
 public interface MovieJpaRepository extends SoftDeleteJpaRepository<MovieJpaEntity> {
@@ -40,4 +41,13 @@ public interface MovieJpaRepository extends SoftDeleteJpaRepository<MovieJpaEnti
             @Param("ageRating") AgeRating ageRating,
             Pageable pageable
     );
+
+    @Query("""
+        SELECT DISTINCT m FROM MovieJpaEntity m
+        LEFT JOIN FETCH m.genres
+        WHERE m.id IN :ids
+          AND m.deletedAt IS NULL
+    """)
+    List<MovieJpaEntity> findAllByIdInWithGenres(@Param("ids") List<Long> ids);
+
 }

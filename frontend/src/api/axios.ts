@@ -27,9 +27,11 @@ const PUBLIC_ENDPOINTS = [
 const PROTECTED_GET_REGEX = [
   /^\/users\/me(\/|$)/,
   /^\/loyalty\/my-account(\/|$)/,
+  /^\/recommendations\/me(\/|$)/,
   /^\/admin(\/|$)/,
+  /^\/bookings\/admin(\/|$)/,
   /^\/bookings\/me(\/|$)/,
-  /^\/bookings\/\d+\/qr-code$/     
+  /^\/bookings\/\d+\/qr-code$/,
 ]
 
 const isPublicEndpoint = (url?: string): boolean => {

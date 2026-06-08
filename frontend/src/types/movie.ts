@@ -1,5 +1,5 @@
 // src/types/movie.types.ts
-import type { GenreResponse } from './genre.types'
+import type { GenreResponse } from './genre'
 
 export type AgeRating = 'P' | 'T13' | 'T16' | 'T18'
 export type MovieStatus = 'COMING_SOON' | 'NOW_SHOWING' | 'ENDED'
