@@ -8,11 +8,12 @@ import type {
 } from '@/types/refund.types'
 
 export const refundApi = {
-  getAdminList: (params?: { page?: number; size?: number; sort?: string }) =>
+  getAdminList: (params?: { status?: string; page?: number; size?: number; sort?: string }) =>
     apiClient.get<RefundPageResponse>('/admin/refunds', {
       params: {
+        status: params?.status || undefined,
         page: params?.page ?? 0,
-        size: params?.size ?? 10,
+        size: params?.size ?? 20,
         sort: params?.sort ?? 'requestedAt,desc',
       },
     }) as Promise<RefundPageResponse>,
