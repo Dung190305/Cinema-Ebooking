@@ -9,17 +9,21 @@
         <!-- Dropdown Khuyến mãi -->
         <NavDropdownItem label="Khuyến mãi" :items="promotionMenuItems" />
 
-        <router-link to="/my-bookings"
+        <button @click="handleMyBookingsClick"
             class="hover:underline hover:text-accent text-text-primary text-body-sm sm:text-body whitespace-nowrap">
             Vé của tôi
-        </router-link>
+        </button>
     </nav>
 </template>
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import NavDropdownItem, { type NavDropdownItemData } from '@/components/common/header/subcomponents/NavDropdownItem.vue';
 import { getDateKeyVN } from '@/utils/dateFormat'
+import { useAuthStore } from '@/stores/auth.store'
+import { useUIStore } from '@/stores/ui.store'
 const router = useRouter()
+const authStore = useAuthStore()
+const uiStore = useUIStore()
 // Danh sách item cho dropdown "Phim"
 const movieMenuItems: NavDropdownItemData[] = [
     {
@@ -67,4 +71,12 @@ const promotionMenuItems: NavDropdownItemData[] = [
         onClick: () => router.push('/coupons')
     }
 ]
+
+const handleMyBookingsClick = () => {
+    if (authStore.isLoggedIn) {
+        router.push('/my-bookings')
+    } else {
+        uiStore.openLoginModal()
+    }
+}
 </script>
