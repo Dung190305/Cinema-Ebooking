@@ -6,7 +6,7 @@ spring:
     name: cinema-ebooking
 
   profiles:
-    active: local
+    active: dev
 
   flyway:
     enabled: false
