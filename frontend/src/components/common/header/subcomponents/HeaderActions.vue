@@ -7,7 +7,7 @@
         </button>
 
         <!-- Desktop: full button, Mobile: icon only -->
-        <BaseButton variant="primary" size="lg" rounded="2xl" custom-class="hidden! sm:flex"
+        <BaseButton variant="primary" size="lg" rounded="2xl" custom-class="hidden! sm:flex!"
             @click.stop="goToBookingPage">
             Đặt vé ngay
         </BaseButton>

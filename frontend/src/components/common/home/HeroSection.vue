@@ -16,7 +16,7 @@
             </template>
         </AppCarousel>
 
-        <BookingQuickSelector class="-translate-y-4" />
+        <BookingQuickSelector class="-translate-y-4 hidden xl:flex" />
     </div>
 </template>
 

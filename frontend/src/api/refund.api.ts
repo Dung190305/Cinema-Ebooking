@@ -48,4 +48,40 @@ export const refundApi = {
       `/admin/refunds/${id}/complete`,
       body ?? {},
     ) as Promise<RefundResponse>,
+  
+  
+    /**
+   * User yêu cầu hủy booking CONFIRMED + tạo refund request.
+   * Endpoint: POST /bookings/{id}/request-refund
+   */
+  requestRefundAndCancel: (bookingId: number, reason?: string) =>
+    apiClient.post<RefundResponse>(`/bookings/${bookingId}/request-refund`, {
+      reason: reason ?? null,
+    }) as Promise<RefundResponse>,
+ 
+  /**
+   * Xem chi tiết refund theo bookingId.
+   */
+  getByBookingId: (bookingId: number) =>
+    apiClient.get<RefundResponse>(`/refunds/by-booking/${bookingId}`) as Promise<RefundResponse>,
+ 
+  /**
+   * Tính số tiền dự kiến hoàn trước khi user xác nhận hủy.
+   */
+  calculateRefundAmount: (bookingId: number) =>
+    apiClient.get<RefundCalculationResponse>(`/refunds/calculate`, {
+      params: { bookingId },
+    }) as Promise<RefundCalculationResponse>,
+  
+  getMyRefunds: () =>
+    apiClient.get<RefundResponse[]>('/refunds/me') as Promise<RefundResponse[]>,
 }
+
+export interface RefundCalculationResponse {
+  bookingId: number
+  originalAmount: number
+  refundAmount: number
+  refundPercentage: number
+  message: string
+}
+ 

@@ -2,10 +2,12 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useBookingFilters } from '@/composables/useBookingFilters'
+import { useRefundHistory } from '@/composables/useRefundHistory'
 import type { BookingStatus } from '@/types/booking.types'
 import { formatDateTimeVN } from '@/utils/dateFormat'
 import CalendarPicker from '@/components/ui/calendar/CalendarPicker.vue'
 import BookingDetailModal from '@/components/booking/BookingDetailModal.vue'
+import RefundHistoryModal from '@/components/refund/RefundHistoryModal.vue'
 
 const {
     loading,
@@ -20,6 +22,8 @@ const {
     clearFilters,
 } = useBookingFilters()
 
+const { pendingCount, fetchRefunds } = useRefundHistory()
+
 const statusOptions = [
     { value: '', label: 'Tất cả' },
     { value: 'PENDING', label: 'Chờ thanh toán' },
@@ -27,7 +31,7 @@ const statusOptions = [
     { value: 'CANCELLED', label: 'Đã hủy' },
 ]
 
-// ── Modal state ──────────────────────────────────────────────────────────────
+// ── Booking detail modal ─────────────────────────────────────────────────────
 const selectedBookingId = ref<number | null>(null)
 
 function openDetail(bookingId: number) {
@@ -38,37 +42,83 @@ function closeDetail() {
     selectedBookingId.value = null
 }
 
+// Khi user vừa gửi refund → refresh cả booking list và badge count
+function onRefundRequested() {
+    fetchBookings()
+    fetchRefunds()
+}
+
+// ── Refund notification modal ────────────────────────────────────────────────
+const showRefundModal = ref(false)
+
+function openRefundModal() {
+    showRefundModal.value = true
+}
+
+function closeRefundModal() {
+    showRefundModal.value = false
+}
+
 // ── Status helpers ───────────────────────────────────────────────────────────
 const getStatusBadgeClass = (status: BookingStatus) => {
     switch (status) {
-        case 'CONFIRMED': return 'bg-green-100 text-green-800'
-        case 'PENDING': return 'bg-yellow-100 text-yellow-800'
-        case 'CANCELLED': return 'bg-red-100 text-red-800'
-        default: return 'bg-gray-100 text-gray-800'
+        case 'CONFIRMED':
+            return 'bg-green-100 text-green-800'
+        case 'PENDING':
+            return 'bg-yellow-100 text-yellow-800'
+        case 'CANCELLED':
+            return 'bg-red-100 text-red-800'
+        default:
+            return 'bg-gray-100 text-gray-800'
     }
 }
 
 const getStatusText = (status: BookingStatus) => {
     switch (status) {
-        case 'CONFIRMED': return 'Đã thanh toán'
-        case 'PENDING': return 'Chờ thanh toán'
-        case 'CANCELLED': return 'Đã hủy'
-        default: return status
+        case 'CONFIRMED':
+            return 'Đã thanh toán'
+        case 'PENDING':
+            return 'Chờ thanh toán'
+        case 'CANCELLED':
+            return 'Đã hủy'
+        default:
+            return status
     }
 }
 
 onMounted(() => {
     fetchBookings()
+    // Pre-fetch refund count để badge hiển thị ngay
+    fetchRefunds()
 })
 </script>
 
 <template>
-    <div class="min-h-screen bg-bg-base py-8 px-4 sm:px-6 lg:px-8">
+    <div class="min-h-screen bg-bg-base py-8 px-4 sm:px-6 lg:px-8 xl:px-16">
         <div class="max-w-7xl mx-auto">
             <!-- Header -->
-            <div class="mb-8">
-                <h1 class="text-title text-text-primary">Vé của tôi</h1>
-                <p class="text-body text-text-secondary mt-1">Quản lý và theo dõi lịch sử đặt vé xem phim</p>
+            <div class="mb-8 flex items-start justify-between gap-4">
+                <div>
+                    <h1 class="text-title text-text-primary">Vé của tôi</h1>
+                    <p class="text-body text-text-secondary mt-1">
+                        Quản lý và theo dõi lịch sử đặt vé xem phim
+                    </p>
+                </div>
+
+                <!-- Bell button -->
+                <button @click="openRefundModal"
+                    class="relative p-2.5 rounded-xl bg-bg-surface border border-border-subtle text-text-secondary hover:text-text-primary hover:border-border-default hover:shadow-sm transition-all shrink-0"
+                    aria-label="Yêu cầu hoàn tiền" title="Xem yêu cầu hoàn tiền">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    <!-- Badge count — chỉ hiện khi có yêu cầu đang xử lý -->
+                    <span v-if="pendingCount > 0"
+                        class="absolute -top-1 -right-1 w-4.5 h-4.5 min-w-4.5 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                        {{ pendingCount > 9 ? '9+' : pendingCount }}
+                    </span>
+                </button>
             </div>
 
             <!-- Filters -->
@@ -199,4 +249,6 @@ onMounted(() => {
 
     <!-- Booking Detail Modal -->
     <BookingDetailModal :booking-id="selectedBookingId" @close="closeDetail" />
+
+    <RefundHistoryModal :open="showRefundModal" @close="closeRefundModal" />
 </template>
