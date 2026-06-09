@@ -30,7 +30,8 @@ const PROTECTED_GET_REGEX = [
   /^\/admin(\/|$)/,
   /^\/bookings\/me(\/|$)/,
     /^\/bookings\/\d+\/qr-code$/,
-    /^\/bookings\/admin\/all(\/|$)/
+    /^\/bookings\/admin\/all(\/|$)/,
+    /^\/refunds\/me(\/|$)/,
 ]
 
 const isPublicEndpoint = (url?: string): boolean => {

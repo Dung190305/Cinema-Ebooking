@@ -1,4 +1,4 @@
-export type BookingStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED'
+export type BookingStatus = 'PENDING' | 'CONFIRMED' | 'REFUND_REQUESTED' | 'CANCELLED' | 'EXPIRED'
 
 export interface BookingListItemResponse {
   bookingId: number

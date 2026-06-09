@@ -28,7 +28,9 @@ const statusOptions = [
     { value: '', label: 'Tất cả' },
     { value: 'PENDING', label: 'Chờ thanh toán' },
     { value: 'CONFIRMED', label: 'Đã thanh toán' },
+    { value: 'REFUND_REQUESTED', label: 'Yêu cầu hoàn tiền' },
     { value: 'CANCELLED', label: 'Đã hủy' },
+    { value: 'EXPIRED', label: 'Đã hết hạn' },
 ]
 
 // ── Booking detail modal ─────────────────────────────────────────────────────
@@ -66,10 +68,14 @@ const getStatusBadgeClass = (status: BookingStatus) => {
             return 'bg-green-100 text-green-800'
         case 'PENDING':
             return 'bg-yellow-100 text-yellow-800'
+        case 'REFUND_REQUESTED':
+            return 'bg-amber-100 text-amber-800'
         case 'CANCELLED':
             return 'bg-red-100 text-red-800'
-        default:
+        case 'EXPIRED':
             return 'bg-gray-100 text-gray-800'
+        default:
+            return 'bg-blue-100 text-blue-800'
     }
 }
 
@@ -79,8 +85,12 @@ const getStatusText = (status: BookingStatus) => {
             return 'Đã thanh toán'
         case 'PENDING':
             return 'Chờ thanh toán'
+        case 'REFUND_REQUESTED':
+            return 'Yêu cầu hoàn tiền'
         case 'CANCELLED':
             return 'Đã hủy'
+        case 'EXPIRED':
+            return 'Đã hết hạn thanh toán'
         default:
             return status
     }

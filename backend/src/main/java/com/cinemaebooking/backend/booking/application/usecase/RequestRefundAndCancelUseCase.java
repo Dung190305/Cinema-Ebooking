@@ -7,6 +7,7 @@ import com.cinemaebooking.backend.booking.domain.valueObject.BookingId;
 import com.cinemaebooking.backend.common.exception.domain.BookingExceptions;
 import com.cinemaebooking.backend.common.exception.domain.RefundExceptions;
 import com.cinemaebooking.backend.refund.application.dto.RefundResponse;
+import com.cinemaebooking.backend.refund.application.mapper.RefundResponseMapper;
 import com.cinemaebooking.backend.refund.application.port.RefundRepository;
 import com.cinemaebooking.backend.refund.application.usecase.CalculateRefundAmountUseCase;
 import com.cinemaebooking.backend.refund.domain.enums.RefundStatus;
@@ -42,6 +43,7 @@ public class RequestRefundAndCancelUseCase {
     private final BookingRepository bookingRepository;
     private final RefundRepository refundRepository;
     private final CalculateRefundAmountUseCase calculateRefundAmountUseCase;
+    private final RefundResponseMapper refundResponseMapper;
 
     @Transactional
     public RefundResponse execute(Long bookingId, String reason) {
@@ -75,24 +77,10 @@ public class RequestRefundAndCancelUseCase {
         Refund savedRefund = refundRepository.create(refund);
 
         // Hủy booking — giữ tickets để admin xem khi duyệt refund
-        booking.cancel();
+        booking.requestRefund();
         bookingRepository.save(booking);
 
-        return toResponse(savedRefund);
+        return refundResponseMapper.toResponse(savedRefund);
     }
 
-    private RefundResponse toResponse(Refund refund) {
-        return new RefundResponse(
-                refund.getId() != null ? refund.getId().getValue() : null,
-                refund.getBookingId(),
-                refund.getOriginalAmount(),
-                refund.getRefundAmount(),
-                refund.getRefundPercentage(),
-                refund.getStatus(),
-                refund.getRequestedAt(),
-                refund.getProcessedAt(),
-                refund.getReason(),
-                refund.getAdminNote()
-        );
-    }
 }

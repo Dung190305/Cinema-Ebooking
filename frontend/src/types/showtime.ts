@@ -39,3 +39,14 @@ export interface UpdateShowtimeRequest {
   audioLanguage:    string
   subtitleLanguage: string
 }
+
+export interface RefundError {
+  bookingId: number
+  bookingCode: string | null
+  reason: string
+}
+ 
+export interface ShowtimeCancelResult {
+  showtime: ShowtimeResponse
+  refundErrors: RefundError[]
+}

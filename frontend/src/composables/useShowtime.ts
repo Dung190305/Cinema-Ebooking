@@ -2,7 +2,7 @@ import { ref, readonly, watch, computed, type Ref, isRef } from 'vue'
 import { showtimeApi } from '@/api/showtime.api'
 import { movieApi } from '@/api/movie.api'
 import { roomApi } from '@/api/room.api'
-import type { ShowtimeResponse, CreateShowtimeRequest, UpdateShowtimeRequest } from '@/types/showtime'
+import type { ShowtimeResponse, CreateShowtimeRequest, UpdateShowtimeRequest, RefundError, ShowtimeCancelResult } from '@/types/showtime'
 import type { RoomType } from '@/types/room'
 
 interface ApiRejected {
@@ -139,16 +139,17 @@ export function useShowtime(cinemaIdInput: Ref<number | null> | number | null) {
     }
   }
 
-  async function cancel(item: ShowtimeResponse): Promise<boolean> {
+  async function cancel(item: ShowtimeResponse): Promise<ShowtimeCancelResult> {
     clearErrors()
     try {
-      const updated = await showtimeApi.cancel(item.id)
+      const result: ShowtimeCancelResult = await showtimeApi.cancel(item.id)
+      // Cập nhật item trong danh sách với showtime đã cancel
       const idx = showtimes.value.findIndex(s => s.id === item.id)
-      if (idx !== -1) showtimes.value[idx] = updated
-      return true
+      if (idx !== -1) showtimes.value[idx] = result.showtime
+      return result
     } catch (err) {
       handleError(err)
-      return false
+      throw err  // re-throw để caller biết cancel thất bại hoàn toàn
     }
   }
 

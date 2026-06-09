@@ -4,6 +4,7 @@ import type {
   CreateShowtimeRequest,
   UpdateShowtimeRequest,
   ShowtimeFormatResponse,
+  ShowtimeCancelResult,
 } from '@/types/showtime'
 import type { NestedPage } from '@/types/common.types'
 import type { ShowtimeSeatLayoutResponse } from '@/types/showtime-seat'
@@ -50,5 +51,5 @@ export const showtimeApi = {
     apiClient.put<ShowtimeResponse>(`/admin/showtimes/${id}`, body),
 
   cancel: (id: number) =>
-    apiClient.patch<ShowtimeResponse>(`/admin/showtimes/${id}/cancel`),
+    apiClient.patch<ShowtimeCancelResult>(`/admin/showtimes/${id}/cancel`),
 }

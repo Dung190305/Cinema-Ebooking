@@ -124,7 +124,7 @@ const refundStepLabels: Record<string, { step: number; label: string }> = {
                                         <!-- Top row: booking ID + status -->
                                         <div class="flex items-start justify-between gap-2 mb-2">
                                             <div>
-                                                <p class="text-caption text-text-tertiary">Đơn #{{ refund.bookingId }}
+                                                <p class="text-caption text-text-tertiary">Đơn {{ refund.bookingCode }}
                                                 </p>
                                                 <p class="text-body font-semibold text-text-primary">
                                                     {{ formatVND(refund.refundAmount) }}

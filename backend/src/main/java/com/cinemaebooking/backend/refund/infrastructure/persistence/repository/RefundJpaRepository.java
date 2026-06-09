@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -31,4 +32,14 @@ public interface RefundJpaRepository extends SoftDeleteJpaRepository<RefundJpaEn
             @Param("status") RefundStatus status,
             Pageable pageable
     );
+
+    @Query("""
+    SELECT r FROM RefundJpaEntity r
+    JOIN FETCH r.booking b
+    JOIN FETCH b.user u
+    WHERE r.deleted = false
+      AND u.id = :userId
+    ORDER BY r.requestedAt DESC
+    """)
+    List<RefundJpaEntity> findAllByUserId(@Param("userId") Long userId);
 }
