@@ -45,6 +45,13 @@ const isProtectedGetRequest = (config: InternalAxiosRequestConfig): boolean => {
   return PROTECTED_GET_REGEX.some(regex => regex.test(url))
 }
 
+// Helper function to check if a request is a true public GET (not protected)
+const isPublicGetRequest = (config: InternalAxiosRequestConfig): boolean => {
+  if (config.method?.toUpperCase() !== 'GET') return false
+  const url = config.url || ''
+  return !PROTECTED_GET_REGEX.some(regex => regex.test(url))
+}
+
 // ================= REQUEST =================
 apiClient.interceptors.request.use((config) => {
     if (isPublicEndpoint(config.url)) {
@@ -139,7 +146,9 @@ apiClient.interceptors.response.use(
             })
         }
 
-        if (isProtectedGetRequest(originalRequest)) {
+        // ✅ FIX: Chỉ reject TRUE public GET requests (không cần token)
+        // Protected GET requests sẽ được skip qua đây và tiếp tục refresh flow
+        if (isPublicGetRequest(originalRequest)) {
             const mapped = mapFieldErrors(apiError ?? null)
             return Promise.reject({
                 type: 'api',
