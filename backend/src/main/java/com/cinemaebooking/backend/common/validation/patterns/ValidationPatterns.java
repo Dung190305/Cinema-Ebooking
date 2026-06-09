@@ -40,7 +40,7 @@ public final class ValidationPatterns {
 
 
     // ===================== MOVIE_TITLE =====================
-    public static final String MOVIE_TITLE = "^[\\p{L}0-9\\s\\-\\:\\,\\.\\!\\?\\'\\&\\\\(\\)]+$";
+    public static final String MOVIE_TITLE =  "^[\\p{L}\\p{M}0-9\\s\\-:,.!?&'()]+$";
 
     // ===================== GENRE_NAME =====================
     public static final String GENRE_NAME = "^[\\p{L}\\s\\-]+$";

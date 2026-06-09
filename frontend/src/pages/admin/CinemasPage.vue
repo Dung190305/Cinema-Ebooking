@@ -56,7 +56,7 @@
         </div>
 
         <!-- Create modal -->
-        <CreateModal v-model="showCreate" title="Thêm rạp chiếu phim" :columns="columns" :isLoading="isLoading"
+        <CreateModal v-model="showCreate" title="Thêm rạp chiếu phim" :columns="columns" :isLoading="isCreating"
             :fieldErrors="fieldErrors" @submit="handleCreate" />
 
     </div>
@@ -82,6 +82,7 @@ const {
 } = useCinema()
 
 const showCreate = ref(false)
+const isCreating = ref(false)
 
 // ── Column definitions ────────────────────────────────────────────────────────
 const columns: ColumnDef<CinemaResponse>[] = [
@@ -127,8 +128,13 @@ const columns: ColumnDef<CinemaResponse>[] = [
 
 // ── Handlers ──────────────────────────────────────────────────────────────────
 async function handleCreate(draft: Record<string, unknown>) {
-    const ok = await create(draft as unknown as CreateCinemaRequest)
-    if (ok) showCreate.value = false
+    isCreating.value = true
+    try {
+        const ok = await create(draft as unknown as CreateCinemaRequest)
+        if (ok) showCreate.value = false
+    } finally {
+        isCreating.value = false
+    }
 }
 
 async function handleSave(item: CinemaResponse, done: () => void) {

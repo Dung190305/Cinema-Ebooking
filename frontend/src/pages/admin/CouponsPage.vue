@@ -63,7 +63,7 @@
     </DataTable>
 
     <CreateModal v-model="showCreate" title="Thêm coupon" submitLabel="Tạo" size="lg" :columns="columns"
-      :isLoading="isLoading" :fieldErrors="fieldErrors" @submit="handleCreate" />
+      :isLoading="isCreating" :fieldErrors="fieldErrors" @submit="handleCreate" />
 
     <ConfirmDialog v-model="showActionConfirm" :title="confirmAction.type === 'activate'
       ? 'Kích hoạt coupon'
@@ -122,6 +122,7 @@ const {
 } = useCoupon()
 
 const showCreate = ref(false)
+const isCreating = ref(false)
 const actionCouponId = ref<number | null>(null)
 
 const statusOptions: { value: CouponStatusFilter; label: string }[] = [
@@ -273,21 +274,26 @@ const columns = computed<ColumnDef[]>(() => [
 ])
 
 async function handleCreate(draft: Record<string, unknown>) {
-  const payload: CreateCouponRequest = {
-    code: String(draft.code || '').trim(),
-    type: draft.type === 'FIXED' ? 'FIXED' : 'PERCENT',
-    value: Number(draft.value || 0),
-    usageLimit: Number(draft.usageLimit || 0),
-    perUserUsage: Number(draft.perUserUsage || 0),
-    pointsToRedeem: Number(draft.pointsToRedeem || 0),
-    minimumBookingValue: Number(draft.minimumBookingValue || 0),
-    maximumDiscountAmount: Number(draft.maximumDiscountAmount || 0),
-    startDate: String(draft.startDate || ''),
-    endDate: String(draft.endDate || ''),
-  }
+  isCreating.value = true
+  try {
+    const payload: CreateCouponRequest = {
+      code: String(draft.code || '').trim(),
+      type: draft.type === 'FIXED' ? 'FIXED' : 'PERCENT',
+      value: Number(draft.value || 0),
+      usageLimit: Number(draft.usageLimit || 0),
+      perUserUsage: Number(draft.perUserUsage || 0),
+      pointsToRedeem: Number(draft.pointsToRedeem || 0),
+      minimumBookingValue: Number(draft.minimumBookingValue || 0),
+      maximumDiscountAmount: Number(draft.maximumDiscountAmount || 0),
+      startDate: String(draft.startDate || ''),
+      endDate: String(draft.endDate || ''),
+    }
 
-  const ok = await create(payload)
-  if (ok) showCreate.value = false
+    const ok = await create(payload)
+    if (ok) showCreate.value = false
+  } finally {
+    isCreating.value = false
+  }
 }
 
 async function handleSave(

@@ -48,7 +48,7 @@ public class MovieJpaEntity extends BaseJpaEntity {
     @Column(nullable = false, length = 255)
     private String title;
 
-    @Column(length = 1000)
+    @Column(length = 2000)
     private String description;
 
     @NotNull

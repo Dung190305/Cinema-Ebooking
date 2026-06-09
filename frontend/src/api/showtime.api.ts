@@ -10,18 +10,6 @@ import type { NestedPage } from '@/types/common.types'
 import type { ShowtimeSeatLayoutResponse } from '@/types/showtime-seat'
 
 export const showtimeApi = {
-  // GET /api/v1/admin/showtimes?cinemaId=&roomId=&status=&page=&size=&sort=
-  getList: (params: {
-    page?: number
-    size?: number
-    sort?: string
-    cinemaId?: number
-    movieId?: number
-    roomId?: number
-    status?: string
-  }) =>
-    apiClient.get<NestedPage<ShowtimeResponse>>('/admin/showtimes', { params }),
-  
   getPublicShowtimes: (params: {
     cinemaId?: number
     movieId?: number
