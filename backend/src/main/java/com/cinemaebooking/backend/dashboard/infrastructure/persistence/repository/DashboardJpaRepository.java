@@ -128,8 +128,11 @@ public interface DashboardJpaRepository extends SoftDeleteJpaRepository<BookingJ
     );
 
     // ── Hourly Revenue for TODAY ────────────────────────────────────────────────
+    // CONVERT_TZ converts from UTC (how MySQL stores DATETIME internally) to the
+    // configured app timezone. This makes the hour extraction timezone-aware and
+    // decoupled from the JDBC connection's serverTimezone setting.
     @Query(value = """
-        SELECT HOUR(DATE_ADD(b.paid_at, INTERVAL 7 HOUR)) as hourSlot,
+        SELECT HOUR(CONVERT_TZ(b.paid_at, 'UTC', :toTz)) as hourSlot,
                SUM(b.total_ticket_price + b.total_combo_price) as revenue
         FROM bookings b
         LEFT JOIN cinemas c ON c.name = b.cinema_name AND c.deleted = false
@@ -138,13 +141,14 @@ public interface DashboardJpaRepository extends SoftDeleteJpaRepository<BookingJ
           AND b.paid_at >= :dayStart
           AND b.paid_at < :dayEnd
           AND (:cinemaId IS NULL OR c.id = :cinemaId)
-        GROUP BY HOUR(DATE_ADD(b.paid_at, INTERVAL 7 HOUR))
+        GROUP BY HOUR(CONVERT_TZ(b.paid_at, 'UTC', :toTz))
         ORDER BY hourSlot
         """, nativeQuery = true)
     List<Object[]> sumHourlyRevenue(
             @Param("dayStart") LocalDateTime dayStart,
             @Param("dayEnd") LocalDateTime dayEnd,
-            @Param("cinemaId") Long cinemaId
+            @Param("cinemaId") Long cinemaId,
+            @Param("toTz") String toTz
     );
 
     // ── Top 5 Movies by Ticket Count ───────────────────────────────────────────

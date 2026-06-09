@@ -53,7 +53,12 @@ spring:
           starttls:
             enable: true
 
-  # ================== SEAT LOCK CONFIG ==================
+  # ================== APP CONFIG ==================
+app:
+  timezone:
+    db: Asia/Ho_Chi_Minh
+
+# ================== SEAT LOCK CONFIG ==================
   seat-lock:
     lock-duration-minutes: 7
     payment-duration-minutes: 10

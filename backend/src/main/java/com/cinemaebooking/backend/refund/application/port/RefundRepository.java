@@ -1,5 +1,6 @@
 package com.cinemaebooking.backend.refund.application.port;
 
+import com.cinemaebooking.backend.refund.domain.enums.RefundStatus;
 import com.cinemaebooking.backend.refund.domain.model.Refund;
 import com.cinemaebooking.backend.refund.domain.valueobject.RefundId;
 import org.springframework.data.domain.Page;
@@ -18,6 +19,8 @@ public interface RefundRepository {
     Optional<Refund> findByBookingId(Long bookingId);
 
     Page<Refund> findAll(Pageable pageable);
+
+    Page<Refund> findAll(RefundStatus status, Pageable pageable);
 
     boolean existsByBookingId(Long bookingId);
 }

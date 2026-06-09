@@ -27,6 +27,9 @@ export const authApi = {
         apiClient.post<VerifyOtpResponse>('/auth/reset_password', payload),
 
     refreshToken: (payload: RefreshTokenRequest) =>
-        apiClient.post<LoginResponse>('/auth/refresh_token', payload)
+        apiClient.post<LoginResponse>('/auth/refresh_token', payload),
+
+    logout: (refreshToken: string) =>
+        apiClient.post('/auth/logout', { refreshToken }),
 }
 

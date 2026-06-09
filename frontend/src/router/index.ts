@@ -180,6 +180,12 @@ const routes: RouteRecordRaw[] = [
             meta: { sidebar: { label: 'Bookings' } },
           },
           {
+            path: 'checkin',
+            name: 'admin-operations-checkin',
+            component: () => import('@/pages/admin/CheckInPage.vue'),
+            meta: { sidebar: { label: 'Check-in' } },
+          },
+          {
             path: 'refunds',
             name: 'admin-operations-refunds',
             component: () => import('@/pages/admin/RefundsPage.vue'),

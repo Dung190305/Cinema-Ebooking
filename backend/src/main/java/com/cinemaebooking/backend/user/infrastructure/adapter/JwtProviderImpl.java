@@ -2,6 +2,7 @@ package com.cinemaebooking.backend.user.infrastructure.adapter;
 
 import com.cinemaebooking.backend.user.application.port.JwtProvider;
 import com.cinemaebooking.backend.user.domain.valueObject.UserId;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.time.Instant;
 import java.util.Date;
 
 @Component
@@ -64,13 +66,21 @@ public class JwtProviderImpl implements JwtProvider {
 
     @Override
     public UserId extractUserId(String token) {
-        String subject = Jwts.parserBuilder()
+        String subject = parseClaims(token).getSubject();
+        return new UserId(Long.parseLong(subject));
+    }
+
+    @Override
+    public Instant extractExpiration(String token) {
+        Date expiration = parseClaims(token).getExpiration();
+        return expiration.toInstant();
+    }
+
+    private Claims parseClaims(String token) {
+        return Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build()
                 .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
-
-        return new UserId(Long.parseLong(subject));
+                .getBody();
     }
 }
