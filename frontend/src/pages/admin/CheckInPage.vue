@@ -354,7 +354,6 @@ function scanQR() {
       handleScannedCode(code.data)
       return
     }
-  }
 
   scanFrameId = requestAnimationFrame(scanQR)
 }

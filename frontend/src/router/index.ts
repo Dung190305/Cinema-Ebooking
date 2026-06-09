@@ -183,7 +183,7 @@ const routes: RouteRecordRaw[] = [
             path: 'checkin',
             name: 'admin-operations-checkin',
             component: () => import('@/pages/admin/CheckInPage.vue'),
-            meta: { sidebar: { label: 'Check-in' } },
+            meta: { sidebar: { label: 'Check-in' }, hidden: true },
           },
           {
             path: 'refunds',

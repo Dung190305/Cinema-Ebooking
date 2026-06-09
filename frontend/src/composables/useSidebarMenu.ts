@@ -25,14 +25,14 @@ export function useSidebarMenu(adminPath = '/admin') {
     const adminRoute = router.options.routes.find((r) => r.path === adminPath)
     if (!adminRoute?.children) return []
 
-    // 2. Chỉ lấy những route có meta.sidebar
+    // 2. Chỉ lấy những route có meta.sidebar VÀ không bị hidden
     return adminRoute.children
-      .filter((route) => route.meta?.sidebar)
+      .filter((route) => route.meta?.sidebar && !route.meta?.hidden)
       .map((route) => {
         const { label, icon } = route.meta!.sidebar as { label: string; icon?: Component }
 
         // 3. Sub-routes có meta.sidebar → đây là group
-        const sidebarChildren = route.children?.filter((c) => c.meta?.sidebar)
+        const sidebarChildren = route.children?.filter((c) => c.meta?.sidebar && !c.meta?.hidden)
 
         if (sidebarChildren?.length) {
           // Chỉ 1 child có sidebar meta → unwrap thành direct link
