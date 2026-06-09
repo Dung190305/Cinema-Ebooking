@@ -1,10 +1,10 @@
 <template>
     <!-- TOPBAR -->
     <header class="flex flex-col gap-2 w-full h-fit bg-bg-admin-topbar text-text-on-admin-topbar py-4">
-        <div class="flex items-center w-full px-4" :style="{ gap: 'var(--sidebar-right-gap)' }">
+        <div class="flex items-center w-full pr-4" :style="{ gap: 'var(--sidebar-right-gap)' }">
 
             <!-- LEFT: Logo + Collapse -->
-            <div class="flex items-center shrink-0" :style="{ width: 'var(--sidebar-width)' }">
+            <div class="flex items-center shrink-0 pl-16" :style="{ width: 'var(--sidebar-width)' }">
                 <Logo isAdminPage />
                 <div class="ml-auto">
                     <BaseButton @click="ui.toggleSidebar()" iconOnly size="sm" rounded="full">
@@ -22,20 +22,20 @@
             <div class="flex-1"></div>
 
             <!-- RIGHT: Logout -->
-            <BaseButton
-                iconOnly
-                size="md"
-                rounded="full"
+            <BaseButton iconOnly size="md" rounded="full"
                 customClass="text-text-admin-secondary hover:text-red-400 hover:bg-red-400/10 focus:ring-2 focus:ring-red-400/50"
-                @click="logout"
-                title="Đăng xuất"
-            >
+                @click="logout" title="Đăng xuất">
                 <BaseIcon :icon="LogOut" :size="18" :scale="1.2" :stroke-width="1.5" />
             </BaseButton>
         </div>
 
 
-        <div class="flex items-start w-full px-4">
+        <div class="flex items-start w-fit" :style="{
+            paddingLeft: !ui.isSidebarCollapsed
+                ? 'calc(var(--sidebar-width) + var(--sidebar-right-gap))'
+                : 'calc(var(--sidebar-collapsed-width) + var(--sidebar-right-gap))'
+        }">
+            <!-- content -->
             <div class="flex flex-col gap-1">
                 <h1 class="text-title">{{ pageTitle }}</h1>
             </div>

@@ -18,8 +18,10 @@ export function useBookingDetail(bookingId: () => number | null) {
   const cancelLoading = ref(false)
   const cancelError = ref<string | null>(null)
   const cancelSuccess = ref(false)
+  const cancelReason = ref('')
   const refundCalc = ref<RefundCalculationResponse | null>(null)
   const refundCalcLoading = ref(false)
+
 
   // ── Computed ───────────────────────────────────────────────────────────────
   const hasDiscount = computed(() =>
@@ -114,8 +116,10 @@ export function useBookingDetail(bookingId: () => number | null) {
     cancelLoading.value = true
     cancelError.value = null
 
+    const reason = cancelReason.value.trim() || undefined
+
     try {
-      await refundApi.requestRefundAndCancel(id, 'Người dùng yêu cầu hủy vé')
+      await refundApi.requestRefundAndCancel(id, reason)
       cancelSuccess.value = true
       return true
     } catch (err: any) {
@@ -150,6 +154,7 @@ export function useBookingDetail(bookingId: () => number | null) {
     cancelLoading,
     cancelError,
     cancelSuccess,
+    cancelReason,
     refundCalc,
     refundCalcLoading,
     // computed

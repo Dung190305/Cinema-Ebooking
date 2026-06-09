@@ -31,6 +31,12 @@ public class LoyaltyAccount extends BaseEntity<LoyaltyAccountId> {
         this.lastActivityDate = LocalDateTime.now();
     }
 
+    public void subtractSpending(BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) return;
+        this.totalSpending = this.totalSpending.subtract(amount).max(BigDecimal.ZERO);
+        this.lastActivityDate = LocalDateTime.now();
+    }
+
     public void deductPoints(BigDecimal amount) {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) return;
         if (this.currentPoints.compareTo(amount) < 0) {

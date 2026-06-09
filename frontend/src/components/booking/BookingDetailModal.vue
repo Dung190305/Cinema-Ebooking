@@ -27,6 +27,7 @@ const {
     cancelLoading,
     cancelError,
     cancelSuccess,
+    cancelReason,
     refundCalc,
     refundCalcLoading,
     hasDiscount,
@@ -246,7 +247,7 @@ function goToRefundPolicy() {
                                         <span class="text-body font-semibold text-text-primary">Tổng thanh toán</span>
                                         <span class="text-title font-bold text-accent">{{
                                             formatVND(detail.finalAmount)
-                                            }}</span>
+                                        }}</span>
                                     </div>
                                 </section>
 
@@ -435,6 +436,20 @@ function goToRefundPolicy() {
                                             </p>
                                         </template>
                                     </div>
+                                </div>
+
+                                <!-- Optional cancel reason -->
+                                <div class="space-y-1.5">
+                                    <label class="text-caption font-medium text-text-secondary">
+                                        Lý do hủy
+                                        <span class="text-text-tertiary font-normal">(tuỳ chọn)</span>
+                                    </label>
+                                    <textarea v-model="cancelReason" :disabled="cancelLoading" rows="2" maxlength="300"
+                                        placeholder="Nhập lý do nếu muốn — hệ thống sẽ tự điền nếu để trống"
+                                        class="w-full resize-none rounded-lg border border-border-subtle bg-bg-base px-3 py-2 text-caption text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-1 focus:ring-accent/50 disabled:opacity-50 transition-colors" />
+                                    <p class="text-right text-[11px] text-text-tertiary">
+                                        {{ cancelReason.length }}/300
+                                    </p>
                                 </div>
 
                                 <!-- Error message -->
