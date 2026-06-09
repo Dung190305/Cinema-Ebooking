@@ -13,9 +13,8 @@
                                 {{ quick.selectedMovie.value?.title || 'Chọn Phim' }}
                             </span>
                         </div>
-                        <BaseIcon :icon="ChevronDown" :size="12"
-                            class="shrink-0 transition-transform duration-200 text-text-secondary group-hover:text-accent"
-                            :class="{ 'rotate-180': isMovieDropdownOpen }" />
+                        <BaseIcon :icon="isMovieDropdownOpen ? ChevronUp : ChevronDown" :size="12"
+                            class="shrink-0 text-text-secondary group-hover:text-accent transition-colors pointer-events-none" />
                     </div>
                 </div>
 
@@ -52,7 +51,7 @@
                     <div class="flex w-full justify-between items-center gap-2 min-w-0 px-3">
                         <div class="flex gap-2 items-center min-w-0">
                             <div class="step-badge"
-                                :class="quick.selectedMovie.value ? 'step-badge--active' : 'step-badge--inactive'">
+                                :class="(isCinemaDropdownOpen || quick.selectedCinema.value) ? 'step-badge--active' : 'step-badge--inactive'">
                                 2
                             </div>
                             <span class="text-caption truncate font-medium"
@@ -60,11 +59,9 @@
                                 {{ quick.selectedCinema.value?.name || 'Chọn Rạp' }}
                             </span>
                         </div>
-                        <BaseIcon :icon="ChevronDown" :size="12" class="shrink-0 transition-transform duration-200"
-                            :class="[
-                                quick.selectedMovie.value ? 'text-text-secondary group-hover:text-accent' : 'text-text-disabled',
-                                { 'rotate-180': isCinemaDropdownOpen }
-                            ]" />
+                        <BaseIcon :icon="isCinemaDropdownOpen ? ChevronUp : ChevronDown" :size="12"
+                            class="shrink-0 transition-colors pointer-events-none"
+                            :class="quick.selectedMovie.value ? 'text-text-secondary group-hover:text-accent' : 'text-text-disabled'" />
                     </div>
                 </div>
 
@@ -104,7 +101,7 @@
                     <div class="flex w-full justify-between items-center gap-2 min-w-0 px-3">
                         <div class="flex gap-2 items-center min-w-0">
                             <div class="step-badge"
-                                :class="quick.selectedCinema.value ? 'step-badge--active' : 'step-badge--inactive'">
+                                :class="(isDateDropdownOpen || quick.selectedDate.value) ? 'step-badge--active' : 'step-badge--inactive'">
                                 3
                             </div>
                             <span class="text-caption truncate font-medium"
@@ -112,11 +109,9 @@
                                 {{ selectedDateDisplay }}
                             </span>
                         </div>
-                        <BaseIcon :icon="ChevronDown" :size="12" class="shrink-0 transition-transform duration-200"
-                            :class="[
-                                quick.selectedCinema.value ? 'text-text-secondary group-hover:text-accent' : 'text-text-disabled',
-                                { 'rotate-180': isDateDropdownOpen }
-                            ]" />
+                        <BaseIcon :icon="isDateDropdownOpen ? ChevronUp : ChevronDown" :size="12"
+                            class="shrink-0 transition-colors pointer-events-none"
+                            :class="quick.selectedCinema.value ? 'text-text-secondary group-hover:text-accent' : 'text-text-disabled'" />
                     </div>
                 </div>
 
@@ -153,7 +148,7 @@
                     <div class="flex w-full justify-between items-center gap-2 min-w-0 px-3">
                         <div class="flex gap-2 items-center min-w-0">
                             <div class="step-badge"
-                                :class="quick.selectedDate.value ? 'step-badge--active' : 'step-badge--inactive'">
+                                :class="(isShowtimeDropdownOpen || quick.selectedShowtime.value) ? 'step-badge--active' : 'step-badge--inactive'">
                                 4
                             </div>
                             <span class="text-caption truncate font-medium"
@@ -161,11 +156,9 @@
                                 {{ selectedShowtimeDisplay }}
                             </span>
                         </div>
-                        <BaseIcon :icon="ChevronDown" :size="12" class="shrink-0 transition-transform duration-200"
-                            :class="[
-                                quick.selectedDate.value ? 'text-text-secondary group-hover:text-accent' : 'text-text-disabled',
-                                { 'rotate-180': isShowtimeDropdownOpen }
-                            ]" />
+                        <BaseIcon :icon="isShowtimeDropdownOpen ? ChevronUp : ChevronDown" :size="12"
+                            class="shrink-0 transition-colors pointer-events-none"
+                            :class="quick.selectedDate.value ? 'text-text-secondary group-hover:text-accent' : 'text-text-disabled'" />
                     </div>
                 </div>
 
@@ -212,7 +205,7 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseButton from '@/components/ui/button/BaseButton.vue'
 import BaseIcon from '@/components/ui/icon/BaseIcon.vue'
-import { ChevronDown, Check } from 'lucide-vue-next'
+import { ChevronDown, ChevronUp, Check } from 'lucide-vue-next'
 import { useQuickBooking } from '@/composables/useQuickBooking'
 import { formatDateVN, formatTimeVN } from '@/utils/dateFormat'
 

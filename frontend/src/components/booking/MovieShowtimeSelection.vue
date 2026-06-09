@@ -136,7 +136,6 @@ const showtimesByMovieFiltered = computed(() => {
 
 <template>
     <div>
-        <!-- Header -->
         <div class="flex justify-between items-center mb-6">
             <div>
                 <h2 class="text-title">Chọn phim & suất chiếu</h2>
@@ -146,7 +145,6 @@ const showtimesByMovieFiltered = computed(() => {
             </div>
         </div>
 
-        <!-- Calendar Picker -->
         <div class="mb-6">
             <p class="text-caption text-text-secondary mb-2">Chọn ngày chiếu</p>
             <CalendarPicker v-model="selectedDate" mode="date" :minDate="new Date()" class="w-full max-w-xs" />
@@ -161,10 +159,8 @@ const showtimesByMovieFiltered = computed(() => {
             <p class="mt-4 text-text-tertiary">Đang tải suất chiếu...</p>
         </div>
 
-        <!-- Danh sách phim grouped by date -->
         <div v-else class="space-y-8">
             <div v-for="dateGroup in showtimesByMovieFiltered" :key="dateGroup.dateKey" class="space-y-4">
-                <!-- Date Header -->
                 <div class="sticky top-0 z-10 py-2 pl-4 border-b">
                     <h3 class="text-lg font-semibold text-text-primary flex items-center gap-2">
                         <BaseIcon :icon="Calendar" :size="20" class="text-accent" />
@@ -174,13 +170,10 @@ const showtimesByMovieFiltered = computed(() => {
 
                 <div v-for="group in dateGroup.groups" :key="group.movie.id"
                     class="bg-bg-surface border border-border-default rounded-2xl overflow-hidden">
-
                     <div class="flex gap-4 p-4">
-                        <!-- Poster -->
                         <div class="w-24 shrink-0 relative rounded-xl overflow-hidden bg-bg-elevated">
                             <img v-if="group.movie.posterUrl" :src="group.movie.posterUrl" :alt="group.movie.title"
                                 class="w-full h-full object-cover" />
-                            <!-- Age Rating -->
                             <span v-if="group.movie.ageRating"
                                 class="absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded"
                                 :class="ageRatingClass(group.movie.ageRating)">
@@ -188,7 +181,6 @@ const showtimesByMovieFiltered = computed(() => {
                             </span>
                         </div>
 
-                        <!-- Info -->
                         <div class="flex-1">
                             <p class="font-semibold text-body leading-tight">{{ group.movie.title }}</p>
                             <div class="flex gap-2 text-caption text-text-tertiary mt-1">
@@ -210,11 +202,17 @@ const showtimesByMovieFiltered = computed(() => {
             </div>
         </div>
 
-        <!-- Empty -->
         <div v-if="!loading && showtimesByMovieFiltered.length === 0" class="text-center py-20 text-text-tertiary">
-            <p class="text-4xl mb-3">🎬</p>
-            <p>Không có suất chiếu nào trong ngày đã chọn</p>
-            <p class="text-sm mt-1">Vui lòng chọn ngày khác</p>
+            <template v-if="!selectedDate">
+                <p class="text-4xl mb-3"></p>
+                <p>Rạp này hiện chưa có suất chiếu nào</p>
+                <p class="text-sm mt-1">Vui lòng quay lại chọn rạp khác</p>
+            </template>
+            <template v-else>
+                <p class="text-4xl mb-3"></p>
+                <p>Không có suất chiếu trong ngày đã chọn</p>
+                <p class="text-sm mt-1">Vui lòng chọn ngày khác</p>
+            </template>
         </div>
     </div>
 </template>

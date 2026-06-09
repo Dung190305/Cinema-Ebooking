@@ -2,6 +2,7 @@ package com.cinemaebooking.backend.showtime.presentation;
 
 import com.cinemaebooking.backend.common.exception.domain.CommonExceptions;
 import com.cinemaebooking.backend.showtime.application.dto.showtime.CreateShowtimeRequest;
+import com.cinemaebooking.backend.showtime.application.dto.showtime.ShowtimeCancelResult;
 import com.cinemaebooking.backend.showtime.application.dto.showtime.ShowtimeResponse;
 import com.cinemaebooking.backend.showtime.application.dto.showtime.UpdateShowtimeRequest;
 import com.cinemaebooking.backend.showtime.application.usecase.showtime.*;
@@ -56,7 +57,7 @@ public class ShowtimeAdminController {
     // ================== CANCEL ==================
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id}/cancel")
-    public ShowtimeResponse cancel(@PathVariable Long id) {
+    public ShowtimeCancelResult cancel(@PathVariable Long id) {
         return cancelShowtimeUseCase.execute(toShowtimeId(id));
     }
 

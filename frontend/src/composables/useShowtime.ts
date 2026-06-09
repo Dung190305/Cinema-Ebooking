@@ -2,7 +2,7 @@ import { ref, readonly, watch, computed, type Ref, isRef } from 'vue'
 import { showtimeApi } from '@/api/showtime.api'
 import { movieApi } from '@/api/movie.api'
 import { roomApi } from '@/api/room.api'
-import type { ShowtimeResponse, CreateShowtimeRequest, UpdateShowtimeRequest } from '@/types/showtime'
+import type { ShowtimeResponse, CreateShowtimeRequest, UpdateShowtimeRequest, RefundError, ShowtimeCancelResult } from '@/types/showtime'
 import type { RoomType } from '@/types/room'
 
 interface ApiRejected {
@@ -36,15 +36,19 @@ export function useShowtime(cinemaIdInput: Ref<number | null> | number | null) {
   const roomOptionsCache = ref<{ id: number; label: string }[]>([])
 
   function handleError(err: unknown) {
+  console.error('🔴 handleError called with:', err)
     const e = err as ApiRejected
     fieldErrors.value = e.fieldErrors ?? {}
+
+    // Ưu tiên globalErrors từ BE. Nếu BE không trả globalErrors thì KHÔNG fallback message
+    // thành global error nữa, vì sẽ gây hiển thị lỗi global không đúng khi FE không map được field.
+    // Lúc này lỗi sẽ được thể hiện qua fieldErrors (nếu có).
     if (e.globalErrors?.length) {
       globalErrors.value = e.globalErrors
-    } else if (!Object.values(fieldErrors.value).some(Boolean)) {
-      globalErrors.value = [e.message ?? 'Đã có lỗi xảy ra']
-    } else {
-      globalErrors.value = []
+      return
     }
+
+    globalErrors.value = []
   }
 
   function clearErrors() {
@@ -118,12 +122,12 @@ export function useShowtime(cinemaIdInput: Ref<number | null> | number | null) {
     fetchList(0)
   }
 
-  async function create(body: Omit<CreateShowtimeRequest, 'cinemaId'>): Promise<boolean> {
+  async function create(body: CreateShowtimeRequest): Promise<boolean> {
     clearErrors()
     const cid = currentCinemaId.value
     if (!cid) return false
     try {
-      const created = await showtimeApi.create({ ...body, cinemaId: cid })
+      const created = await showtimeApi.create({ ...body})
       showtimes.value.unshift(created)
       totalItems.value++
       totalPages.value = Math.ceil(totalItems.value / pageSize)
@@ -134,21 +138,23 @@ export function useShowtime(cinemaIdInput: Ref<number | null> | number | null) {
       prefetchNextPage(currentPage.value + 1)
       return true
     } catch (err) {
+      console.error('Error creating showtime:', err)
       handleError(err)
       return false
     }
   }
 
-  async function cancel(item: ShowtimeResponse): Promise<boolean> {
+  async function cancel(item: ShowtimeResponse): Promise<ShowtimeCancelResult> {
     clearErrors()
     try {
-      const updated = await showtimeApi.cancel(item.id)
+      const result: ShowtimeCancelResult = await showtimeApi.cancel(item.id)
+      // Cập nhật item trong danh sách với showtime đã cancel
       const idx = showtimes.value.findIndex(s => s.id === item.id)
-      if (idx !== -1) showtimes.value[idx] = updated
-      return true
+      if (idx !== -1) showtimes.value[idx] = result.showtime
+      return result
     } catch (err) {
       handleError(err)
-      return false
+      throw err  // re-throw để caller biết cancel thất bại hoàn toàn
     }
   }
 
@@ -192,14 +198,6 @@ export function useShowtime(cinemaIdInput: Ref<number | null> | number | null) {
     }
   }
 
-  // Khi cinemaId thay đổi, reset filter và load lại
-  watch(currentCinemaId, () => {
-    filterRoomId.value = undefined
-    filterStatus.value = undefined
-    nextPageDirty.value = true
-    fetchList(0) // gọi sau khi cinemaId thật sự thay đổi
-  })
-
   return {
     showtimes: readonly(showtimes),
     isLoading: readonly(isLoading),
@@ -218,5 +216,6 @@ export function useShowtime(cinemaIdInput: Ref<number | null> | number | null) {
     loadRooms,
     loadRoomsByFormat,
     roomOptionsCache,
+    clearErrors,
   }
 }

@@ -61,13 +61,14 @@ defineExpose({ next: validateAndNext })
     <div>
         <h2 class="text-title mb-6">Chọn rạp chiếu phim</h2>
 
-        <!-- Loading -->
-        <div v-if="isLoading" class="flex justify-center py-12">
+        <!-- Loading spinner -->
+        <div v-if="isLoading" class="flex flex-col item-center justify-center py-12">
             <div class="animate-spin h-8 w-8 border-4 border-accent border-t-transparent rounded-full"></div>
+            <p class="text-caption text-text-secondary mt-2">Đang tải danh sách rạp...</p>
         </div>
 
         <template v-else>
-            <!-- Chọn Thành Phố -->
+            <!-- Chọn thành phố -->
             <div class="mb-8" v-if="cities.length">
                 <p class="text-caption text-text-secondary mb-3">Thành phố</p>
                 <div class="flex flex-wrap gap-2">
@@ -88,12 +89,12 @@ defineExpose({ next: validateAndNext })
                 </div>
             </div>
 
-            <!-- Danh sách Rạp -->
+            <!-- Danh sách rạp -->
             <div v-if="filteredCinemas.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <button v-for="cinema in filteredCinemas" :key="cinema.id"
-                    class="group bg-bg-surface border border-border-default hover:border-accent hover:shadow-xl rounded-3xl p-6 text-left transition-all duration-300 flex flex-col h-full"
+                    class="group bg-bg-surface border border-border-default hover:border-accent hover:shadow-xl rounded-3xl px-6 py-4 text-left transition-all duration-300 flex flex-col h-full"
                     @click="selectCinema(cinema)">
-                    <div class="flex justify-between items-start mb-4">
+                    <div class="flex justify-between items-start">
                         <div class="flex-1">
                             <p class="text-body font-semibold group-hover:text-accent transition-colors">
                                 {{ cinema.name }}
@@ -107,24 +108,13 @@ defineExpose({ next: validateAndNext })
                             →
                         </div>
                     </div>
-                    <div
-                        class="mt-auto pt-4 border-t border-border-subtle flex items-center justify-between text-xs text-text-tertiary">
-                        <span>🎥 Phim đang chiếu</span>
-                        <span class="flex items-center gap-1">
-                            <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                            Sẵn sàng
-                        </span>
-                    </div>
                 </button>
             </div>
 
-            <!-- Không tìm thấy rạp -->
+            <!-- Không có rạp (chỉ hiện khi đã tải xong) -->
             <div v-else class="text-center py-20">
-                <div class="text-5xl mb-4">🏙️</div>
-                <p class="text-body text-text-secondary">Không tìm thấy rạp nào</p>
-                <p class="text-caption text-text-tertiary mt-1">
-                    Vui lòng thử chọn thành phố khác
-                </p>
+                <p class="text-body text-text-secondary">Không có rạp nào</p>
+                <p class="text-caption text-text-tertiary mt-1">Vui lòng thử chọn thành phố khác</p>
             </div>
         </template>
     </div>

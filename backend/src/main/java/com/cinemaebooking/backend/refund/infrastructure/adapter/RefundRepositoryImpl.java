@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -64,5 +65,10 @@ public class RefundRepositoryImpl implements RefundRepository {
     @Override
     public boolean existsByBookingId(Long bookingId) {
         return jpaRepository.existsByBooking_IdAndDeletedFalse(bookingId);
+    }
+
+    @Override
+    public List<Refund> findAllByUserId(Long userId){
+        return jpaRepository.findAllByUserId(userId).stream().map(mapper::toDomainWithBookingDetails).toList();
     }
 }

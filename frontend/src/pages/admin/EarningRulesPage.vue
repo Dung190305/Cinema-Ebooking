@@ -36,7 +36,7 @@
             @create="showCreate = true" :showDelete="false" @save="handleSave" />
 
         <!-- Create modal -->
-        <CreateModal v-model="showCreate" title="Thêm quy tắc tích điểm" :columns="columns" :isLoading="isLoading"
+        <CreateModal v-model="showCreate" title="Thêm quy tắc tích điểm" :columns="columns" :isLoading="isCreating"
             :fieldErrors="fieldErrors" @submit="handleCreate" />
     </div>
 </template>
@@ -60,6 +60,7 @@ const { rules, isLoading, fieldErrors, globalErrors, fetchAll, create, save, rem
     useEarningRule(tierId)
 
 const showCreate = ref(false)
+const isCreating = ref(false)
 
 // Lấy tên tier cho breadcrumb
 const tierName = ref('...')
