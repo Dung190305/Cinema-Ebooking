@@ -27,14 +27,23 @@ export const useAuthStore = defineStore('auth', () => {
         loyaltyAccount.value = loyalty;
     };
 
-    const logout = () => {
-        user.value = null
-        accessToken.value = null
-        refreshToken.value = null
-        loyaltyAccount.value = null
-        localStorage.removeItem('accessToken')
-        localStorage.removeItem('refreshToken')
-        delete apiClient.defaults.headers.common.Authorization;
+    const logout = async () => {
+        try {
+            const refresh = localStorage.getItem('refreshToken')
+            if (refresh) {
+                await apiClient.post('/auth/logout', { refreshToken: refresh })
+            }
+        } catch {
+            // Luôn clear state cục bộ dù API có lỗi
+        } finally {
+            user.value = null
+            accessToken.value = null
+            refreshToken.value = null
+            loyaltyAccount.value = null
+            localStorage.removeItem('accessToken')
+            localStorage.removeItem('refreshToken')
+            delete apiClient.defaults.headers.common.Authorization;
+        }
     }
 
     const isLoggedIn = computed(() => !!accessToken.value)

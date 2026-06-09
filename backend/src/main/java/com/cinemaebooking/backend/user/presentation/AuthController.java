@@ -67,8 +67,9 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public void logout() {
-        logoutUseCase.execute();
+    public void logout(@RequestBody(required = false) RefreshTokenRequest request) {
+        String refreshToken = (request != null) ? request.getRefreshToken() : null;
+        logoutUseCase.execute(refreshToken);
     }
 
     // ================== FORGOT & RESET PASSWORD ==================

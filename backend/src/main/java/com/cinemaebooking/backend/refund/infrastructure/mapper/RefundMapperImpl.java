@@ -34,6 +34,36 @@ public class RefundMapperImpl implements RefundMapper {
     }
 
     @Override
+    public Refund toDomainWithBookingDetails(RefundJpaEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+
+        var booking = entity.getBooking();
+
+        return Refund.builder()
+                .id(RefundId.ofNullable(entity.getId()))
+                .bookingId(booking != null ? booking.getId() : null)
+                .originalAmount(entity.getOriginalAmount())
+                .refundAmount(entity.getRefundAmount())
+                .refundPercentage(entity.getRefundPercentage())
+                .status(entity.getStatus())
+                .requestedAt(entity.getRequestedAt())
+                .processedAt(entity.getProcessedAt())
+                .reason(entity.getReason())
+                .adminNote(entity.getAdminNote())
+                // Booking details
+                .bookingCode(booking != null ? booking.getBookingCode() : null)
+                .movieTitle(booking != null ? booking.getMovieTitle() : null)
+                .cinemaName(booking != null ? booking.getCinemaName() : null)
+                .roomName(booking != null ? booking.getRoomName() : null)
+                .userId(booking != null && booking.getUser() != null ? booking.getUser().getId() : null)
+                .showtimeStartTime(booking != null && booking.getShowtimeStartTime() != null
+                        ? booking.getShowtimeStartTime().toString() : null)
+                .build();
+    }
+
+    @Override
     public RefundJpaEntity toEntity(Refund domain) {
         if (domain == null) {
             return null;

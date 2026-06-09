@@ -32,6 +32,14 @@ public class Refund extends BaseEntity<RefundId> {
 
     private String adminNote;
 
+    // Transient fields from joined booking
+    private String bookingCode;
+    private String movieTitle;
+    private String cinemaName;
+    private String roomName;
+    private Long userId;
+    private String showtimeStartTime;
+
     public void approve(String adminNote) {
         if (this.status != RefundStatus.REQUESTED) {
             throw CommonExceptions.invalidInput("Chỉ yêu cầu hoàn tiền đang chờ xử lý mới được duyệt.");
@@ -39,6 +47,7 @@ public class Refund extends BaseEntity<RefundId> {
 
         this.status = RefundStatus.APPROVED;
         this.adminNote = adminNote;
+        this.processedAt = LocalDateTime.now();
     }
 
     public void reject(String adminNote) {
