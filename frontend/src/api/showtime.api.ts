@@ -33,7 +33,7 @@ export const showtimeApi = {
     apiClient.get<ShowtimeSeatLayoutResponse>(`/showtimes/${id}/seat-layout`),
 
   create: (body: CreateShowtimeRequest) =>
-    apiClient.post<ShowtimeResponse>('/admin/showtimes', body),
+    apiClient.post<ShowtimeResponse>('/admin/showtimes', body, { timeout: 60000 }),
 
   update: (id: number, body: UpdateShowtimeRequest) =>
     apiClient.put<ShowtimeResponse>(`/admin/showtimes/${id}`, body),

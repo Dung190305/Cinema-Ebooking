@@ -36,15 +36,19 @@ export function useShowtime(cinemaIdInput: Ref<number | null> | number | null) {
   const roomOptionsCache = ref<{ id: number; label: string }[]>([])
 
   function handleError(err: unknown) {
+  console.error('🔴 handleError called with:', err)
     const e = err as ApiRejected
     fieldErrors.value = e.fieldErrors ?? {}
+
+    // Ưu tiên globalErrors từ BE. Nếu BE không trả globalErrors thì KHÔNG fallback message
+    // thành global error nữa, vì sẽ gây hiển thị lỗi global không đúng khi FE không map được field.
+    // Lúc này lỗi sẽ được thể hiện qua fieldErrors (nếu có).
     if (e.globalErrors?.length) {
       globalErrors.value = e.globalErrors
-    } else if (!Object.values(fieldErrors.value).some(Boolean)) {
-      globalErrors.value = [e.message ?? 'Đã có lỗi xảy ra']
-    } else {
-      globalErrors.value = []
+      return
     }
+
+    globalErrors.value = []
   }
 
   function clearErrors() {
@@ -118,12 +122,12 @@ export function useShowtime(cinemaIdInput: Ref<number | null> | number | null) {
     fetchList(0)
   }
 
-  async function create(body: Omit<CreateShowtimeRequest, 'cinemaId'>): Promise<boolean> {
+  async function create(body: CreateShowtimeRequest): Promise<boolean> {
     clearErrors()
     const cid = currentCinemaId.value
     if (!cid) return false
     try {
-      const created = await showtimeApi.create({ ...body, cinemaId: cid })
+      const created = await showtimeApi.create({ ...body})
       showtimes.value.unshift(created)
       totalItems.value++
       totalPages.value = Math.ceil(totalItems.value / pageSize)
@@ -134,6 +138,7 @@ export function useShowtime(cinemaIdInput: Ref<number | null> | number | null) {
       prefetchNextPage(currentPage.value + 1)
       return true
     } catch (err) {
+      console.error('Error creating showtime:', err)
       handleError(err)
       return false
     }
@@ -193,14 +198,6 @@ export function useShowtime(cinemaIdInput: Ref<number | null> | number | null) {
     }
   }
 
-  // Khi cinemaId thay đổi, reset filter và load lại
-  watch(currentCinemaId, () => {
-    filterRoomId.value = undefined
-    filterStatus.value = undefined
-    nextPageDirty.value = true
-    fetchList(0) // gọi sau khi cinemaId thật sự thay đổi
-  })
-
   return {
     showtimes: readonly(showtimes),
     isLoading: readonly(isLoading),
@@ -219,5 +216,6 @@ export function useShowtime(cinemaIdInput: Ref<number | null> | number | null) {
     loadRooms,
     loadRoomsByFormat,
     roomOptionsCache,
+    clearErrors,
   }
 }
