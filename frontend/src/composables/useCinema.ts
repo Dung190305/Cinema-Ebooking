@@ -181,13 +181,18 @@ export function useCinema() {
 
   // ── Fetch All (for filter dropdown) ─────────────────────────────────────────
   async function fetchAll(): Promise<CinemaResponse[]> {
+    isLoading.value = true
+    clearErrors()
     try {
-      const res = await cinemaApi.getAll(100)
-      return res.content
-    } catch {
-      return []
+        const res = await cinemaApi.getAll(50) 
+        return res.content
+    } catch (err) {
+        handleError(err)
+        return []
+    } finally {
+        isLoading.value = false
     }
-  }
+}
 
   function setCinemas(data: CinemaResponse[]) {
     cinemas.value = data
