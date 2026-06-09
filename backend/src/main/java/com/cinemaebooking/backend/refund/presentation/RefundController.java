@@ -12,6 +12,7 @@ import com.cinemaebooking.backend.refund.application.usecase.CreateRefundUseCase
 import com.cinemaebooking.backend.refund.application.usecase.GetRefundDetailUseCase;
 import com.cinemaebooking.backend.refund.application.usecase.GetRefundListUseCase;
 import com.cinemaebooking.backend.refund.application.usecase.RejectRefundUseCase;
+import com.cinemaebooking.backend.refund.domain.enums.RefundStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -59,8 +60,10 @@ public class RefundController {
 
     @GetMapping("/admin/refunds")
     @PreAuthorize("hasRole('ADMIN')")
-    public Page<RefundResponse> getRefundList(@PageableDefault(size = 8) Pageable pageable) {
-        return getRefundListUseCase.execute(pageable);
+    public Page<RefundResponse> getRefundList(
+            @RequestParam(required = false) RefundStatus status,
+            @PageableDefault(size = 20) Pageable pageable) {
+        return getRefundListUseCase.execute(status, pageable);
     }
 
     @GetMapping("/admin/refunds/{id}")

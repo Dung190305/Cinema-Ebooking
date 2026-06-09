@@ -30,8 +30,28 @@ public class BatchCheckInUseCase {
 
     @Transactional
     public List<TicketCheckInResponse> execute(String bookingCode) {
-        if (!bookingJpaRepository.findByBookingCodeAndDeletedFalse(bookingCode).isPresent()) {
+        var optBooking = bookingJpaRepository.findByBookingCodeAndDeletedFalse(bookingCode);
+        if (optBooking.isEmpty()) {
             throw TicketExceptions.notFound(bookingCode);
+        }
+
+        var booking = optBooking.get();
+        if (booking.getStatus() == com.cinemaebooking.backend.booking.domain.enums.BookingStatus.CANCELLED) {
+            List<TicketCheckInResponse> results = new ArrayList<>();
+            for (Ticket ticket : ticketRepository.findByBookingCode(bookingCode)) {
+                results.add(TicketCheckInResponse.builder()
+                        .ticketId(ticket.getId().getValue())
+                        .ticketCode(ticket.getTicketCode())
+                        .seatName(ticket.getSeatName())
+                        .seatType(ticket.getSeatType())
+                        .status(ticket.getStatus())
+                        .price(ticket.getPrice())
+                        .checkedInAt(ticket.getCheckedInAt())
+                        .success(false)
+                        .message("Booking đã bị hủy (refund), không thể check-in")
+                        .build());
+            }
+            return results;
         }
 
         List<Ticket> tickets = ticketRepository.findByBookingCode(bookingCode);

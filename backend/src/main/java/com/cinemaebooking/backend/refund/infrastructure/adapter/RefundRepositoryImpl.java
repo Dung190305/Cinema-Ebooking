@@ -2,6 +2,7 @@ package com.cinemaebooking.backend.refund.infrastructure.adapter;
 
 import com.cinemaebooking.backend.common.exception.domain.RefundExceptions;
 import com.cinemaebooking.backend.refund.application.port.RefundRepository;
+import com.cinemaebooking.backend.refund.domain.enums.RefundStatus;
 import com.cinemaebooking.backend.refund.domain.model.Refund;
 import com.cinemaebooking.backend.refund.domain.valueobject.RefundId;
 import com.cinemaebooking.backend.refund.infrastructure.mapper.RefundMapper;
@@ -52,6 +53,12 @@ public class RefundRepositoryImpl implements RefundRepository {
     public Page<Refund> findAll(Pageable pageable) {
         return jpaRepository.findAll(pageable)
                 .map(mapper::toDomain);
+    }
+
+    @Override
+    public Page<Refund> findAll(RefundStatus status, Pageable pageable) {
+        return jpaRepository.findAllWithBooking(status, pageable)
+                .map(mapper::toDomainWithBookingDetails);
     }
 
     @Override

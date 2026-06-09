@@ -22,7 +22,13 @@ public class RefundResponseMapper {
                 refund.getRequestedAt(),
                 refund.getProcessedAt(),
                 refund.getReason(),
-                refund.getAdminNote()
+                refund.getAdminNote(),
+                refund.getBookingCode(),
+                refund.getMovieTitle(),
+                refund.getCinemaName(),
+                refund.getRoomName(),
+                refund.getUserId(),
+                refund.getShowtimeStartTime()
         );
     }
 }

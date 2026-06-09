@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
  * Note:
  * - This is NOT a domain model
  * - Must be converted via Mapper
+ * - Transient fields are loaded via JOIN FETCH in repository queries
  *
  * @author Hieu Nguyen
  * @since 2026
@@ -75,4 +76,26 @@ public class RefundJpaEntity extends BaseJpaEntity {
 
     @Column(name = "admin_note", length = 500)
     private String adminNote;
+
+    /**
+     * Transient fields — populated via JOIN FETCH in repository queries.
+     * Not persisted to database.
+     */
+    @Transient
+    private String bookingCode;
+
+    @Transient
+    private String movieTitle;
+
+    @Transient
+    private String cinemaName;
+
+    @Transient
+    private String roomName;
+
+    @Transient
+    private Long userId;
+
+    @Transient
+    private String showtimeStartTime;
 }
