@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+
 @Getter
 @Builder
 @NoArgsConstructor
@@ -16,37 +17,24 @@ import java.util.List;
 public class ApiResponseDto {
 
     private boolean valid;
-    @JsonProperty("label")
+
     private String label;
 
-    @JsonProperty("label_score")
-    private double sentimentScore;
-
-    @JsonProperty("final_decision")
-    private String finalDecision;
-
-    private String action;
-
-    @JsonProperty("cleaned_text")
     private String cleanedText;
 
-    @JsonProperty("is_spoiler")
-    private boolean isSpoiler;
+    private String finalOutput;
 
-    @JsonProperty("spoiler_conf")
+    private String finalDecision;
+
+    private boolean spoiler;
+
     private double spoilerConf;
 
     private List<String> censoredWords;
 
-    @JsonProperty("profanity_count")
     private int profanityCount;
 
-    @JsonProperty("profanity_ratio")
     private double profanityRatio;
 
-    @JsonProperty("final_output")
-    private String finalOutput;
-
-    @JsonProperty("process_time")
     private double processTime;
 }
