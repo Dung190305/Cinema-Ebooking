@@ -179,6 +179,7 @@ const handleSubmit = async () => {
 
 const handleEdit = () => {
   isEditMode.value = true
+  commentText.value = myReviewFinalText.value
 }
 
 const handleCancelEdit = () => {

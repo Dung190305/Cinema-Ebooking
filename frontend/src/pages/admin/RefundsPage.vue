@@ -212,7 +212,7 @@
             v-if="item.status === 'REQUESTED'"
             class="w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
             :disabled="isActionLoading"
-            @click="approveRefund(Number(item.id), close)"
+            @click="openModal('approve', item, close)"
           >
             Duyệt yêu cầu
           </button>
@@ -221,7 +221,7 @@
             v-if="item.status === 'REQUESTED'"
             class="w-full rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
             :disabled="isActionLoading"
-            @click="rejectRefund(Number(item.id), close)"
+            @click="openModal('reject', item, close)"
           >
             Từ chối
           </button>
@@ -230,7 +230,7 @@
             v-if="item.status === 'APPROVED'"
             class="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
             :disabled="isActionLoading"
-            @click="completeRefund(Number(item.id), close)"
+            @click="openModal('complete', item, close)"
           >
             Hoàn tất refund
           </button>
@@ -245,15 +245,71 @@
       </template>
     </DataTable>
   </div>
+
+  <!-- Action Modal -->
+  <RefundActionModal
+    v-model="showModal"
+    :action="modalAction"
+    :refund="selectedRefund"
+    :is-loading="isActionLoading"
+    @confirm="handleModalConfirm"
+  />
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { Banknote, Building2, Clock3, FileText, Percent, RefreshCw, RotateCcw } from 'lucide-vue-next'
 import DataTable from '@/components/common/table/DataTable.vue'
 import type { ColumnDef } from '@/components/common/table/types/table'
+import RefundActionModal from '@/components/refund/RefundActionModal.vue'
 import { refundApi } from '@/api/refund.api'
 import type { RefundResponse, RefundStatus } from '@/types/refund.types'
+
+// ── Modal state ────────────────────────────────────────────────────────────────
+type RefundAction = 'approve' | 'reject' | 'complete'
+
+const showModal = ref(false)
+const modalAction = ref<RefundAction>('approve')
+const selectedRefund = ref<RefundResponse | null>(null)
+let pendingClose: (() => void) | null = null
+
+function openModal(action: RefundAction, refund: RefundResponse, close: () => void) {
+  selectedRefund.value = refund
+  modalAction.value = action
+  pendingClose = close
+  showModal.value = true
+}
+
+async function handleModalConfirm(adminNote: string | null) {
+  if (!selectedRefund.value) return
+  const id = selectedRefund.value.id
+  const close = pendingClose
+
+  try {
+    isActionLoading.value = true
+    switch (modalAction.value) {
+      case 'approve':
+        await refundApi.approve(id, { adminNote })
+        successMessage.value = 'Đã duyệt yêu cầu hoàn tiền'
+        break
+      case 'reject':
+        await refundApi.reject(id, { adminNote })
+        successMessage.value = 'Đã từ chối yêu cầu hoàn tiền'
+        break
+      case 'complete':
+        await refundApi.complete(id, { adminNote })
+        successMessage.value = 'Đã hoàn tất hoàn tiền'
+        break
+    }
+    showModal.value = false
+    close?.()
+    await fetchRefunds(currentPage.value)
+  } catch (error: unknown) {
+    globalError.value = getErrorMessage(error, 'Không thể xử lý refund')
+  } finally {
+    isActionLoading.value = false
+  }
+}
 
 // ── Refs ──────────────────────────────────────────────────────────────────────
 const refunds = ref<RefundResponse[]>([])
@@ -282,39 +338,32 @@ function onPageChange(page: number) {
 // ── Columns ──────────────────────────────────────────────────────────────────
 const columns: ColumnDef<RefundResponse>[] = [
   {
-    key: 'id',
-    label: 'Refund ID',
-    type: 'number',
-    readonly: true,
-    width: '100px',
-  },
-  {
     key: 'bookingCode',
     label: 'Mã đặt vé',
     type: 'text',
     readonly: true,
-    width: '140px',
+    width: '135px',
   },
   {
     key: 'movieTitle',
     label: 'Phim',
     type: 'text',
     readonly: true,
-    width: '180px',
+    width: '190px',
   },
   {
     key: 'cinemaName',
     label: 'Rạp',
     type: 'text',
     readonly: true,
-    width: '140px',
+    width: '130px',
   },
   {
     key: 'roomName',
     label: 'Phòng',
     type: 'text',
     readonly: true,
-    width: '100px',
+    width: '80px',
   },
   {
     key: 'showtimeStartTime',
@@ -328,21 +377,21 @@ const columns: ColumnDef<RefundResponse>[] = [
     label: 'Tiền gốc',
     type: 'currency',
     readonly: true,
-    width: '120px',
+    width: '115px',
   },
   {
     key: 'refundAmount',
     label: 'Tiền hoàn',
     type: 'currency',
     readonly: true,
-    width: '120px',
+    width: '115px',
   },
   {
     key: 'refundPercentage',
     label: 'Tỷ lệ',
     type: 'number',
     readonly: true,
-    width: '80px',
+    width: '70px',
     displayFn: (value) => `${Number(value || 0)}%`,
   },
   {
@@ -350,7 +399,7 @@ const columns: ColumnDef<RefundResponse>[] = [
     label: 'Trạng thái',
     type: 'enum',
     readonly: true,
-    width: '130px',
+    width: '115px',
     options: [
       { value: 'REQUESTED', label: 'Chờ xử lý' },
       { value: 'APPROVED', label: 'Đã duyệt' },
@@ -364,7 +413,7 @@ const columns: ColumnDef<RefundResponse>[] = [
     label: 'Ngày yêu cầu',
     type: 'datetime',
     readonly: true,
-    width: '160px',
+    width: '155px',
   },
 ]
 
@@ -423,67 +472,6 @@ async function fetchRefunds(page = 0) {
     globalError.value = getErrorMessage(error, 'Không thể tải danh sách hoàn tiền')
   } finally {
     isLoading.value = false
-  }
-}
-
-async function approveRefund(id: number, close?: () => void) {
-  const adminNote = globalThis.prompt(
-    'Nhập ghi chú duyệt refund:',
-    'Yêu cầu hợp lệ, đồng ý hoàn tiền.',
-  )
-  if (adminNote === null) return
-  await processRefundAction(
-    () => refundApi.approve(id, { adminNote }),
-    'Đã duyệt yêu cầu hoàn tiền',
-    close,
-  )
-}
-
-async function rejectRefund(id: number, close?: () => void) {
-  const adminNote = globalThis.prompt('Nhập lý do từ chối refund:', 'Yêu cầu không hợp lệ.')
-  if (adminNote === null) return
-  await processRefundAction(
-    () => refundApi.reject(id, { adminNote }),
-    'Đã từ chối yêu cầu hoàn tiền',
-    close,
-  )
-}
-
-async function completeRefund(id: number, close?: () => void) {
-  const ok = globalThis.confirm(
-    'Bạn chắc chắn muốn hoàn tất refund này? Booking sẽ chuyển sang CANCELLED.',
-  )
-  if (!ok) return
-
-  const adminNote = globalThis.prompt(
-    'Nhập ghi chú hoàn tất refund:',
-    'Đã hoàn tất xử lý hoàn tiền.',
-  )
-  if (adminNote === null) return
-
-  await processRefundAction(
-    () => refundApi.complete(id, { adminNote }),
-    'Đã hoàn tất hoàn tiền',
-    close,
-  )
-}
-
-async function processRefundAction(
-  action: () => Promise<RefundResponse>,
-  message: string,
-  close?: () => void,
-) {
-  isActionLoading.value = true
-  clearMessages()
-  try {
-    await action()
-    successMessage.value = message
-    close?.()
-    await fetchRefunds(currentPage.value)
-  } catch (error: unknown) {
-    globalError.value = getErrorMessage(error, 'Không thể xử lý refund')
-  } finally {
-    isActionLoading.value = false
   }
 }
 
