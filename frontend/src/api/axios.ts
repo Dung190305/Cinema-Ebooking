@@ -39,20 +39,32 @@ const isPublicEndpoint = (url?: string): boolean => {
   return PUBLIC_ENDPOINTS.some(publicPath => url.includes(publicPath))
 }
 
+const isProtectedGetRequest = (config: InternalAxiosRequestConfig): boolean => {
+  if (config.method?.toUpperCase() !== 'GET') return false
+  const url = config.url || ''
+  return PROTECTED_GET_REGEX.some(regex => regex.test(url))
+}
+
+// Helper function to check if a request is a true public GET (not protected)
 const isPublicGetRequest = (config: InternalAxiosRequestConfig): boolean => {
   if (config.method?.toUpperCase() !== 'GET') return false
   const url = config.url || ''
-  // Nếu URL khớp với bất kỳ protected regex nào → không phải public GET
-  const isProtected = PROTECTED_GET_REGEX.some(regex => regex.test(url))
-  return !isProtected
+  return !PROTECTED_GET_REGEX.some(regex => regex.test(url))
 }
 
 // ================= REQUEST =================
 apiClient.interceptors.request.use((config) => {
-    if (isPublicEndpoint(config.url) || isPublicGetRequest(config)) {
+    if (isPublicEndpoint(config.url)) {
         delete config.headers.Authorization;
-        return config 
-    } 
+        return config
+    }
+    if (isProtectedGetRequest(config)) {
+        // Protected GET — gắn token bình thường (không xóa)
+        const token = localStorage.getItem('accessToken')
+        if (token) config.headers.Authorization = `Bearer ${token}`
+        return config
+    }
+    // Các request còn lại (POST/PUT/PATCH/DELETE) — gắn token
     const token = localStorage.getItem('accessToken')
     if (token) config.headers.Authorization = `Bearer ${token}`
     return config
@@ -134,6 +146,8 @@ apiClient.interceptors.response.use(
             })
         }
 
+        // ✅ FIX: Chỉ reject TRUE public GET requests (không cần token)
+        // Protected GET requests sẽ được skip qua đây và tiếp tục refresh flow
         if (isPublicGetRequest(originalRequest)) {
             const mapped = mapFieldErrors(apiError ?? null)
             return Promise.reject({

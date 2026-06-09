@@ -32,6 +32,7 @@ const checkedInCount = ref(0)
 const latestBookingCode = ref<string | null>(null)
 const hasReview = ref(false)
 const myReviewId = ref<number | null>(null)
+const myReviewFinalText = ref('')
 const isEditMode = ref(false)
 
 // ==========================================
@@ -98,6 +99,7 @@ const initData = async () => {
       myReviewId.value = myReviewData.review.reviewId
       selectedRating.value = myReviewData.review.rating ?? 0
       commentText.value = myReviewData.review.comment ?? ''
+      myReviewFinalText.value = myReviewData.review.finalText ?? myReviewData.review.comment ?? ''
     }
   } catch (err) {
     console.error('Lỗi khởi tạo dữ liệu review:', err)
@@ -110,7 +112,6 @@ const loadReviews = async () => {
   loadingReviews.value = true
   try {
     const res = await reviewApi.getByMovieId(props.movieId, { size: 20, sort: 'createdAt,desc' })
-    // Fix lỗi TypeScript bóc tách content từ AxiosResponse hoặc Object thuần
     const page = (res as any).data ?? res
     reviews.value = page.content ?? []
     totalReviews.value = page.totalElements ?? 0
@@ -178,6 +179,7 @@ const handleSubmit = async () => {
 
 const handleEdit = () => {
   isEditMode.value = true
+  commentText.value = myReviewFinalText.value
 }
 
 const handleCancelEdit = () => {
@@ -360,8 +362,8 @@ defineExpose({
               </svg>
               <span class="ml-2 text-xs font-black text-amber-400">{{ selectedRating }}/10</span>
             </div>
-            <p v-if="commentText" class="text-xs text-zinc-300 leading-relaxed">
-              {{ commentText }}
+            <p v-if="myReviewFinalText" class="text-xs text-zinc-300 leading-relaxed">
+              {{ myReviewFinalText }}
             </p>
             <p v-else class="text-xs text-zinc-600 italic">Không có nội dung bình luận.</p>
           </div>
@@ -553,12 +555,12 @@ defineExpose({
             </div>
           </div>
 
-          <p
-            v-else-if="review.finalText || review.comment"
-            class="mt-3 text-xs text-zinc-300 leading-relaxed pl-0.5"
-          >
-            {{ review.finalText || review.comment }}
-          </p>
+            <p
+              v-else-if="review.finalText ?? review.comment"
+              class="mt-3 text-xs text-zinc-300 leading-relaxed pl-0.5"
+            >
+              {{ review.finalText ?? review.comment }}
+            </p>
 
           <button
             v-if="review.isSpoiler && review.userId !== currentUserId && revealedSpoilers.has(review.reviewId)"
