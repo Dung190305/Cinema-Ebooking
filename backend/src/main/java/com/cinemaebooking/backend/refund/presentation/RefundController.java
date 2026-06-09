@@ -1,17 +1,11 @@
 package com.cinemaebooking.backend.refund.presentation;
 
+import com.cinemaebooking.backend.common.security.CustomUserPrincipal;
 import com.cinemaebooking.backend.refund.application.dto.CreateRefundRequest;
 import com.cinemaebooking.backend.refund.application.dto.ProcessRefundRequest;
 import com.cinemaebooking.backend.refund.application.dto.RefundCalculationResponse;
 import com.cinemaebooking.backend.refund.application.dto.RefundResponse;
-import com.cinemaebooking.backend.refund.application.usecase.ApproveRefundUseCase;
-import com.cinemaebooking.backend.refund.application.usecase.CalculateRefundAmountUseCase;
-import com.cinemaebooking.backend.refund.application.usecase.CancelRefundUseCase;
-import com.cinemaebooking.backend.refund.application.usecase.CompleteRefundUseCase;
-import com.cinemaebooking.backend.refund.application.usecase.CreateRefundUseCase;
-import com.cinemaebooking.backend.refund.application.usecase.GetRefundDetailUseCase;
-import com.cinemaebooking.backend.refund.application.usecase.GetRefundListUseCase;
-import com.cinemaebooking.backend.refund.application.usecase.RejectRefundUseCase;
+import com.cinemaebooking.backend.refund.application.usecase.*;
 import com.cinemaebooking.backend.refund.domain.enums.RefundStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -19,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,6 +22,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -41,6 +38,7 @@ public class RefundController {
     private final CompleteRefundUseCase completeRefundUseCase;
     private final GetRefundDetailUseCase getRefundDetailUseCase;
     private final GetRefundListUseCase getRefundListUseCase;
+    private final GetMyRefundsUseCase getMyRefundsUseCase;
 
     @PostMapping("/refunds")
     @ResponseStatus(HttpStatus.CREATED)
@@ -91,5 +89,11 @@ public class RefundController {
     public RefundResponse completeRefund(@PathVariable Long id,
                                          @RequestBody(required = false) ProcessRefundRequest request) {
         return completeRefundUseCase.execute(id, request);
+    }
+
+    @GetMapping("/refunds/me")
+    public List<RefundResponse> getMyRefunds(
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        return getMyRefundsUseCase.execute(principal.getUserId());
     }
 }

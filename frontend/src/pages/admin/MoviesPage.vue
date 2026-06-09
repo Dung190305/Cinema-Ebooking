@@ -53,7 +53,7 @@
         </div>
 
         <!-- CreateModal -->
-        <CreateModal v-model="showCreate" title="Thêm phim mới" :columns="createColumns" :isLoading="isLoading"
+        <CreateModal v-model="showCreate" title="Thêm phim mới" :columns="createColumns" :isLoading="isCreating"
             :fieldErrors="fieldErrors" @submit="handleCreate" />
     </div>
 </template>
@@ -76,6 +76,7 @@ const {
 } = useMovie()
 
 const showCreate = ref(false)
+const isCreating = ref(false)
 
 const baseColumns: ColumnDef<MovieResponse>[] = [
     {
@@ -206,23 +207,28 @@ const createColumns = computed(() => {
 
 // ========== Handlers ==========
 async function handleCreate(draft: Record<string, unknown>) {
-    // draft.genres là number[] (do FieldRenderer checkbox trả về)
-    const payload: CreateMovieRequest = {
-        title: draft.title as string,
-        description: draft.description as string,
-        duration: Number(draft.duration),
-        ageRating: draft.ageRating as any,
-        releaseDate: draft.releaseDate as string,
-        showingEndDate: (draft.showingEndDate as string) || null,
-        posterUrl: draft.posterUrl as string,
-        bannerUrl: draft.bannerUrl as string,
-        trailerUrl: draft.trailerUrl as String,
-        director: draft.director as string,
-        actors: draft.actors as string,
-        genreIds: (draft.genres as number[]) || []
+    isCreating.value = true
+    try {
+        // draft.genres là number[] (do FieldRenderer checkbox trả về)
+        const payload: CreateMovieRequest = {
+            title: draft.title as string,
+            description: draft.description as string,
+            duration: Number(draft.duration),
+            ageRating: draft.ageRating as any,
+            releaseDate: draft.releaseDate as string,
+            showingEndDate: (draft.showingEndDate as string) || null,
+            posterUrl: draft.posterUrl as string,
+            bannerUrl: draft.bannerUrl as string,
+            trailerUrl: draft.trailerUrl as String,
+            director: draft.director as string,
+            actors: draft.actors as string,
+            genreIds: (draft.genres as number[]) || []
+        }
+        const ok = await create(payload)
+        if (ok) showCreate.value = false
+    } finally {
+        isCreating.value = false
     }
-    const ok = await create(payload)
-    if (ok) showCreate.value = false
 }
 
 async function handleSave(item: MovieResponse, done: () => void) {

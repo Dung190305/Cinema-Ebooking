@@ -184,6 +184,15 @@ public class BookingRepositoryImpl implements BookingRepository {
     }
 
     @Override
+    public List<Booking> findAllByShowtimeIdAndStatus(Long showtimeId, BookingStatus status) {
+        return jpaRepository
+                .findAllByShowtimeIdAndStatusAndDeletedFalse(showtimeId, status)
+                .stream()
+                .map(mapper::toDomain)
+                .toList();
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<Booking> findAllExpired(LocalDateTime now, BookingStatus status) {
         return jpaRepository.findAllByExpiredAtBeforeAndStatusAndDeletedFalse(now, status)

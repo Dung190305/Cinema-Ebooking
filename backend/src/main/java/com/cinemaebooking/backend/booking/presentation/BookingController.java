@@ -7,6 +7,7 @@ import com.cinemaebooking.backend.booking.application.usecase.*;
 import com.cinemaebooking.backend.booking.domain.enums.BookingStatus;
 import com.cinemaebooking.backend.common.security.CustomUserPrincipal;
 import com.cinemaebooking.backend.notification.application.port.QRCodeService;
+import com.cinemaebooking.backend.refund.application.dto.RefundResponse;
 import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDate;
 import jakarta.validation.Valid;
@@ -30,6 +31,7 @@ public class BookingController {
     private final GetAdminBookingsUseCase getAdminBookingsUseCase;
     private final GetPendingBookingUseCase getPendingBookingUseCase;
     private final GetUserTransactionHistoryUseCase getUserTransactionHistoryUseCase;
+    private final RequestRefundAndCancelUseCase requestRefundAndCancelUseCase;
     private final QRCodeService qrCodeService;
 
     // ================== LIST (DANH SÁCH TẤT CẢ ĐƠN HÀNG) ==================
@@ -107,6 +109,17 @@ public class BookingController {
         confirmPaymentUseCase.execute(id);
     }
 
+    @PostMapping("/{id}/request-refund")
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("isAuthenticated()")
+    public RefundResponse requestRefundAndCancel(
+            @PathVariable Long id,
+            @RequestBody(required = false) RefundReasonRequest request
+    ) {
+        String reason = (request != null) ? request.reason() : null;
+        return requestRefundAndCancelUseCase.execute(id, reason);
+    }
+
 
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
@@ -136,4 +149,6 @@ public class BookingController {
         String base64 = qrCodeService.generateQRCodeBase64(booking.getBookingCode(), 300, 300);
         return new QRCodeResponse(base64);
     }
+
+    public record RefundReasonRequest(String reason) {}
 }

@@ -33,6 +33,7 @@ const selectedPaymentMethod = ref<PaymentMethod>('MOMO')
 const isProcessing = ref(false)
 const isUserCouponExpanded = ref(false)
 const generalError = ref('')
+const isPaying = ref(false)
 
 // State cho booking pending
 const pendingBookingId = ref<number | null>(null)
@@ -135,30 +136,6 @@ function restoreLockFromStorage(showtimeId: number): boolean {
     }
 }
 
-// Huỷ booking cũ, reset state để chọn lại ghế
-async function cancelOldBookingAndReset() {
-    if (!pendingBookingId.value) return
-    showPendingDialog.value = false
-    isProcessing.value = true
-    try {
-        await bookingApi.cancelBooking(pendingBookingId.value)
-        // Reset booking state (xóa ghế đã chọn, coupon, ...)
-        booking.resetBooking?.()
-        // Tải lại dữ liệu ghế cho suất chiếu hiện tại
-        const showtimeId = booking.selectedShowtime.value?.id
-        if (showtimeId) {
-            await booking.loadShowtimeSeats?.(showtimeId)
-        }
-        generalError.value = 'Đã huỷ đơn hàng cũ. Bạn có thể chọn ghế lại.'
-        pendingBookingId.value = null
-        sessionStorage.removeItem('returned_from_payment')
-    } catch (err: any) {
-        generalError.value = 'Không thể huỷ đơn hàng, vui lòng thử lại sau.'
-    } finally {
-        isProcessing.value = false
-    }
-}
-
 async function confirmAndPay() {
     const userId = authStore.user?.id
     if (!userId) {
@@ -168,6 +145,7 @@ async function confirmAndPay() {
     if (isProcessing.value) return
 
     isProcessing.value = true
+    isPaying.value = true
     generalError.value = ''
 
     try {
@@ -219,6 +197,7 @@ async function confirmAndPay() {
         sessionStorage.removeItem('just_left_for_payment')
     } finally {
         isProcessing.value = false
+        if (generalError.value) isPaying.value = false
     }
 }
 
@@ -256,29 +235,18 @@ defineExpose({ next: validateAndNext })
 
 <template>
     <div>
-        <h2 class="text-title mb-6">Xác nhận & thanh toán</h2>
-
-        <!-- Dialog thông báo booking đang chờ -->
-        <div v-if="showPendingDialog" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div class="bg-bg-surface rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
-                <h3 class="text-lg font-bold mb-2">Đã có đơn hàng đang chờ</h3>
-                <p class="text-text-secondary mb-4">
-                    Bạn đã tạo một đơn hàng cho suất chiếu này nhưng chưa thanh toán.
-                    Bạn muốn tiếp tục thanh toán hay huỷ để chọn lại ghế khác?
-                </p>
-                <div class="flex gap-3">
-                    <button @click="continuePayment" :disabled="isProcessing"
-                        class="flex-1 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition disabled:opacity-50">
-                        Tiếp tục thanh toán
-                    </button>
-                    <button @click="cancelOldBookingAndReset" :disabled="isProcessing"
-                        class="flex-1 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition disabled:opacity-50">
-                        Huỷ & chọn lại ghế
-                    </button>
-                </div>
+        <div v-if="isPaying" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center">
+            <div class="bg-bg-surface rounded-xl p-6 flex flex-col items-center gap-3">
+                <svg class="animate-spin h-8 w-8 text-accent" xmlns="http://www.w3.org/2000/svg" fill="none"
+                    viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                </svg>
+                <p class="text-text-primary">Đang xử lý thanh toán, vui lòng chờ...</p>
             </div>
         </div>
 
+        <h2 class="text-title mb-6">Xác nhận & thanh toán</h2>
         <!-- Thông báo lỗi chung -->
         <div v-if="generalError"
             class="mb-4 p-3 rounded-lg bg-red-500/10 border border-error/30 text-error flex items-center justify-between">

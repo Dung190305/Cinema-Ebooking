@@ -64,7 +64,7 @@
 
         <!-- Create modal -->
         <CreateModal v-model="showCreate" title="Thêm phòng chiếu" submitLabel="Tạo phòng" :columns="columns"
-            :isLoading="isLoading" :fieldErrors="fieldErrors" @submit="handleCreate" />
+            :isLoading="isCreating" :fieldErrors="fieldErrors" @submit="handleCreate" />
 
         <!--
             TODO: Layout modal
@@ -105,6 +105,7 @@ const {
 
 // ── UI state ──────────────────────────────────────────────────────────────────
 const showCreate = ref(false)
+const isCreating = ref(false)
 
 
 const columns: ColumnDef<RoomResponse>[] = [
@@ -181,13 +182,18 @@ const columns: ColumnDef<RoomResponse>[] = [
 
 // ── Handlers ──────────────────────────────────────────────────────────────────
 async function handleCreate(draft: Record<string, unknown>) {
-    const ok = await create({
-        name: String(draft.name ?? ''),
-        roomType: draft.roomType as CreateRoomRequest['roomType'],
-        numberOfRows: Number(draft.numberOfRows),
-        numberOfCols: Number(draft.numberOfCols),
-    })
-    if (ok) showCreate.value = false
+    isCreating.value = true
+    try {
+        const ok = await create({
+            name: String(draft.name ?? ''),
+            roomType: draft.roomType as CreateRoomRequest['roomType'],
+            numberOfRows: Number(draft.numberOfRows),
+            numberOfCols: Number(draft.numberOfCols),
+        })
+        if (ok) showCreate.value = false
+    } finally {
+        isCreating.value = false
+    }
 }
 
 async function handleSave(item: RoomResponse, done: () => void) {

@@ -1,5 +1,15 @@
 <template>
     <div>
+        <div v-if="isLocking" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center">
+            <div class="bg-bg-surface rounded-xl p-6 flex flex-col items-center gap-3">
+                <svg class="animate-spin h-8 w-8 text-accent" xmlns="http://www.w3.org/2000/svg" fill="none"
+                    viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                </svg>
+                <p class="text-text-primary">Đang giữ ghế, vui lòng chờ...</p>
+            </div>
+        </div>
         <Transition name="modal-fade">
             <div v-if="orphanWarning"
                 class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-md"
@@ -163,6 +173,7 @@ const uiStore = useUIStore()
 const seatLock = inject<ReturnType<typeof useSeatLock>>('seatLock')!
 const toast = useToast()
 const showLoginPrompt = ref(false)
+const isLocking = ref(false)
 
 // ── Composables ─────────────────────────────
 const {
@@ -213,59 +224,59 @@ async function validateAndNext() {
         return false
     }
 
-    const currentLayout = adapted.value
-    if (currentLayout) {
-        const stillAvailable = selectedSeats.value.every(seat =>
-            !currentLayout.bookedIds.includes(seat.id) && !currentLayout.lockedIds.includes(seat.id)
-        )
-        if (!stillAvailable) {
-            toast.error('Một số ghế đã bị đặt hoặc giữ bởi người khác. Vui lòng chọn lại.')
-            await retry()
-            return false
+    isLocking.value = true
+    try {
+        const currentLayout = adapted.value
+        if (currentLayout) {
+            const stillAvailable = selectedSeats.value.every(seat =>
+                !currentLayout.bookedIds.includes(seat.id) && !currentLayout.lockedIds.includes(seat.id)
+            )
+            if (!stillAvailable) {
+                toast.error('Một số ghế đã bị đặt hoặc giữ bởi người khác. Vui lòng chọn lại.')
+                await retry()
+                return false
+            }
+
+            const orphanResult = checkOrphan(
+                currentLayout.grid,
+                new Set(currentLayout.bookedIds),
+                new Set(currentLayout.lockedIds),
+                new Set(selectedIds.value),
+            )
+            if (orphanResult.hasOrphan) {
+                orphanWarning.value = orphanResult
+                return false
+            }
         }
 
-        // Orphan check — chạy tại đây, không phải khi click ghế
-        const orphanResult = checkOrphan(
-            currentLayout.grid,
-            new Set(currentLayout.bookedIds),
-            new Set(currentLayout.lockedIds),
-            new Set(selectedIds.value),
-        )
-        if (orphanResult.hasOrphan) {
-            orphanWarning.value = orphanResult   // hiện modal, chờ user confirm
-            return false
+        await retry()
+
+        const freshLayout = adapted.value
+        if (freshLayout) {
+            const stillAvailableAfterPoll = selectedSeats.value.every(seat =>
+                !freshLayout.bookedIds.includes(seat.id) && !freshLayout.lockedIds.includes(seat.id)
+            )
+            if (!stillAvailableAfterPoll) {
+                toast.error('Một số ghế vừa bị đặt hoặc giữ bởi người khác. Vui lòng chọn lại.')
+                return false
+            }
+
+            const orphanResultAfterPoll = checkOrphan(
+                freshLayout.grid,
+                new Set(freshLayout.bookedIds),
+                new Set(freshLayout.lockedIds),
+                new Set(selectedIds.value),
+            )
+            if (orphanResultAfterPoll.hasOrphan) {
+                orphanWarning.value = orphanResultAfterPoll
+                return false
+            }
         }
+
+        return await doNext()
+    } finally {
+        isLocking.value = false
     }
-
-    // Bảo mật bổ sung: Poll sơ đồ ghế trước khi xác nhận để lấy trạng thái mới nhất
-    // Điều này giúp phát hiện nếu người khác vừa khóa ghế làm ghế lẻ
-    await retry()
-
-    // Re-validate sau khi polling
-    const freshLayout = adapted.value
-    if (freshLayout) {
-        const stillAvailableAfterPoll = selectedSeats.value.every(seat =>
-            !freshLayout.bookedIds.includes(seat.id) && !freshLayout.lockedIds.includes(seat.id)
-        )
-        if (!stillAvailableAfterPoll) {
-            toast.error('Một số ghế vừa bị đặt hoặc giữ bởi người khác. Vui lòng chọn lại.')
-            return false
-        }
-
-        // Re-check orphan sau khi polling
-        const orphanResultAfterPoll = checkOrphan(
-            freshLayout.grid,
-            new Set(freshLayout.bookedIds),
-            new Set(freshLayout.lockedIds),
-            new Set(selectedIds.value),
-        )
-        if (orphanResultAfterPoll.hasOrphan) {
-            orphanWarning.value = orphanResultAfterPoll
-            return false
-        }
-    }
-
-    return doNext()
 }
 
 async function doNext() {
@@ -275,22 +286,9 @@ async function doNext() {
 
     const result = await seatLock.acquireLocks(userId, showtimeId, selectedIds.value)
     if (!result?.success) {
-        const orphanError = extractOrphanError(seatLock.error.value)
-        const rawError = (result as any)?.rawError ?? null
-        const orphanFromRaw = rawError ? extractOrphanError(rawError) : null
-        const orphan = orphanError ?? orphanFromRaw
-
-        if (orphan) {
-            orphanWarning.value = {
-                hasOrphan: true,
-                orphanCount: orphan.orphanCount,
-                message: orphan.message,
-            }
-            await retry()
-            return false
-        }
-
-        toast.error(seatLock.error.value || 'Không thể giữ ghế. Vui lòng thử lại.')
+        // Hiển thị lỗi trực tiếp từ seatLock hoặc result
+        const errorMsg = seatLock.error.value || result?.error || 'Không thể giữ ghế. Vui lòng thử lại.'
+        toast.error(errorMsg)
         await retry()
         return false
     }

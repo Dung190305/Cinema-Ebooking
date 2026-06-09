@@ -8,7 +8,7 @@
     </div>
 
     <div class="flex items-center gap-4 sm:gap-8">
-      <HeaderActions />
+      <HeaderActions :search-open="searchOpen" @toggle-search="toggleSearch" />
 
       <!-- Mobile menu button -->
       <button @click="toggleMobileMenu"
@@ -17,6 +17,8 @@
       </button>
     </div>
   </header>
+
+  <SearchBar :is-visible="searchOpen" @close="searchOpen = false" />
 
   <!-- Mobile Navigation Drawer -->
   <Transition name="mobile-drawer">
@@ -28,8 +30,10 @@
       <div class="absolute right-0 top-0 h-full w-80 max-w-[85vw] bg-bg-surface shadow-xl flex flex-col drawer-panel">
         <!-- Drawer Header -->
         <div class="flex justify-end p-4 border-b border-border-default">
-          <button @click="closeMobileMenu" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-            <BaseIcon :icon="X" :size="20" />
+          <button @click="closeMobileMenu"
+            class="p-1 aspect-square rounded-full hover:bg-overlay-light-30 dark:hover:bg-overlay-dark-30 text-white transition-colors"
+            aria-label="Close menu">
+            <BaseIcon :icon="X" :size="16" :scale="1.2" />
           </button>
         </div>
 
@@ -51,6 +55,7 @@ import HeaderActions from '@/components/common/header/subcomponents/HeaderAction
 import MobileNav from '@/components/common/header/subcomponents/MobileNav.vue'
 import BaseIcon from '@/components/ui/icon/BaseIcon.vue'
 import { Menu, X } from 'lucide-vue-next'
+import SearchBar from '@/components/common/search/SearchBar.vue'
 
 const { toggleTheme, initTheme } = useTheme()
 const mobileMenuOpen = ref(false)
@@ -76,6 +81,11 @@ onMounted(() => {
 onUnmounted(() => {
   document.body.style.overflow = ''
 })
+
+const searchOpen = ref(false)
+function toggleSearch() {
+  searchOpen.value = !searchOpen.value
+}
 </script>
 
 <style>

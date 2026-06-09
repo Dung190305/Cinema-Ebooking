@@ -58,8 +58,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/bookings/me").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/loyalty/my-account").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/bookings/{id}/qr-code").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/refunds/me").authenticated()
 
                         // Các POST/PUT/DELETE liên quan đến booking, user, payment cần auth
+                        .requestMatchers(HttpMethod.POST, "/api/v1/bookings/*/request-refund").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/bookings/**").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/v1/users/**").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/users/**").authenticated()

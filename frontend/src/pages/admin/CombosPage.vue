@@ -54,7 +54,7 @@
         </DataTable>
 
         <CreateModal v-model="showCreate" title="Thêm combo" submitLabel="Tạo" size="lg" :columns="columns"
-            :isLoading="isLoading" :fieldErrors="fieldErrors" @submit="handleCreate" />
+            :isLoading="isCreating" :fieldErrors="fieldErrors" @submit="handleCreate" />
 
         <ConfirmDialog v-model="showActionConfirm" :title="confirmActionTitle" :description="confirmActionDescription"
             :confirmLabel="confirmActionLabel" :danger="confirmAction.type === 'delete'"
@@ -103,6 +103,7 @@ const {
 } = useCombo()
 
 const showCreate = ref(false)
+const isCreating = ref(false)
 const actionComboId = ref<number | null>(null)
 
 // Cột cho DataTable
@@ -169,16 +170,21 @@ const columns = computed<ColumnDef[]>(() => [
 
 // ─── Xử lý tạo mới ──────────────────────────────────────────────
 async function handleCreate(draft: Record<string, unknown>) {
-    const payload: CreateComboRequest = {
-        name: String(draft.name || '').trim(),
-        description: String(draft.description || '').trim(),
-        price: Number(draft.price || 0),
-        originalPrice: Number(draft.originalPrice || 0),
-        stock: Number(draft.stock || 0),
-        imageUrl: String(draft.imageUrl || '').trim(),
+    isCreating.value = true
+    try {
+        const payload: CreateComboRequest = {
+            name: String(draft.name || '').trim(),
+            description: String(draft.description || '').trim(),
+            price: Number(draft.price || 0),
+            originalPrice: Number(draft.originalPrice || 0),
+            stock: Number(draft.stock || 0),
+            imageUrl: String(draft.imageUrl || '').trim(),
+        }
+        const ok = await create(payload)
+        if (ok) showCreate.value = false
+    } finally {
+        isCreating.value = false
     }
-    const ok = await create(payload)
-    if (ok) showCreate.value = false
 }
 
 // ─── Xử lý lưu chỉnh sửa (inline edit) ────────────────────────────

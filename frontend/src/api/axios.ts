@@ -9,7 +9,7 @@ export const BASE_URL = 'http://localhost:8080/api/v1'
 
 export const apiClient = axios.create({
     baseURL: BASE_URL,
-    timeout: 10000,
+    timeout: 30000,
     headers: { 'Content-Type': 'application/json' },
 })
 
@@ -30,7 +30,8 @@ const PROTECTED_GET_REGEX = [
   /^\/admin(\/|$)/,
   /^\/bookings\/me(\/|$)/,
     /^\/bookings\/\d+\/qr-code$/,
-    /^\/bookings\/admin\/all(\/|$)/
+    /^\/bookings\/admin\/all(\/|$)/,
+    /^\/refunds\/me(\/|$)/,
 ]
 
 const isPublicEndpoint = (url?: string): boolean => {

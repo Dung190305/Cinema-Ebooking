@@ -63,6 +63,7 @@ const {
 } = useMembershipTier()
 
 const showCreate = ref(false)
+const isCreating = ref(false)
 
 const columns: ColumnDef<MembershipTierResponse>[] = [
     { key: 'id', label: 'ID', type: 'number', readonly: true, hideInCreate: true, hideInTable: true },

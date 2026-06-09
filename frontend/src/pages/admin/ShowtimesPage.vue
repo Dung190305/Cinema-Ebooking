@@ -104,7 +104,7 @@
 
         <!-- Create Modal -->
         <CreateModal v-model="showCreateModal" title="Thêm suất chiếu" submitLabel="Tạo suất chiếu" :columns="columns"
-            :isLoading="isLoading" :fieldErrors="fieldErrors" size="xl" :onFieldBlur="onFieldBlur"
+            :isLoading="isCreating" :fieldErrors="fieldErrors" size="xl" :onFieldBlur="onFieldBlur"
             @submit="handleCreate">
             <template #extra="{ draft }">
                 <SeatMapPreview :roomId="draft?.roomId ? Number(draft.roomId) : null"
@@ -191,6 +191,7 @@ const isLoadingCinemas = ref(true)
 
 const seatMapShowtimeId = ref<number | null>(null)
 const isSeatMapOpen = ref(false)
+const isCreating = ref(false)
 
 const showCancelConfirmModal = ref(false)
 const showtimeToCancel = ref<ShowtimeResponse | null>(null)
@@ -202,8 +203,8 @@ const dataTableRef = ref<InstanceType<typeof DataTable> | null>(null);
 const {
     showtimes, isLoading, fieldErrors, globalErrors,
     currentPage, totalPages, totalItems,
-    fetchList, goToPage, setFilters, create, save, cancel,
-    loadMovies, loadRooms, loadRoomsByFormat
+    fetchList, goToPage, setFilters, create, cancel,
+    loadMovies, loadRooms, loadRoomsByFormat, clearErrors
 } = useShowtime(selectedCinemaId)
 
 
@@ -316,6 +317,7 @@ function statusLabel(status: string) {
 }
 
 function openCreateModal() {
+    clearErrors()
     showCreateModal.value = true
 }
 
@@ -345,25 +347,30 @@ function onFieldBlur(key: string, draft: Record<string, unknown>) {
 }
 
 async function handleCreate(draft: Record<string, unknown>) {
-    const startTimeStr = typeof draft.startTime === 'string'
-        ? draft.startTime
-        : (draft.startTime as Date)?.toISOString()
+    isCreating.value = true
+    try {
+        const startTimeStr = typeof draft.startTime === 'string'
+            ? draft.startTime
+            : (draft.startTime as Date)?.toISOString()
 
-    const endTimeStr = typeof draft.endTime === 'string'
-        ? draft.endTime
-        : (draft.endTime as Date)?.toISOString()
+        const endTimeStr = typeof draft.endTime === 'string'
+            ? draft.endTime
+            : (draft.endTime as Date)?.toISOString()
 
-    const ok = await create({
-        movieId: Number(draft.movieId),
-        roomId: Number(draft.roomId),
-        formatId: Number(draft.formatId),
-        startTime: toUTCInstant(new Date(startTimeStr!)),
-        endTime: toUTCInstant(new Date(endTimeStr!)),
-        audioLanguage: String(draft.audioLanguage),
-        subtitleLanguage: String(draft.subtitleLanguage),
-    })
+        const ok = await create({
+            movieId: Number(draft.movieId),
+            roomId: Number(draft.roomId),
+            formatId: Number(draft.formatId),
+            startTime: toUTCInstant(new Date(startTimeStr!)),
+            endTime: toUTCInstant(new Date(endTimeStr!)),
+            audioLanguage: String(draft.audioLanguage),
+            subtitleLanguage: String(draft.subtitleLanguage),
+        })
 
-    if (ok) showCreateModal.value = false
+        if (ok) showCreateModal.value = false
+    } finally {
+        isCreating.value = false
+    }
 }
 
 function openCancelConfirm(item: ShowtimeResponse) {

@@ -38,6 +38,8 @@ public interface BookingRepository {
 
     Optional<Booking> findByUserIdAndShowtimeIdAndStatus(Long userId, Long showtimeId, BookingStatus status);
 
+    List<Booking> findAllByShowtimeIdAndStatus(Long showtimeId, BookingStatus status);
+
     /**
      * Tìm Booking kèm theo tất cả các Ticket, Combo, Coupon.
      */

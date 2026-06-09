@@ -43,6 +43,9 @@ public interface BookingJpaRepository extends SoftDeleteJpaRepository<BookingJpa
 
     Optional<BookingJpaEntity> findByUserIdAndShowtimeIdAndStatus(Long userId, Long showtimeId, BookingStatus status);
 
+    List<BookingJpaEntity> findAllByShowtimeIdAndStatusAndDeletedFalse(
+            Long showtimeId, BookingStatus status);
+
     // 4.1. Admin: phân trang toàn bộ booking
     Page<BookingJpaEntity> findByDeletedFalse(Pageable pageable);
 
