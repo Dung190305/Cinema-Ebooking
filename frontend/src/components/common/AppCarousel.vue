@@ -51,7 +51,7 @@
                         ? 'h-16 w-16 shadow-lg bg-overlay-light-30 hover:bg-overlay-light-50'
                         : 'h-16 w-16 shadow-sm bg-overlay-dark-10 hover:bg-overlay-dark-30',
                 navButtonClass,
-            ]" :style="nextBtnStyle" :disabled="isAnimating || (!infinite && currentIndex <= 0)" @click="next"
+            ]" :style="nextBtnStyle" :disabled="isAnimating || (!infinite && currentIndex >= maxIndex)" @click="next"
             aria-label="Next">
             <span :style="edgeButtons ? { transform: 'translateX(-30%)', display: 'inline-flex' } : {}"
                 class="text-text-secondary hover:text-text-primary">
