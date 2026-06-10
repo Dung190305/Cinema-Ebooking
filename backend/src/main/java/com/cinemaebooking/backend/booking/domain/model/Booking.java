@@ -162,4 +162,13 @@ public class Booking extends BaseEntity<BookingId> {
 
         this.finalAmount = subTotal.subtract(totalDiscount).max(BigDecimal.ZERO);
     }
+
+    public void requestRefund() {
+        if (this.status != BookingStatus.CONFIRMED) {
+            throw CommonExceptions.invalidInput(
+                    "Chỉ booking đã xác nhận mới có thể chuyển sang trạng thái yêu cầu hoàn tiền."
+            );
+        }
+        this.status = BookingStatus.REFUND_REQUESTED;
+    }
 }

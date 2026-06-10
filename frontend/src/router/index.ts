@@ -74,7 +74,14 @@ const routes: RouteRecordRaw[] = [
         name: 'LoyaltyProgram',
         component: () => import('@/pages/LoyaltyProgramPage.vue'),
         meta: { title: 'Chương trình thành viên' }
-      }
+      },
+
+      {
+        path: 'refund-policy',
+        name: 'refund-policy',
+        component: () => import('@/pages/RefundPolicyPage.vue'),
+        meta: { title: 'Chính sách hoàn tiền' },
+      },
     ],
   },
 
@@ -176,7 +183,7 @@ const routes: RouteRecordRaw[] = [
             path: 'checkin',
             name: 'admin-operations-checkin',
             component: () => import('@/pages/admin/CheckInPage.vue'),
-            meta: { sidebar: { label: 'Check-in' } },
+            meta: { sidebar: { label: 'Check-in' }, hidden: true },
           },
           {
             path: 'refunds',

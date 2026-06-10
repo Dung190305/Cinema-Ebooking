@@ -192,8 +192,16 @@
           {{ error }}
         </div>
 
+        <!-- Check-in status -->
+        <div v-if="booking && !isLoading && checkInResults.length > 0">
+          <div class="flex items-center justify-center gap-3 rounded-lg bg-emerald-50 border border-emerald-200 p-4 text-sm font-medium text-emerald-700">
+            <CheckCircle2 class="size-5 shrink-0" />
+            <span>Check-in thành công!</span>
+          </div>
+        </div>
+
         <!-- Confirm check-in button -->
-        <div v-if="booking && !isLoading">
+        <div v-else-if="booking && !isLoading">
           <button
             v-if="booking.status === 'CONFIRMED'"
             class="w-full rounded-lg bg-emerald-500 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
@@ -354,7 +362,6 @@ function scanQR() {
       handleScannedCode(code.data)
       return
     }
-  }
 
   scanFrameId = requestAnimationFrame(scanQR)
 }

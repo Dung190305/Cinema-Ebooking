@@ -179,12 +179,22 @@
             Đang tải layout...
         </div>
 
+        <!-- Không tìm thấy layout theo ngày đã chọn -->
+        <div v-else-if="error && error.includes('404')"
+            class="mt-8 mx-auto max-w-md bg-slate-50 border border-slate-200 rounded-xl p-6 text-center">
+            <Wrench class="size-10 text-slate-400 mx-auto mb-3" />
+            <p class="font-semibold text-slate-700 mb-1">Không có layout phòng vào ngày đã chọn</p>
+            <p class="text-sm text-slate-500">Phòng đang được bảo trì</p>
+        </div>
+
+        <!-- Lỗi thật sự -->
         <div v-else-if="error"
             class="mt-8 mx-auto max-w-md bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-700">
             <p class="font-semibold mb-1">Không thể tải layout</p>
             <p class="text-red-500">{{ error }}</p>
-            <button @click="fetchLayout(roomId, today.value)" class="mt-3 text-xs underline hover:text-red-800">Thử
-                lại</button>
+            <button @click="fetchLayout(roomId, today.value)" class="mt-3 text-xs underline hover:text-red-800">
+                Thử lại
+            </button>
         </div>
 
         <!-- Seat grid (giữ nguyên cấu trúc) -->
@@ -231,7 +241,7 @@
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
-    ChevronRight, CalendarDays, RotateCcw, Clock12, AlertTriangle, Eye, CircleCheck
+    ChevronRight, CalendarDays, RotateCcw, Clock12, AlertTriangle, Eye, CircleCheck, Wrench
 } from 'lucide-vue-next'
 import SeatGrid from '@/components/seat/SeatGrid.vue'
 import AdminSeatPanel from '@/components/seat/AdminSeatPanel.vue'

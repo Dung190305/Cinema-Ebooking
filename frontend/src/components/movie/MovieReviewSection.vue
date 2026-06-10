@@ -5,7 +5,7 @@ import { useAuthStore } from '@/stores/auth.store'
 import type { ReviewResponse } from '@/types/review.types'
 
 // ==========================================
-// PROPS
+// PROPS & EMITS
 // ==========================================
 const props = defineProps<{
   movieId: number
@@ -17,14 +17,14 @@ const emit = defineEmits<{
 }>()
 
 // ==========================================
-// AUTH
+// AUTH STORE
 // ==========================================
 const authStore = useAuthStore()
 const isLoggedIn = computed(() => authStore.isLoggedIn)
 const currentUserId = computed(() => authStore.user?.id)
 
 // ==========================================
-// TRẠNG THÁI KIỂM TRA
+// TRẠNG THÁI KIỂM TRA & THÔNG TIN REVIEW CỦA TÔI
 // ==========================================
 const loadingCheck = ref(true)
 const hasCheckedInTicket = ref(false)
@@ -32,10 +32,12 @@ const checkedInCount = ref(0)
 const latestBookingCode = ref<string | null>(null)
 const hasReview = ref(false)
 const myReviewId = ref<number | null>(null)
+const myReviewFinalText = ref('')
 const isEditMode = ref(false)
+const myReviewIsSpoiler = ref(false)
 
 // ==========================================
-// DANH SÁCH BÌNH LUẬN
+// DANH SÁCH BÌNH LUẬN KHÁC
 // ==========================================
 const reviews = ref<ReviewResponse[]>([])
 const totalReviews = ref(0)
@@ -43,7 +45,7 @@ const averageRating = ref(0)
 const loadingReviews = ref(false)
 
 // ==========================================
-// FORM
+// FORM ĐĂNG REVIEW
 // ==========================================
 const selectedRating = ref(0)
 const commentText = ref('')
@@ -54,38 +56,39 @@ const submitError = ref('')
 const isStarActive = (star: number) => star <= (hoverRating.value || selectedRating.value)
 
 // ==========================================
-// SPOILER
+// QUẢN LÝ ĐÓNG/MỞ KHÓA SPOILER BẰNG TAY (CHO USER XEM)
+// FIX: Dùng ref<Set> và gán lại object mới để Vue detect thay đổi
 // ==========================================
-const revealedSpoilers = ref(new Set<number>())
+const revealedSpoilers = ref<Set<number>>(new Set())
 
 const toggleSpoiler = (reviewId: number) => {
-  if (revealedSpoilers.value.has(reviewId)) {
-    revealedSpoilers.value.delete(reviewId)
+  const next = new Set(revealedSpoilers.value)
+  if (next.has(reviewId)) {
+    next.delete(reviewId)
   } else {
-    revealedSpoilers.value.add(reviewId)
+    next.add(reviewId)
   }
+  revealedSpoilers.value = next
 }
 
+const isSpoilerRevealed = (reviewId: number) => revealedSpoilers.value.has(reviewId)
+
 // ==========================================
-// KHỞI TẠO DỮ LIỆU
+// KHỞI TẠO DỮ LIỆU BAN ĐẦU
 // ==========================================
 const initData = async () => {
   loadingCheck.value = true
 
   try {
-    // Luôn tải danh sách review
     await loadReviews()
 
-    // Nếu chưa đăng nhập thì dừng
     if (!isLoggedIn.value || !currentUserId.value) return
 
-    // Kiểm tra song song: vé check-in + review của tôi
     const [ticketRes, myReviewRes] = await Promise.all([
       reviewApi.checkTicket(props.movieId, currentUserId.value),
       reviewApi.getMyReview(props.movieId, currentUserId.value),
     ])
 
-    // Fix lỗi TypeScript bằng cách lấy data từ AxiosResponse
     const ticketData = (ticketRes as any).data ?? ticketRes
     const myReviewData = (myReviewRes as any).data ?? myReviewRes
 
@@ -98,6 +101,8 @@ const initData = async () => {
       myReviewId.value = myReviewData.review.reviewId
       selectedRating.value = myReviewData.review.rating ?? 0
       commentText.value = myReviewData.review.comment ?? ''
+      myReviewFinalText.value = myReviewData.review.finalText ?? myReviewData.review.comment ?? ''
+      myReviewIsSpoiler.value = myReviewData.review.isSpoiler ?? false
     }
   } catch (err) {
     console.error('Lỗi khởi tạo dữ liệu review:', err)
@@ -106,16 +111,25 @@ const initData = async () => {
   }
 }
 
+// ==========================================
+// TẢI DANH SÁCH BÌNH LUẬN TỪ BACKEND
+// ==========================================
 const loadReviews = async () => {
   loadingReviews.value = true
   try {
     const res = await reviewApi.getByMovieId(props.movieId, { size: 20, sort: 'createdAt,desc' })
-    // Fix lỗi TypeScript bóc tách content từ AxiosResponse hoặc Object thuần
-    const page = (res as any).data ?? res
-    reviews.value = page.content ?? []
-    totalReviews.value = page.totalElements ?? 0
+    const page = res && (res as any).data ? (res as any).data : res
 
-    // Tính điểm trung bình từ danh sách
+    reviews.value = page.content ?? (Array.isArray(page) ? page : [])
+
+    if (page.totalElements !== undefined) {
+      totalReviews.value = page.totalElements
+    } else if (page.total !== undefined) {
+      totalReviews.value = page.total
+    } else {
+      totalReviews.value = reviews.value.length
+    }
+
     if (reviews.value.length > 0) {
       const sum = reviews.value.reduce((acc, r) => acc + (r.rating ?? 0), 0)
       averageRating.value = sum / reviews.value.length
@@ -132,41 +146,43 @@ const loadReviews = async () => {
 }
 
 // ==========================================
-// GỬI / CẬP NHẬT BÌNH LUẬN
+// LOGIC SUBMIT FORM
 // ==========================================
 const handleSubmit = async () => {
-  if (!selectedRating.value || submitting.value) return
+  if (!selectedRating.value || submitting.value || !currentUserId.value) return
   submitError.value = ''
   submitting.value = true
 
   try {
     if (isEditMode.value && myReviewId.value) {
-      // Cập nhật bình luận cũ
       await reviewApi.update(myReviewId.value, {
         userId: currentUserId.value,
         rating: selectedRating.value,
         comment: commentText.value,
+        isSpoiler: myReviewIsSpoiler.value,
       })
     } else {
-      // Tạo bình luận mới
       await reviewApi.create({
         userId: currentUserId.value,
         movieId: props.movieId,
         bookingCode: latestBookingCode.value ?? '',
         rating: selectedRating.value,
         comment: commentText.value,
+        isSpoiler: false,
       })
     }
 
     isEditMode.value = false
     hasReview.value = true
     await loadReviews()
-    // Cập nhật lại my-review để lấy reviewId nếu vừa tạo
+
     if (currentUserId.value) {
       const myReviewRes = await reviewApi.getMyReview(props.movieId, currentUserId.value)
       const myReviewData = (myReviewRes as any).data ?? myReviewRes
       if (myReviewData.review) {
         myReviewId.value = myReviewData.review.reviewId
+        myReviewFinalText.value = myReviewData.review.finalText ?? myReviewData.review.comment ?? ''
+        myReviewIsSpoiler.value = myReviewData.review.isSpoiler ?? false
       }
     }
   } catch (err: any) {
@@ -178,21 +194,20 @@ const handleSubmit = async () => {
 
 const handleEdit = () => {
   isEditMode.value = true
+  commentText.value = myReviewFinalText.value
 }
 
 const handleCancelEdit = () => {
   isEditMode.value = false
+  initData()
 }
 
-// ==========================================
-// THÊM HÀM XỬ LÝ CHUYỂN TRANG ĐĂNG NHẬP
-// ==========================================
 const handleGoToLogin = () => {
   emit('request-login')
 }
 
 // ==========================================
-// FORMAT DATE
+// UTILS / FORMATTERS
 // ==========================================
 const formatDate = (date: string | Date | null | undefined) => {
   if (!date) return ''
@@ -206,12 +221,16 @@ const formatDate = (date: string | Date | null | undefined) => {
 const getInitial = (name: string | undefined | null) => (name ? name.charAt(0).toUpperCase() : 'U')
 
 // ==========================================
-// WATCH movieId thay đổi + login state thay đổi
+// WATCHERS & LIFECYCLE HOOKS
 // ==========================================
 watch(() => props.movieId, initData, { immediate: false })
-watch(isLoggedIn, (loggedIn) => {
-  if (loggedIn) initData()
-}, { immediate: false })
+watch(
+  isLoggedIn,
+  (loggedIn) => {
+    if (loggedIn) initData()
+  },
+  { immediate: false },
+)
 onMounted(initData)
 
 defineExpose({
@@ -345,23 +364,31 @@ defineExpose({
             </span>
           </div>
           <div class="p-3 rounded-xl bg-black/30 border border-white/[0.04] space-y-2">
-            <div class="flex items-center gap-1">
-              <svg
-                v-for="star in 10"
-                :key="star"
-                class="w-4 h-4"
-                :class="star <= selectedRating ? 'text-amber-400' : 'text-zinc-700'"
-                fill="currentColor"
-                viewBox="0 0 24 24"
+            <div class="flex items-center gap-2 flex-wrap">
+              <div class="flex items-center gap-1">
+                <svg
+                  v-for="star in 10"
+                  :key="star"
+                  class="w-4 h-4"
+                  :class="star <= selectedRating ? 'text-amber-400' : 'text-zinc-700'"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
+                  />
+                </svg>
+                <span class="ml-1 text-xs font-black text-amber-400">{{ selectedRating }}/10</span>
+              </div>
+              <span
+                v-if="myReviewIsSpoiler"
+                class="ml-auto text-[9px] font-bold text-red-400 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded uppercase"
               >
-                <path
-                  d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
-                />
-              </svg>
-              <span class="ml-2 text-xs font-black text-amber-400">{{ selectedRating }}/10</span>
+                AI: Phát hiện Spoiler
+              </span>
             </div>
-            <p v-if="commentText" class="text-xs text-zinc-300 leading-relaxed">
-              {{ commentText }}
+            <p v-if="myReviewFinalText" class="text-xs text-zinc-300 leading-relaxed">
+              {{ myReviewFinalText }}
             </p>
             <p v-else class="text-xs text-zinc-600 italic">Không có nội dung bình luận.</p>
           </div>
@@ -485,7 +512,10 @@ defineExpose({
         </p>
       </div>
 
-      <div v-else class="space-y-3">
+      <div
+        v-else
+        class="space-y-3 overflow-y-auto max-h-[520px] pr-1 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent"
+      >
         <div
           v-for="review in reviews"
           :key="review.reviewId"
@@ -517,58 +547,90 @@ defineExpose({
             </div>
           </div>
 
-          <div v-if="review.isSpoiler && review.userId !== currentUserId && !revealedSpoilers.has(review.reviewId)">
-            <div class="relative mt-3 pl-0.5">
-              <p
-                class="text-xs leading-relaxed text-zinc-300 blur-sm select-none pointer-events-none"
-              >
-                {{ review.finalText || review.comment }}
-              </p>
+          <div class="mt-3 pl-0.5">
+            <!-- Spoiler: Option A banner -->
+            <div
+              v-if="
+                review.isSpoiler &&
+                review.userId !== currentUserId &&
+                !isSpoilerRevealed(review.reviewId)
+              "
+              class="flex items-center gap-3 p-3 rounded-xl border border-dashed border-red-500/30 bg-red-500/5 cursor-pointer hover:bg-red-500/10 transition-colors duration-200"
+              @click="toggleSpoiler(review.reviewId)"
+            >
               <div
-                class="absolute inset-0 flex flex-col items-center justify-center gap-2 cursor-pointer bg-zinc-900/40 rounded-lg hover:bg-zinc-900/60 transition-colors"
-                @click="toggleSpoiler(review.reviewId)"
+                class="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center shrink-0"
               >
                 <svg
-                  class="w-5 h-5 text-red-400"
+                  class="w-4 h-4 text-red-400"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
-                  stroke-width="1.5"
+                  stroke-width="2"
                 >
                   <path
                     stroke-linecap="round"
                     stroke-linejoin="round"
-                    d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"
-                  />
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M13 13l6 6"
+                    d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
                   />
                 </svg>
-                <span class="text-[11px] font-bold text-red-400 bg-red-500/20 border border-red-500/30 px-3 py-1 rounded-full">
-                  Nội dung có spoiler — bấm để xem
-                </span>
               </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-bold text-red-400">Bình luận chứa spoiler</p>
+                <p class="text-[11px] text-zinc-500 mt-0.5">Nhấn để xem</p>
+              </div>
+              <span
+                class="text-[11px] font-bold text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-1.5 shrink-0 hover:bg-red-500/20 transition-colors"
+              >
+                Xem nội dung
+              </span>
+            </div>
+
+            <!-- Nội dung đã hiện (spoiler đã reveal hoặc không phải spoiler) -->
+            <div v-else>
+              <div
+                v-if="review.isSpoiler"
+                class="inline-block mb-1.5 text-[9px] font-bold text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded border border-red-500/20 uppercase"
+              >
+                Bình luận chứa Spoiler
+              </div>
+
+              <p class="text-xs text-zinc-300 leading-relaxed">
+                {{ review.finalText || review.comment }}
+              </p>
+
+              <!-- Nút ẩn lại — chỉ hiện khi user đã reveal spoiler của người khác -->
+              <button
+                v-if="
+                  review.isSpoiler &&
+                  review.userId !== currentUserId &&
+                  isSpoilerRevealed(review.reviewId)
+                "
+                class="mt-2 text-[10px] font-medium text-zinc-500 hover:text-red-400 transition-colors flex items-center gap-1"
+                @click="toggleSpoiler(review.reviewId)"
+              >
+                ▲ Ẩn lại nội dung spoiler
+              </button>
             </div>
           </div>
-
-          <p
-            v-else-if="review.finalText || review.comment"
-            class="mt-3 text-xs text-zinc-300 leading-relaxed pl-0.5"
-          >
-            {{ review.finalText || review.comment }}
-          </p>
-
-          <button
-            v-if="review.isSpoiler && review.userId !== currentUserId && revealedSpoilers.has(review.reviewId)"
-            class="mt-1 text-[10px] text-zinc-500 hover:text-red-400 transition-colors"
-            @click="toggleSpoiler(review.reviewId)"
-          >
-            ▲ Ẩn nội dung spoiler
-          </button>
         </div>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.overflow-y-auto::-webkit-scrollbar {
+  width: 4px;
+}
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background-color: rgba(113, 113, 122, 0.4);
+  border-radius: 9999px;
+}
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(113, 113, 122, 0.7);
+}
+</style>

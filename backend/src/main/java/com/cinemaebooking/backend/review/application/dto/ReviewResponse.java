@@ -3,6 +3,7 @@ package com.cinemaebooking.backend.review.application.dto;
 import com.cinemaebooking.backend.review.domain.enums.ReviewDecision;
 import com.cinemaebooking.backend.review.domain.enums.ReviewSentiment;
 import com.cinemaebooking.backend.review.domain.enums.ReviewStatus;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -27,6 +28,7 @@ public class ReviewResponse {
     private ReviewSentiment sentiment;
     private ReviewDecision decision;
     private ReviewStatus status;
+    @JsonProperty("isSpoiler")
     private boolean isSpoiler;
     private double spoilerConf;
     private LocalDateTime createdAt;

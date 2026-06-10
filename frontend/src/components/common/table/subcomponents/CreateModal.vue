@@ -45,9 +45,13 @@
                                     Hủy
                                 </button>
                                 <BaseButton variant="primary" size="md" rounded="lg" class="flex-1"
-                                    :class="!canSubmit && 'opacity-50 cursor-not-allowed pointer-events-none'"
-                                    :disabled="!canSubmit || isLoading" @click="onSubmit">
-                                    <span v-if="isLoading">Đang tạo...</span>
+                                    :disabled="!canSubmit || isLoading"
+                                    :class="(!canSubmit || isLoading) && 'opacity-60 cursor-not-allowed pointer-events-none'"
+                                    @click="onSubmit">
+                                    <span v-if="isLoading" class="flex items-center justify-center gap-2">
+                                        <Loader2 class="size-4 animate-spin" />
+                                        Đang xử lý...
+                                    </span>
                                     <span v-else>{{ submitLabel }}</span>
                                 </BaseButton>
                             </div>
@@ -62,7 +66,7 @@
 
 <script setup lang="ts" generic="T extends Record<string, unknown>">
 import { ref, computed, watch } from 'vue'
-import { X } from 'lucide-vue-next'
+import { X, Loader2 } from 'lucide-vue-next'
 import BaseIcon from '@/components/ui/icon/BaseIcon.vue'
 import BaseButton from '@/components/ui/button/BaseButton.vue'
 import FieldRenderer from '@/components/common/table/subcomponents/FieldRenderer.vue'
@@ -212,7 +216,7 @@ const emptyFields = computed(() =>
         .map((c) => c.label),
 )
 
-const canSubmit = computed(() => emptyFields.value.length === 0 && !props.isLoading)
+const canSubmit = computed(() => emptyFields.value.length === 0)
 
 // ── Actions ───────────────────────────────────────────────────────────────────
 function onSubmit() {

@@ -36,14 +36,22 @@ public class UpdateReviewUseCase {
         // Gọi AI phân tích lại comment sau khi chỉnh sửa
         var aiResult = aiService.analyze(request.getComment());
 
+        // Spoiler KHÔNG phải vi phạm — nếu AI trả SPOILER_WARNING thì vẫn duyệt
+        ReviewDecision finalDecision = aiResult.getDecision();
+        boolean isSpoiler = aiResult.isSpoiler();
+
+        if (finalDecision == ReviewDecision.SPOILER_WARNING) {
+            finalDecision = ReviewDecision.APPROVED;
+        }
+
         review.applyAiResult(
                 aiResult.getSentiment(),
                 aiResult.getFinalText(),
-                aiResult.isSpoiler(),
-                aiResult.getSpoilerConf()
+                isSpoiler,
+                isSpoiler ? aiResult.getSpoilerConf() : 0.0
         );
 
-        review.applyDecision(aiResult.getDecision());
+        review.applyDecision(finalDecision);
 
         Review saved = reviewRepository.save(review);
         return mapper.toResponse(saved);

@@ -6,7 +6,7 @@ spring:
     name: cinema-ebooking
 
   profiles:
-    active: local
+    active: dev
 
   flyway:
     enabled: false
@@ -14,7 +14,7 @@ spring:
     locations: classpath:db/migration
 
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:cinema_ebooking}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:cinema_ebooking}?sslMode=REQUIRED&requireSSL=true&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -32,8 +32,6 @@ spring:
     time-zone: Asia/Ho_Chi_Minh
 
   jpa:
-    hibernate:
-      ddl-auto: update
     show-sql: false
     properties:
       hibernate:

@@ -4,23 +4,12 @@ import type {
   CreateShowtimeRequest,
   UpdateShowtimeRequest,
   ShowtimeFormatResponse,
+  ShowtimeCancelResult,
 } from '@/types/showtime'
 import type { NestedPage } from '@/types/common.types'
 import type { ShowtimeSeatLayoutResponse } from '@/types/showtime-seat'
 
 export const showtimeApi = {
-  // GET /api/v1/admin/showtimes?cinemaId=&roomId=&status=&page=&size=&sort=
-  getList: (params: {
-    page?: number
-    size?: number
-    sort?: string
-    cinemaId?: number
-    movieId?: number
-    roomId?: number
-    status?: string
-  }) =>
-    apiClient.get<NestedPage<ShowtimeResponse>>('/admin/showtimes', { params }),
-  
   getPublicShowtimes: (params: {
     cinemaId?: number
     movieId?: number
@@ -44,11 +33,11 @@ export const showtimeApi = {
     apiClient.get<ShowtimeSeatLayoutResponse>(`/showtimes/${id}/seat-layout`),
 
   create: (body: CreateShowtimeRequest) =>
-    apiClient.post<ShowtimeResponse>('/admin/showtimes', body),
+    apiClient.post<ShowtimeResponse>('/admin/showtimes', body, { timeout: 60000 }),
 
   update: (id: number, body: UpdateShowtimeRequest) =>
     apiClient.put<ShowtimeResponse>(`/admin/showtimes/${id}`, body),
 
   cancel: (id: number) =>
-    apiClient.patch<ShowtimeResponse>(`/admin/showtimes/${id}/cancel`),
+    apiClient.patch<ShowtimeCancelResult>(`/admin/showtimes/${id}/cancel`),
 }

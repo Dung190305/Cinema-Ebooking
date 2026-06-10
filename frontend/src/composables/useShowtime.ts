@@ -2,7 +2,7 @@ import { ref, readonly, watch, computed, type Ref, isRef } from 'vue'
 import { showtimeApi } from '@/api/showtime.api'
 import { movieApi } from '@/api/movie.api'
 import { roomApi } from '@/api/room.api'
-import type { ShowtimeResponse, CreateShowtimeRequest, UpdateShowtimeRequest } from '@/types/showtime'
+import type { ShowtimeResponse, CreateShowtimeRequest, UpdateShowtimeRequest, RefundError, ShowtimeCancelResult } from '@/types/showtime'
 import type { RoomType } from '@/types/room'
 
 interface ApiRejected {
@@ -34,17 +34,22 @@ export function useShowtime(cinemaIdInput: Ref<number | null> | number | null) {
 
   // Cache options
   const roomOptionsCache = ref<{ id: number; label: string }[]>([])
+  const movieCache = ref<{ id: number; title: string; showingEndDate: string | null }[]>
 
   function handleError(err: unknown) {
+  console.error('🔴 handleError called with:', err)
     const e = err as ApiRejected
     fieldErrors.value = e.fieldErrors ?? {}
+
+    // Ưu tiên globalErrors từ BE. Nếu BE không trả globalErrors thì KHÔNG fallback message
+    // thành global error nữa, vì sẽ gây hiển thị lỗi global không đúng khi FE không map được field.
+    // Lúc này lỗi sẽ được thể hiện qua fieldErrors (nếu có).
     if (e.globalErrors?.length) {
       globalErrors.value = e.globalErrors
-    } else if (!Object.values(fieldErrors.value).some(Boolean)) {
-      globalErrors.value = [e.message ?? 'Đã có lỗi xảy ra']
-    } else {
-      globalErrors.value = []
+      return
     }
+
+    globalErrors.value = []
   }
 
   function clearErrors() {
@@ -118,12 +123,17 @@ export function useShowtime(cinemaIdInput: Ref<number | null> | number | null) {
     fetchList(0)
   }
 
-  async function create(body: Omit<CreateShowtimeRequest, 'cinemaId'>): Promise<boolean> {
+  async function create(body: CreateShowtimeRequest): Promise<boolean> {
     clearErrors()
     const cid = currentCinemaId.value
     if (!cid) return false
+    const dateError = validateShowtimeDate(body as unknown as Record<string, unknown>)
+    if (dateError) {
+      fieldErrors.value = { startTime: dateError }
+      return false
+    }
     try {
-      const created = await showtimeApi.create({ ...body, cinemaId: cid })
+      const created = await showtimeApi.create({ ...body})
       showtimes.value.unshift(created)
       totalItems.value++
       totalPages.value = Math.ceil(totalItems.value / pageSize)
@@ -134,28 +144,75 @@ export function useShowtime(cinemaIdInput: Ref<number | null> | number | null) {
       prefetchNextPage(currentPage.value + 1)
       return true
     } catch (err) {
+      console.error('Error creating showtime:', err)
       handleError(err)
       return false
     }
   }
 
-  async function cancel(item: ShowtimeResponse): Promise<boolean> {
+  async function cancel(item: ShowtimeResponse): Promise<ShowtimeCancelResult> {
     clearErrors()
     try {
-      const updated = await showtimeApi.cancel(item.id)
+      const result: ShowtimeCancelResult = await showtimeApi.cancel(item.id)
+      // Cập nhật item trong danh sách với showtime đã cancel
       const idx = showtimes.value.findIndex(s => s.id === item.id)
-      if (idx !== -1) showtimes.value[idx] = updated
-      return true
+      if (idx !== -1) showtimes.value[idx] = result.showtime
+      return result
     } catch (err) {
       handleError(err)
-      return false
+      throw err  // re-throw để caller biết cancel thất bại hoàn toàn
     }
   }
 
   // ── Option loaders ─────────────────────────────────────────
   async function loadMovies() {
-    const res = await movieApi.getList({ page: 0, size: 50 })
-    return res.content.map(m => ({ id: m.id, label: `${m.title} (${m.duration} phút)` }))
+    const [nowShowing, comingSoon] = await Promise.all([
+      movieApi.getList({ page: 0, size: 50, status: 'NOW_SHOWING' }),
+      movieApi.getList({ page: 0, size: 50, status: 'COMING_SOON' }),
+    ])
+    const all = [...nowShowing.content, ...comingSoon.content]
+    movieCache.value = all.map(m => ({
+      id: m.id,
+      title: m.title,
+      releaseDate: m.releaseDate ?? null,       
+      showingEndDate: m.showingEndDate ?? null,
+    }))
+    return all.map(m => ({ id: m.id, label: `${m.title} (${m.duration} phút)` }))
+  }
+
+  function validateShowtimeDate(draft: Record<string, unknown>): string | null {
+    const movieId = Number(draft.movieId)
+    const startTimeVal = draft.startTime
+    if (!movieId || !startTimeVal) return null
+
+    const movie = movieCache.value.find(m => m.id === movieId)
+    if (!movie) return null
+
+    const startDate = startTimeVal instanceof Date
+      ? startTimeVal
+      : new Date(startTimeVal as string)
+
+    // ── Check 1: không được trước releaseDate (phim sắp chiếu) ──
+    if (movie.releaseDate) {
+      const release = new Date(movie.releaseDate)
+      release.setHours(0, 0, 0, 0)
+      if (startDate < release) {
+        const formatted = release.toLocaleDateString('vi-VN')
+        return `Phim "${movie.title}" chỉ bắt đầu chiếu từ ngày ${formatted}`
+      }
+    }
+
+    // ── Check 2: không được sau showingEndDate ──
+    if (movie.showingEndDate) {
+      const cutoff = new Date(movie.showingEndDate)
+      cutoff.setHours(23, 59, 59, 999)
+      if (startDate > cutoff) {
+        const formatted = new Date(movie.showingEndDate).toLocaleDateString('vi-VN')
+        return `Phim "${movie.title}" chỉ chiếu đến ngày ${formatted}`
+      }
+    }
+
+    return null
   }
 
   async function loadRooms(cid?: number) {
@@ -192,13 +249,15 @@ export function useShowtime(cinemaIdInput: Ref<number | null> | number | null) {
     }
   }
 
-  // Khi cinemaId thay đổi, reset filter và load lại
-  watch(currentCinemaId, () => {
-    filterRoomId.value = undefined
-    filterStatus.value = undefined
-    nextPageDirty.value = true
-    fetchList(0) // gọi sau khi cinemaId thật sự thay đổi
-  })
+  function setFieldError(key: string, message: string) {
+    fieldErrors.value = { ...fieldErrors.value, [key]: message }
+  }
+
+  function clearFieldError(key: string) {
+    const copy = { ...fieldErrors.value }
+    delete copy[key]
+    fieldErrors.value = copy
+  }
 
   return {
     showtimes: readonly(showtimes),
@@ -218,5 +277,9 @@ export function useShowtime(cinemaIdInput: Ref<number | null> | number | null) {
     loadRooms,
     loadRoomsByFormat,
     roomOptionsCache,
+    clearErrors,
+    setFieldError,
+    clearFieldError,
+    validateShowtimeDate,
   }
 }

@@ -27,12 +27,14 @@ export interface CreateReviewRequest {
   movieId: number
   rating: number
   comment: string
+  isSpoiler: boolean
 }
 
 export interface UpdateReviewRequest {
   userId: number
   rating: number
   comment: string
+  isSpoiler: boolean
 }
 
 export interface MyReviewDetail {
@@ -44,6 +46,7 @@ export interface MyReviewDetail {
   rating: number
   comment: string
   finalText: string
+  isSpoiler: boolean
 }
 
 export interface MyReviewResponse {

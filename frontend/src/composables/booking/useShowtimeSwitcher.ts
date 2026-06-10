@@ -17,8 +17,15 @@ export function useShowtimeSwitcher(booking: any) {
     const allShowtimes = computed(() => {
         const current = currentShowtime.value
         if (!current) return otherShowtimesRaw.value
+
         const hasCurrent = otherShowtimesRaw.value.some(st => st.id === current.id)
-        return hasCurrent ? otherShowtimesRaw.value : [current, ...otherShowtimesRaw.value]
+        const merged = hasCurrent
+            ? otherShowtimesRaw.value
+            : [current, ...otherShowtimesRaw.value]
+
+        return [...merged].sort(
+            (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+        )
     })
 
     watch([() => booking.selectedShowtime.value, () => booking.selectedCinema.value], async ([st, cinema]) => {

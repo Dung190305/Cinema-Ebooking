@@ -43,7 +43,7 @@
         </div>
 
         <!-- Create modal -->
-        <CreateModal v-model="showCreate" title="Thêm thể loại phim" :columns="columns" :isLoading="isLoading"
+        <CreateModal v-model="showCreate" title="Thêm thể loại phim" :columns="columns" :isLoading="isCreating"
             :fieldErrors="fieldErrors" @submit="handleCreate" />
     </div>
 </template>
@@ -72,6 +72,7 @@ const {
 } = useGenre()
 
 const showCreate = ref(false)
+const isCreating = ref(false)
 
 const columns: ColumnDef<GenreResponse>[] = [
     {
@@ -92,8 +93,13 @@ const columns: ColumnDef<GenreResponse>[] = [
 
 // ── Handlers ──────────────────────────────────────────────────────────────────
 async function handleCreate(draft: Record<string, unknown>) {
-    const ok = await create(draft as unknown as CreateGenreRequest)
-    if (ok) showCreate.value = false
+    isCreating.value = true
+    try {
+        const ok = await create(draft as unknown as CreateGenreRequest)
+        if (ok) showCreate.value = false
+    } finally {
+        isCreating.value = false
+    }
 }
 
 async function handleSave(item: GenreResponse, done: () => void) {

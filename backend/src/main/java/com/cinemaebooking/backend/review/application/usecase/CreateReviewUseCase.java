@@ -47,22 +47,31 @@ public class CreateReviewUseCase {
         // Gọi AI pipeline phân tích comment
         var aiResult = aiService.analyze(request.getComment());
 
+        // Spoiler KHÔNG phải vi phạm — nếu AI trả SPOILER_WARNING thì vẫn duyệt
+        ReviewDecision finalDecision = aiResult.getDecision();
+        boolean isSpoiler = aiResult.isSpoiler();
+
+        if (finalDecision == ReviewDecision.SPOILER_WARNING) {
+            // Đánh dấu spoiler nhưng vẫn duyệt bình luận
+            finalDecision = ReviewDecision.APPROVED;
+        }
+
         // Áp dụng AI result vào domain model
         review.applyAiResult(
                 aiResult.getSentiment(),
                 aiResult.getFinalText(),
-                aiResult.isSpoiler(),
-                aiResult.getSpoilerConf()
+                isSpoiler,
+                isSpoiler ? aiResult.getSpoilerConf() : 0.0
         );
 
-        // Áp dụng decision → status
-        review.applyDecision(aiResult.getDecision());
+        // Áp dụng decision cuối cùng → status
+        review.applyDecision(finalDecision);
 
-        // Lưu review (dù APPROVED, REJECTED, hay SPOILER_WARNING đều lưu)
+        // Lưu review
         Review saved = reviewRepository.save(review);
 
-        // REJECTED → ném exception nhưng review đã lưu với status = HIDDEN
-        if (aiResult.getDecision() == ReviewDecision.REJECTED) {
+        // REJECTED → ném exception (nội dung thực sự vi phạm)
+        if (finalDecision == ReviewDecision.REJECTED) {
             throw ReviewExceptions.aiRejected();
         }
 

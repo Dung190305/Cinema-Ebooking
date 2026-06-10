@@ -14,6 +14,8 @@ public interface ReviewJpaRepository extends SoftDeleteJpaRepository<ReviewJpaEn
 
     Optional<ReviewJpaEntity> findByUserIdAndMovieIdAndDeletedFalse(Long userId, Long movieId);
 
+    Optional<ReviewJpaEntity> findByUserIdAndMovieIdAndDeletedFalseAndStatus(Long userId, Long movieId, ReviewStatus status);
+
     Optional<ReviewJpaEntity> findByBookingIdAndDeletedFalse(Long bookingId);
 
     boolean existsByUserIdAndMovieIdAndDeletedFalse(Long userId, Long movieId);

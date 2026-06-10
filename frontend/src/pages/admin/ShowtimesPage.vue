@@ -104,8 +104,8 @@
 
         <!-- Create Modal -->
         <CreateModal v-model="showCreateModal" title="Thêm suất chiếu" submitLabel="Tạo suất chiếu" :columns="columns"
-            :isLoading="isLoading" :fieldErrors="fieldErrors" size="xl" :onFieldBlur="onFieldBlur"
-            @submit="handleCreate">
+            :isLoading="isCreating" :fieldErrors="fieldErrors" size="xl" :onFieldBlur="onFieldBlur"
+            :onFieldChange="onFieldChange" @submit="handleCreate">
             <template #extra="{ draft }">
                 <SeatMapPreview :roomId="draft?.roomId ? Number(draft.roomId) : null"
                     :startDate="draft?.startTime ? String(draft.startTime) : undefined" />
@@ -175,7 +175,6 @@ import SeatMapDialog from '@/components/showtime/SeatMapDialog.vue';
 import { languageOptions, getLanguageLabel } from '@/constants/languages'
 import { dateToISOString, parseISODate, toUTCInstant, fromUTCToLocal, formatDateTimeVN } from '@/utils/dateFormat'
 
-
 const route = useRoute()
 const initialCinemaId = route.params.cinemaId ? Number(route.params.cinemaId) : null
 const selectedCinemaId = ref<number | null>(isNaN(initialCinemaId) ? null : initialCinemaId)
@@ -191,19 +190,19 @@ const isLoadingCinemas = ref(true)
 
 const seatMapShowtimeId = ref<number | null>(null)
 const isSeatMapOpen = ref(false)
+const isCreating = ref(false)
 
 const showCancelConfirmModal = ref(false)
 const showtimeToCancel = ref<ShowtimeResponse | null>(null)
 const isCancelling = ref(false)
-
 
 const dataTableRef = ref<InstanceType<typeof DataTable> | null>(null);
 
 const {
     showtimes, isLoading, fieldErrors, globalErrors,
     currentPage, totalPages, totalItems,
-    fetchList, goToPage, setFilters, create, save, cancel,
-    loadMovies, loadRooms, loadRoomsByFormat
+    fetchList, goToPage, setFilters, create, cancel,
+    loadMovies, loadRooms, loadRoomsByFormat, clearErrors, validateShowtimeDate, setFieldError, clearFieldError
 } = useShowtime(selectedCinemaId)
 
 
@@ -316,6 +315,7 @@ function statusLabel(status: string) {
 }
 
 function openCreateModal() {
+    clearErrors()
     showCreateModal.value = true
 }
 
@@ -345,25 +345,30 @@ function onFieldBlur(key: string, draft: Record<string, unknown>) {
 }
 
 async function handleCreate(draft: Record<string, unknown>) {
-    const startTimeStr = typeof draft.startTime === 'string'
-        ? draft.startTime
-        : (draft.startTime as Date)?.toISOString()
+    isCreating.value = true
+    try {
+        const startTimeStr = typeof draft.startTime === 'string'
+            ? draft.startTime
+            : (draft.startTime as Date)?.toISOString()
 
-    const endTimeStr = typeof draft.endTime === 'string'
-        ? draft.endTime
-        : (draft.endTime as Date)?.toISOString()
+        const endTimeStr = typeof draft.endTime === 'string'
+            ? draft.endTime
+            : (draft.endTime as Date)?.toISOString()
 
-    const ok = await create({
-        movieId: Number(draft.movieId),
-        roomId: Number(draft.roomId),
-        formatId: Number(draft.formatId),
-        startTime: toUTCInstant(new Date(startTimeStr!)),
-        endTime: toUTCInstant(new Date(endTimeStr!)),
-        audioLanguage: String(draft.audioLanguage),
-        subtitleLanguage: String(draft.subtitleLanguage),
-    })
+        const ok = await create({
+            movieId: Number(draft.movieId),
+            roomId: Number(draft.roomId),
+            formatId: Number(draft.formatId),
+            startTime: toUTCInstant(new Date(startTimeStr!)),
+            endTime: toUTCInstant(new Date(endTimeStr!)),
+            audioLanguage: String(draft.audioLanguage),
+            subtitleLanguage: String(draft.subtitleLanguage),
+        })
 
-    if (ok) showCreateModal.value = false
+        if (ok) showCreateModal.value = false
+    } finally {
+        isCreating.value = false
+    }
 }
 
 function openCancelConfirm(item: ShowtimeResponse) {
@@ -394,6 +399,13 @@ async function confirmCancel() {
 function viewSeatMap(showtime: ShowtimeResponse) {
     seatMapShowtimeId.value = showtime.id
     isSeatMapOpen.value = true
+}
+
+function onFieldChange(key: string, _value: unknown, draft: Record<string, unknown>) {
+    if (key !== 'movieId' && key !== 'startTime') return
+    const err = validateShowtimeDate(draft)
+    if (err) setFieldError('startTime', err)
+    else clearFieldError('startTime')
 }
 
 onMounted(async () => {
