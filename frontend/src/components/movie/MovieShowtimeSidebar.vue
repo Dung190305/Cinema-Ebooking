@@ -258,7 +258,12 @@ const groupedShowtimes = computed(() => {
         })
     })
 
-    return Array.from(groups.values())
+    return Array.from(groups.values()).map(group => ({
+        ...group,
+        showtimes: [...group.showtimes].sort(
+            (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+        ),
+    }))
 })
 
 const formatTime = (instant: string) => formatTimeVN(instant)

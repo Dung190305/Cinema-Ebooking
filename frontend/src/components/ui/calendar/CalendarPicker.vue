@@ -310,6 +310,14 @@ const nextMonth = () => {
     } else calendarMonth.value++
 }
 
+const prevYear = () => {
+    calendarYear.value--
+}
+
+const nextYear = () => {
+    calendarYear.value++
+}
+
 const isSelectedDay = (day: number | null) => {
     if (!day || !normalizedModelValue.value) return false
     const d = normalizedModelValue.value

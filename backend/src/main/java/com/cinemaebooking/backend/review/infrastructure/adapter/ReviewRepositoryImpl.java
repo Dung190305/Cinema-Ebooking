@@ -81,7 +81,7 @@ public class ReviewRepositoryImpl implements ReviewRepository {
     @Override
     @Transactional(readOnly = true)
     public Optional<MyReviewResponse> findMyReviewByUserIdAndMovieId(Long userId, Long movieId) {
-        return jpaRepository.findByUserIdAndMovieIdAndDeletedFalse(userId, movieId)
+        return jpaRepository.findByUserIdAndMovieIdAndDeletedFalseAndStatus(userId, movieId, ReviewStatus.ACTIVE)
                 .map(entity -> MyReviewResponse.builder()
                         .hasReview(true)
                         .review(MyReviewResponse.ReviewDetail.builder()
@@ -93,6 +93,7 @@ public class ReviewRepositoryImpl implements ReviewRepository {
                                 .rating(entity.getRating())
                                 .comment(entity.getComment())
                                 .finalText(entity.getFinalText() != null ? entity.getFinalText() : entity.getComment())
+                                .isSpoiler(entity.isSpoiler())
                                 .build())
                         .build());
     }

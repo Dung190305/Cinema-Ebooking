@@ -12,7 +12,6 @@ import com.cinemaebooking.backend.showtime_seat.domain.enums.ShowtimeSeatStatus;
 import com.cinemaebooking.backend.showtime_seat.infrastructure.persistence.entity.ShowtimeSeatJpaEntity;
 import com.cinemaebooking.backend.showtime_seat.infrastructure.persistence.repository.ShowtimeSeatJpaRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,9 +35,6 @@ public class DashboardServiceImpl implements DashboardService {
     private final ShowtimeSeatJpaRepository showtimeSeatJpaRepository;
 
     private static final ZoneId TIMEZONE = ZoneId.of("Asia/Ho_Chi_Minh");
-
-    @Value("${app.timezone.db:Asia/Ho_Chi_Minh}")
-    private String dbTimezone;
 
     @Override
     public DashboardSummaryDto getDashboardSummary(Long cinemaId) {
@@ -110,7 +106,7 @@ public class DashboardServiceImpl implements DashboardService {
                 .build();
 
         // ── 5. Hourly Revenue ────────────────────────────────────────────────────
-        List<HourlyRevenueDto> hourlyRevenue = buildHourlyRevenue(todayStart, todayEnd, cinemaId, dbTimezone);
+        List<HourlyRevenueDto> hourlyRevenue = buildHourlyRevenue(todayStart, todayEnd, cinemaId);
 
         // ── 6. Top 5 Movies ──────────────────────────────────────────────────────
         List<TopMovieDto> topMovies = buildTopMovies(todayStart, todayEnd, cinemaId);
@@ -157,9 +153,9 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     private List<HourlyRevenueDto> buildHourlyRevenue(
-            LocalDateTime dayStart, LocalDateTime dayEnd, Long cinemaId, String dbTimezone) {
+            LocalDateTime dayStart, LocalDateTime dayEnd, Long cinemaId) {
 
-        List<Object[]> raw = dashboardJpaRepository.sumHourlyRevenue(dayStart, dayEnd, cinemaId, dbTimezone);
+        List<Object[]> raw = dashboardJpaRepository.sumHourlyRevenue(dayStart, dayEnd, cinemaId);
         List<HourlyRevenueDto> result = new ArrayList<>();
 
         for (int h = 0; h < 24; h++) {

@@ -99,7 +99,7 @@ public class Review extends BaseEntity<ReviewId> {
             double spoilerConf
     ) {
         this.sentiment = sentiment;
-        this.finalText = finalText;
+        this.finalText = finalText;  // lưu comment chuẩn hóa vào final_text
         this.isSpoiler = isSpoiler;
         this.spoilerConf = spoilerConf;
         this.editedAt = LocalDateTime.now();
