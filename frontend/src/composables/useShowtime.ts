@@ -34,6 +34,7 @@ export function useShowtime(cinemaIdInput: Ref<number | null> | number | null) {
 
   // Cache options
   const roomOptionsCache = ref<{ id: number; label: string }[]>([])
+  const movieCache = ref<{ id: number; title: string; showingEndDate: string | null }[]>
 
   function handleError(err: unknown) {
   console.error('🔴 handleError called with:', err)
@@ -126,6 +127,11 @@ export function useShowtime(cinemaIdInput: Ref<number | null> | number | null) {
     clearErrors()
     const cid = currentCinemaId.value
     if (!cid) return false
+    const dateError = validateShowtimeDate(body as unknown as Record<string, unknown>)
+    if (dateError) {
+      fieldErrors.value = { startTime: dateError }
+      return false
+    }
     try {
       const created = await showtimeApi.create({ ...body})
       showtimes.value.unshift(created)
@@ -160,8 +166,53 @@ export function useShowtime(cinemaIdInput: Ref<number | null> | number | null) {
 
   // ── Option loaders ─────────────────────────────────────────
   async function loadMovies() {
-    const res = await movieApi.getList({ page: 0, size: 50 })
-    return res.content.map(m => ({ id: m.id, label: `${m.title} (${m.duration} phút)` }))
+    const [nowShowing, comingSoon] = await Promise.all([
+      movieApi.getList({ page: 0, size: 50, status: 'NOW_SHOWING' }),
+      movieApi.getList({ page: 0, size: 50, status: 'COMING_SOON' }),
+    ])
+    const all = [...nowShowing.content, ...comingSoon.content]
+    movieCache.value = all.map(m => ({
+      id: m.id,
+      title: m.title,
+      releaseDate: m.releaseDate ?? null,       
+      showingEndDate: m.showingEndDate ?? null,
+    }))
+    return all.map(m => ({ id: m.id, label: `${m.title} (${m.duration} phút)` }))
+  }
+
+  function validateShowtimeDate(draft: Record<string, unknown>): string | null {
+    const movieId = Number(draft.movieId)
+    const startTimeVal = draft.startTime
+    if (!movieId || !startTimeVal) return null
+
+    const movie = movieCache.value.find(m => m.id === movieId)
+    if (!movie) return null
+
+    const startDate = startTimeVal instanceof Date
+      ? startTimeVal
+      : new Date(startTimeVal as string)
+
+    // ── Check 1: không được trước releaseDate (phim sắp chiếu) ──
+    if (movie.releaseDate) {
+      const release = new Date(movie.releaseDate)
+      release.setHours(0, 0, 0, 0)
+      if (startDate < release) {
+        const formatted = release.toLocaleDateString('vi-VN')
+        return `Phim "${movie.title}" chỉ bắt đầu chiếu từ ngày ${formatted}`
+      }
+    }
+
+    // ── Check 2: không được sau showingEndDate ──
+    if (movie.showingEndDate) {
+      const cutoff = new Date(movie.showingEndDate)
+      cutoff.setHours(23, 59, 59, 999)
+      if (startDate > cutoff) {
+        const formatted = new Date(movie.showingEndDate).toLocaleDateString('vi-VN')
+        return `Phim "${movie.title}" chỉ chiếu đến ngày ${formatted}`
+      }
+    }
+
+    return null
   }
 
   async function loadRooms(cid?: number) {
@@ -198,6 +249,16 @@ export function useShowtime(cinemaIdInput: Ref<number | null> | number | null) {
     }
   }
 
+  function setFieldError(key: string, message: string) {
+    fieldErrors.value = { ...fieldErrors.value, [key]: message }
+  }
+
+  function clearFieldError(key: string) {
+    const copy = { ...fieldErrors.value }
+    delete copy[key]
+    fieldErrors.value = copy
+  }
+
   return {
     showtimes: readonly(showtimes),
     isLoading: readonly(isLoading),
@@ -217,5 +278,8 @@ export function useShowtime(cinemaIdInput: Ref<number | null> | number | null) {
     loadRoomsByFormat,
     roomOptionsCache,
     clearErrors,
+    setFieldError,
+    clearFieldError,
+    validateShowtimeDate,
   }
 }
