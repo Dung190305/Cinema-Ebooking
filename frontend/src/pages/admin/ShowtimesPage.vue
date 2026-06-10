@@ -105,7 +105,7 @@
         <!-- Create Modal -->
         <CreateModal v-model="showCreateModal" title="Thêm suất chiếu" submitLabel="Tạo suất chiếu" :columns="columns"
             :isLoading="isCreating" :fieldErrors="fieldErrors" size="xl" :onFieldBlur="onFieldBlur"
-            @submit="handleCreate">
+            :onFieldChange="onFieldChange" @submit="handleCreate">
             <template #extra="{ draft }">
                 <SeatMapPreview :roomId="draft?.roomId ? Number(draft.roomId) : null"
                     :startDate="draft?.startTime ? String(draft.startTime) : undefined" />
@@ -175,7 +175,6 @@ import SeatMapDialog from '@/components/showtime/SeatMapDialog.vue';
 import { languageOptions, getLanguageLabel } from '@/constants/languages'
 import { dateToISOString, parseISODate, toUTCInstant, fromUTCToLocal, formatDateTimeVN } from '@/utils/dateFormat'
 
-
 const route = useRoute()
 const initialCinemaId = route.params.cinemaId ? Number(route.params.cinemaId) : null
 const selectedCinemaId = ref<number | null>(isNaN(initialCinemaId) ? null : initialCinemaId)
@@ -197,14 +196,13 @@ const showCancelConfirmModal = ref(false)
 const showtimeToCancel = ref<ShowtimeResponse | null>(null)
 const isCancelling = ref(false)
 
-
 const dataTableRef = ref<InstanceType<typeof DataTable> | null>(null);
 
 const {
     showtimes, isLoading, fieldErrors, globalErrors,
     currentPage, totalPages, totalItems,
     fetchList, goToPage, setFilters, create, cancel,
-    loadMovies, loadRooms, loadRoomsByFormat, clearErrors
+    loadMovies, loadRooms, loadRoomsByFormat, clearErrors, validateShowtimeDate, setFieldError, clearFieldError
 } = useShowtime(selectedCinemaId)
 
 
@@ -401,6 +399,13 @@ async function confirmCancel() {
 function viewSeatMap(showtime: ShowtimeResponse) {
     seatMapShowtimeId.value = showtime.id
     isSeatMapOpen.value = true
+}
+
+function onFieldChange(key: string, _value: unknown, draft: Record<string, unknown>) {
+    if (key !== 'movieId' && key !== 'startTime') return
+    const err = validateShowtimeDate(draft)
+    if (err) setFieldError('startTime', err)
+    else clearFieldError('startTime')
 }
 
 onMounted(async () => {
