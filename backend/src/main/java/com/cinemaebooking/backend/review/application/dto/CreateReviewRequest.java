@@ -20,4 +20,5 @@ public class CreateReviewRequest {
     private Long movieId;
     private Integer rating;
     private String comment;
+    private Boolean isSpoiler;
 }

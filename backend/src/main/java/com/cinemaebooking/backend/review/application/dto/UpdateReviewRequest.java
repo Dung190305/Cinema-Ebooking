@@ -13,4 +13,5 @@ public class UpdateReviewRequest {
     private Long userId;
     private Integer rating;
     private String comment;
+    private Boolean isSpoiler;
 }

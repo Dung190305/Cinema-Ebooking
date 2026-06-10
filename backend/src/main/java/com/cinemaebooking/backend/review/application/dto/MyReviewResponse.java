@@ -1,5 +1,6 @@
 package com.cinemaebooking.backend.review.application.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -39,5 +40,7 @@ public class MyReviewResponse {
         private Integer rating;
         private String comment;
         private String finalText;
+        @JsonProperty("isSpoiler")
+        private boolean isSpoiler;
     }
 }
