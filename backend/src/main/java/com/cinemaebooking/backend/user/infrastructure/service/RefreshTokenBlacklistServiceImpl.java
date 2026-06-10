@@ -28,8 +28,12 @@ public class RefreshTokenBlacklistServiceImpl implements RefreshTokenBlacklistSe
     @Transactional
     public void revoke(String rawRefreshToken, Instant expiresAt) {
         String hash = sha256(rawRefreshToken);
-        LocalDateTime expiresAtLocal = LocalDateTime.ofInstant(expiresAt, ZoneId.systemDefault());
 
+        if (repository.existsByTokenHash(hash)) {
+            return;
+        }
+
+        LocalDateTime expiresAtLocal = LocalDateTime.ofInstant(expiresAt, ZoneId.systemDefault());
         repository.save(RevokedRefreshTokenJpaEntity.builder()
                 .tokenHash(hash)
                 .expiresAt(expiresAtLocal)
