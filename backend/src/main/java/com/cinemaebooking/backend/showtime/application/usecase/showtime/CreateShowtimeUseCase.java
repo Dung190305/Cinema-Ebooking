@@ -72,7 +72,13 @@ public class CreateShowtimeUseCase {
         showtime.validateForCreate();
 
         Showtime saved = showtimeRepository.create(showtime);
-        if (!layout.isUsed()) roomLayoutRepository.markAsUsedAndSetLastUsedDate(layout, startDate);
+        boolean needsUpdate = !layout.isUsed()
+                || layout.getLastUsedDate() == null
+                || startDate.isAfter(layout.getLastUsedDate());
+
+        if (needsUpdate) {
+            roomLayoutRepository.markAsUsedAndSetLastUsedDate(layout, startDate);
+        }
         // Lấy tất cả ghế của layout
         List<RoomLayoutSeat> layoutSeats = roomLayoutSeatRepository.findByRoomLayoutId(layout.getId().getValue());
 
