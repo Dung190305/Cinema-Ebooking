@@ -1,0 +1,11 @@
+{
+  "label_map": {
+    "0": "POSITIVE",
+    "1": "NEGATIVE",
+    "2": "SPOILER"
+  },
+  "accuracy": 0.958005249343832,
+  "train_samples": 1524,
+  "test_samples": 381,
+  "train_time_s": 0.26
+}
